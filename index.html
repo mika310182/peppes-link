@@ -1,0 +1,3381 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <!-- ✅ PWA / App-like meta tags -->
+  <meta name="theme-color" content="#ff3131" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Peppe’s | Pedido</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Titan+One&family=Poppins:wght@400;500;600;900&display=swap"
+    rel="stylesheet">
+
+  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
+
+  <!-- No extra map libraries (Pure Text Logic) -->
+  <script src="js/distanceUtils.js"></script>
+  <script>
+    // Google Places Autocomplete - inicialización diferida
+    window.googleMapsReady = false;
+    window.initGooglePlacesAutocomplete = function () {
+      console.log('[GooglePlaces] Callback recibido, esperando DOM...');
+
+      function setupAutocomplete() {
+        const input = document.getElementById('address_street');
+        console.log('[GooglePlaces] Buscando input address_street:', input);
+
+        if (!input) {
+          console.log('[GooglePlaces] Input NO encontrado, reintentando en 500ms...');
+          setTimeout(setupAutocomplete, 500);
+          return;
+        }
+
+        console.log('[GooglePlaces] Input encontrado, creando Autocomplete...');
+
+        const autocomplete = new google.maps.places.Autocomplete(input, {
+          types: ['address'],
+          componentRestrictions: { country: 'cl' },
+          bounds: new google.maps.LatLngBounds(
+            new google.maps.LatLng(-23.85, -70.60),  // SW corner (extremo SW de Antofagasta)
+            new google.maps.LatLng(-23.45, -70.20)    // NE corner (extremo NE de Antofagasta)
+          ),
+          strictBounds: false,
+          fields: ['formatted_address', 'geometry', 'address_components']
+        });
+
+        console.log('[GooglePlaces] Autocomplete creado:', autocomplete);
+
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          console.log('[GooglePlaces] place_changed disparado, place:', place);
+
+          if (!place.geometry || !place.address_components) {
+            console.log('[GooglePlaces] place NO tiene geometry o address_components');
+            return;
+          }
+
+          const streetNumber = place.address_components.find(c => c.types.includes('street_number'));
+          console.log('[GooglePlaces] streetNumber:', streetNumber);
+
+          // Usar window para asegurar acceso global
+          window.customerLocation = {
+            address: place.formatted_address,
+            coords: { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() },
+            glink: `https://www.google.com/maps?q=${place.geometry.location.lat()},${place.geometry.location.lng()}`,
+            hasHouseNumber: !!streetNumber,
+            rawAddressDetails: place.address_components
+          };
+
+          console.log('[GooglePlaces] customerLocation actualizado:', window.customerLocation);
+
+          // Llamar updatePricingByCoords si existe (puede no estar definida aún si el script principal no ha parseado)
+          if (typeof window.updatePricingByCoords === 'function') {
+            console.log('[GooglePlaces] Llamando updatePricingByCoords...');
+            window.updatePricingByCoords(place.geometry.location.lat(), place.geometry.location.lng(), place.address_components);
+          } else {
+            console.log('[GooglePlaces] updatePricingByCoords no disponible aún, reintentando...');
+            setTimeout(() => {
+              if (typeof window.updatePricingByCoords === 'function') {
+                window.updatePricingByCoords(place.geometry.location.lat(), place.geometry.location.lng(), place.address_components);
+              }
+            }, 100);
+          }
+        });
+
+        window.googleMapsReady = true;
+        console.log('[GooglePlaces] Autocomplete conectado exitosamente');
+      }
+
+      // Intentar inmediatamente, si no funciona reintentar
+      setupAutocomplete();
+    };
+  </script>
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC1I5hFEM4arr2a5hM_IjnZHHEUgsMcIgM&libraries=places&callback=initGooglePlacesAutocomplete"
+    async defer></script>
+
+  <style>
+    :root {
+      --pepper-red: #ff3131;
+      --text: #111;
+      --muted: #6b6b6b;
+      --card: #fff;
+      --shadow: 0 18px 50px rgba(0, 0, 0, .18);
+      --soft-shadow: 0 14px 30px rgba(0, 0, 0, .12);
+      --black: #121212;
+      --pill: #111;
+      --bg: #0b0b0b;
+      --radius: 24px;
+      --success-green: #2ecc71;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      min-height: 100svh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 24px;
+      background: var(--bg);
+      font-family: 'Poppins', sans-serif;
+      overscroll-behavior: auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      min-height: 100svh;
+      overflow-x: hidden;
+      overscroll-behavior: auto;
+    }
+
+    .app-viewport {
+      position: relative;
+      width: 100%;
+      max-width: 428px;
+      height: 100%;
+      max-height: 926px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 0;
+      }
+
+      .app-viewport {
+        max-width: none;
+        max-height: none;
+        height: 100svh;
+        /* ✅ svh es el estándar moderno, sin barra URL */
+      }
+
+      .phone {
+        border-radius: 0;
+      }
+    }
+
+    .phone {
+      width: 100%;
+      min-height: 100%;
+      border-radius: var(--radius);
+      overflow: visible;
+      background: #f8f9fa;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0px 100px 80px rgba(0, 0, 0, 0.07);
+      transition: filter 0.3s ease, transform 0.3s ease;
+    }
+
+    .blur-background {
+      filter: blur(8px) brightness(0.9);
+      pointer-events: none;
+      transform: scale(0.98);
+    }
+
+    .top {
+      background: var(--pepper-red);
+      height: 450px;
+      position: relative;
+      color: #fff;
+      padding: calc(20px + env(safe-area-inset-top)) 18px 0;
+      flex-shrink: 0;
+    }
+
+    .topBar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* ESTILO PARA EL NOMBRE DE LA APP ARRIBA */
+    .brand-tag-main {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.9);
+      text-align: center;
+      flex-grow: 1;
+    }
+
+    .iconBtn {
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111;
+      color: #fff;
+      cursor: pointer;
+      position: relative;
+      border: none;
+      font-size: 20px;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .iconBtn.jump {
+      transform: scale(1.3) translateY(-8px);
+    }
+
+    .cartBadge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 4px;
+      border-radius: 999px;
+      background: var(--black);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--pepper-red);
+      transform: scale(0);
+      opacity: 0;
+      transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .cartBadge.show {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    .catRow {
+      margin-top: 18px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .catsSnap {
+      padding: 8px 14px 10px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+
+    .catsSnap::-webkit-scrollbar {
+      display: none;
+    }
+
+    .catsTrack {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .catPill {
+      flex: 0 0 auto;
+      scroll-snap-align: center;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .18);
+      border: 1px solid rgba(255, 255, 255, .25);
+      color: #fff;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .catPill.isActive {
+      background: #fff;
+      color: var(--pepper-red);
+    }
+
+    .productTag {
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      /* ✅ FIX: fondo sólido rojo en vez de semitransparente para que se lea sobre la curva */
+      background: rgba(0, 0, 0, 0.35);
+      padding: 3px 12px;
+      border-radius: 999px;
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+    }
+
+    .productTitle {
+      margin: 10px auto 0;
+      text-align: center;
+      font-family: 'Titan One', cursive;
+      font-size: 28px;
+      text-transform: uppercase;
+      /* ✅ FIX: z-index superior a la curva (z:1) y al hero (z:5) para quedar siempre encima */
+      z-index: 6;
+      position: relative;
+      flex-direction: column;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      /* ✅ FIX: sombra fuerte que garantiza legibilidad sobre fondo rojo Y sobre la curva blanca */
+      text-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.55),
+        0 1px 3px rgba(0, 0, 0, 0.8);
+      /* ✅ FIX: borde de texto oscuro como fallback extra para colores intermedios */
+      -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.15);
+    }
+
+    .curve {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      /* ✅ FIX: curva más baja (120px → antes 180px) para que el título no caiga sobre el bisel blanco */
+      height: 120px;
+      background: #f8f9fa;
+      border-top-left-radius: 220px 120px;
+      border-top-right-radius: 220px 120px;
+      z-index: 1;
+    }
+
+    .hero {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 180px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 5;
+    }
+
+    .pizzasSnap {
+      width: 100%;
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      padding: 0 44px;
+    }
+
+    .pizzasSnap::-webkit-scrollbar {
+      display: none;
+    }
+
+    .pizzaSlide {
+      flex: 0 0 340px;
+      scroll-snap-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 340px;
+    }
+
+    .prodSlideImg {
+      width: 320px;
+      height: 320px;
+      object-fit: contain;
+      filter: drop-shadow(0 25px 25px rgba(0, 0, 0, 0.25));
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .falling-topping {
+      position: absolute;
+      width: 130px;
+      height: 130px;
+      object-fit: contain;
+      z-index: 100;
+      pointer-events: none;
+      top: 50%;
+      left: 50%;
+      margin-top: -65px;
+      margin-left: -65px;
+      animation: proDrop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes proDrop {
+      0% {
+        transform: translateY(-400px) rotate(-45deg) scale(2.5);
+        opacity: 0;
+        filter: blur(8px) drop-shadow(0 40px 30px rgba(0, 0, 0, 0.2));
+      }
+
+      20% {
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateY(0) rotate(0deg) scale(1);
+        opacity: 1;
+        filter: blur(0px) drop-shadow(0 8px 12px rgba(0, 0, 0, 0.4));
+      }
+    }
+
+    .sizes {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin: 0 auto 16px;
+      z-index: 30;
+      position: relative;
+    }
+
+    .sizeBtn {
+      width: 54px;
+      height: 54px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      cursor: pointer;
+      border: 0;
+      background: #fff;
+      color: var(--pepper-red);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .sizeBtn.isActive {
+      background: var(--black);
+      color: #fff;
+    }
+
+    .content {
+      /* hero top(180) + pizza(340) - top height(450) = 70px overflow + sizes(54px) + aire(24px) = 148px */
+      padding: 148px 22px 40px;
+      flex: 1 1 auto;
+      overflow-y: auto;
+      scrollbar-width: none;
+      background: #f8f9fa;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .content::-webkit-scrollbar {
+      display: none;
+    }
+
+    .desc {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+      margin-bottom: 25px;
+      text-align: center;
+      min-height: 40px;
+    }
+
+    .extrasSnap {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      gap: 12px;
+      padding: 10px 4px 20px;
+    }
+
+    .extrasSnap::-webkit-scrollbar {
+      display: none;
+    }
+
+    .extraPill {
+      flex: 0 0 140px;
+      scroll-snap-align: start;
+      padding: 20px 15px;
+      border-radius: 20px;
+      background: #fff;
+      border: 1px solid #eee;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+      transition: all 0.3s ease;
+    }
+
+    .extraPill.isActive {
+      background: var(--pepper-red);
+      color: #fff;
+      border-color: var(--pepper-red);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(255, 49, 49, 0.3);
+    }
+
+    .selectionBadge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: var(--black);
+      color: #fff;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      border: 2px solid #fff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      z-index: 5;
+    }
+
+    .extraPill small {
+      font-weight: 900;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .bottomBar {
+      position: sticky;
+      bottom: 0;
+      padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
+      background: #fff;
+      border-top: 1px solid #f1f1f1;
+      z-index: 40;
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
+    }
+
+    .barRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .qtyBox {
+      width: 120px;
+      height: 54px;
+      border-radius: 999px;
+      background: #f1f1f1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px;
+    }
+
+    .qtyBtn {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 0;
+      background: #fff;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .addBtn {
+      height: 54px;
+      flex: 1;
+      border-radius: 999px;
+      border: 0;
+      background: var(--black);
+      color: #fff;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .addBtn.success {
+      background: var(--success-green);
+      transform: scale(1.02);
+    }
+
+    /* --- ANIMACIÓN PEPE --- */
+    @keyframes peppeFloat {
+      0% {
+        transform: translateY(0px) rotate(0deg);
+      }
+
+      50% {
+        transform: translateY(-15px) rotate(2deg);
+      }
+
+      100% {
+        transform: translateY(0px) rotate(0deg);
+      }
+    }
+
+    .peppe-anim-container {
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 20px;
+      animation: peppeFloat 3s ease-in-out infinite;
+      filter: drop-shadow(0 15px 15px rgba(0, 0, 0, 0.1));
+      position: relative;
+    }
+
+    .peppe-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* --- NUEVA ANIMACIÓN HORNO --- */
+    @keyframes ovenHeat {
+      0% {
+        filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.1)) brightness(1);
+      }
+
+      50% {
+        filter: drop-shadow(0 0 30px rgba(255, 100, 0, 0.8)) brightness(1.2);
+      }
+
+      100% {
+        filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.1)) brightness(1);
+      }
+    }
+
+    @keyframes cookWobble {
+      0% {
+        transform: translateY(0) scale(1);
+      }
+
+      25% {
+        transform: translateY(-5px) scale(1.02) rotate(1deg);
+      }
+
+      50% {
+        transform: translateY(0) scale(1) rotate(-1deg);
+      }
+
+      75% {
+        transform: translateY(-3px) scale(1.01) rotate(0.5deg);
+      }
+
+      100% {
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .peppe-img.oven-animation {
+      animation: cookWobble 0.6s infinite ease-in-out, ovenHeat 1.5s infinite alternate ease-in-out !important;
+    }
+
+    #cartModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      display: none;
+      align-items: flex-end;
+    }
+
+    .cartPanel {
+      width: 100%;
+      background: #fff;
+      max-height: 92svh;
+      border-top-left-radius: 32px;
+      border-top-right-radius: 32px;
+      padding: 30px 24px calc(24px + env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      animation: slideUp 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+      overflow: hidden;
+    }
+
+    .cartFooter {
+      border-top: 1px dashed #eef0f5;
+      padding: 20px 0 calc(5px + env(safe-area-inset-bottom));
+      background: #fff;
+      margin-top: auto;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%);
+      }
+
+      to {
+        transform: translateY(0);
+      }
+    }
+
+    .cartItem {
+      display: flex;
+      gap: 16px;
+      padding: 20px 0;
+      border-bottom: 1px solid #f1f3f7;
+      align-items: flex-start;
+    }
+
+    .cartItem img {
+      width: 54px;
+      height: 54px;
+      object-fit: contain;
+    }
+
+    .itemInfo {
+      flex: 1;
+    }
+
+    .itemName {
+      font-weight: 700;
+      font-size: 16px;
+      color: #1a1c24;
+      margin-bottom: 2px;
+    }
+
+    .cartExtraTag {
+      display: inline-flex;
+      background: #f1f3f7;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      margin: 2px;
+      color: #555;
+    }
+
+    .cartExtraTag b {
+      margin-left: 6px;
+      color: var(--pepper-red);
+      cursor: pointer;
+    }
+
+    .itemQtyBadge {
+      background: #fff1f1;
+      color: var(--pepper-red);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .itemPrice {
+      font-weight: 700;
+      font-size: 16px;
+      color: #1a1c24;
+    }
+
+    .btnRemove {
+      border: 0;
+      background: none;
+      color: var(--pepper-red);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: underline;
+      display: block;
+    }
+
+    .deliveryToggle {
+      display: flex;
+      background: #f1f3f7;
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .toggleBtn {
+      flex: 1;
+      padding: 12px;
+      border: 0;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      background: none;
+      color: #8a91a5;
+      transition: 0.2s;
+      font-family: inherit;
+    }
+
+    .toggleBtn.active {
+      background: #fff;
+      color: #1a1c24;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .deliveryForm input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #eef0f5;
+      margin-bottom: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      background: #fcfdfe;
+      outline: none;
+    }
+
+    .cutlery-option {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fbfbfb;
+      padding: 15px 20px;
+      border-radius: 12px;
+      border: 1px solid #eef0f5;
+      margin-bottom: 20px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked+.slider {
+      background-color: var(--pepper-red);
+    }
+
+    input:checked+.slider:before {
+      transform: translateX(20px);
+    }
+
+    .cancelBox {
+      margin-top: 10px;
+      padding: 20px;
+      border-radius: 20px;
+      background: #fffafa;
+      border: 1.5px dashed var(--pepper-red);
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .modal-legal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-legal-content {
+      background: white;
+      width: 100%;
+      max-width: 380px;
+      max-height: 80vh;
+      border-radius: 32px;
+      padding: 35px 25px;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+      animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes modalPop {
+      from {
+        transform: scale(0.85);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .modal-legal-content h2 {
+      font-family: 'Titan One', cursive;
+      color: var(--pepper-red);
+      font-size: 26px;
+      text-align: center;
+      margin-bottom: 20px;
+      margin-top: 0;
+    }
+
+    .modal-legal-content h3 {
+      font-size: 14px;
+      color: #111;
+      margin-top: 25px;
+      font-weight: 900;
+      text-transform: uppercase;
+      border-left: 4px solid var(--pepper-red);
+      padding-left: 12px;
+    }
+
+    .modal-legal-content p {
+      font-size: 13.5px;
+      color: #555;
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    .btn-close-legal {
+      background: var(--black);
+      color: white;
+      width: 100%;
+      padding: 18px;
+      border-radius: 16px;
+      border: none;
+      font-weight: 900;
+      margin-top: 20px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .floating-track-btn {
+      position: fixed;
+      bottom: calc(80px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 80;
+      background: var(--black);
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 50px;
+      font-weight: 900;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      display: none;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      animation: slideInBottom 0.5s ease;
+    }
+
+    @keyframes slideInBottom {
+      from {
+        bottom: 50px;
+        opacity: 0;
+      }
+
+      to {
+        bottom: 95px;
+        opacity: 1;
+      }
+    }
+
+    #pickupLocationArea {
+      margin-top: 15px;
+      padding: 15px;
+      background: #f1f3f7;
+      border-radius: 18px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .btn-maps {
+      background: #4285F4;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .btn-entendido-uiverse {
+      width: 100%;
+      height: 55px;
+      background-color: var(--pepper-red);
+      background-image: linear-gradient(var(--pepper-red), var(--pepper-red));
+      border: none;
+      border-radius: 50px;
+      color: rgb(255, 255, 255);
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0px 5px 0px #b32222;
+      transition-duration: .3s;
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+      margin-top: 35px;
+      text-transform: uppercase;
+    }
+
+    .btn-entendido-uiverse:active {
+      transform: translate(0px, 4px);
+      box-shadow: 0px 1px 0px #b32222;
+    }
+
+    .btn-entendido-uiverse svg {
+      width: 18px;
+      fill: white;
+    }
+
+    /* --- CUBIERTOS --- */
+    .cutlery-option {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fbfbfb;
+      padding: 15px 20px;
+      border-radius: 12px;
+      border: 1px solid #eef0f5;
+      margin-bottom: 20px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked+.slider {
+      background-color: var(--pepper-red);
+    }
+
+    input:checked+.slider:before {
+      transform: translateX(20px);
+    }
+
+    /* --- BUSCADOR DE DIRECCIONES --- */
+    .address-wrapper {
+      position: relative;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .address-suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      z-index: 2000;
+      max-height: 250px;
+      overflow-y: auto;
+      display: none;
+      margin-top: 5px;
+      border: 1px solid #eef0f5;
+    }
+
+    .suggestion-item {
+      padding: 12px 18px;
+      font-size: 13px;
+      color: #333;
+      cursor: pointer;
+      border-bottom: 1px solid #f8f9fa;
+      transition: background 0.2s;
+      text-align: left;
+    }
+
+    .suggestion-item:last-child {
+      border-bottom: none;
+    }
+
+    .suggestion-item:hover {
+      background: #f1f3f7;
+    }
+
+    .suggestion-item .suggestion-main {
+      display: block;
+      color: var(--pepper-red);
+      font-weight: 800;
+      margin-bottom: 2px;
+      font-size: 14px;
+    }
+
+    .suggestion-item .suggestion-type {
+      display: inline-block;
+      font-size: 10px;
+      background: #f1f3f7;
+      color: #777;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-left: 5px;
+      font-weight: 400;
+      vertical-align: middle;
+    }
+
+    .suggestion-item .suggestion-rest {
+      display: block;
+      color: #666;
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .btn-gps {
+      background: #fbfbfb;
+      border: 1px solid #eef0f5;
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      width: fit-content;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-gps:hover {
+      background: #f1f3f7;
+    }
+
+    /* Mapbox Integration Styles */
+    #geocoder {
+      width: 100%;
+      margin-bottom: 15px;
+    }
+
+    .mapboxgl-ctrl-geocoder {
+      width: 100% !important;
+      max-width: none !important;
+      box-shadow: none !important;
+      border: 1px solid #eef0f5 !important;
+      border-radius: 12px !important;
+      background: #fbfbfb !important;
+    }
+
+    /* --- CAROUSEL NAVIGATION (DESKTOP) --- */
+    .carousel-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      color: var(--black);
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-arrow:hover {
+      background: #fff;
+      transform: translateY(-50%) scale(1.1);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .nav-arrow.left {
+      left: 10px;
+    }
+
+    .nav-arrow.right {
+      right: 10px;
+    }
+
+    /* Show only on desktop hover */
+    @media (min-width: 768px) {
+      .carousel-wrapper:hover .nav-arrow.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+    }
+
+    /* Hide completely on mobile */
+    @media (max-width: 767px) {
+      .nav-arrow {
+        display: none !important;
+      }
+    }
+
+    .leaflet-control-geocoder {
+      border-radius: 12px !important;
+      box-shadow: none !important;
+      border: 1px solid #eef0f5 !important;
+      font-family: inherit !important;
+    }
+
+    .address-field {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #eef0f5;
+      background: #fbfbfb;
+      font-size: 14px;
+      color: #111;
+      margin-top: 10px;
+      display: block;
+      font-family: inherit;
+    }
+
+    .btn-toggle-map {
+      background: #f1f3f7;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #666;
+      cursor: pointer;
+      margin-bottom: 10px;
+      display: none;
+    }
+
+    #map {
+      width: 100%;
+      height: 250px;
+      border-radius: 16px;
+      margin-bottom: 15px;
+      border: 1px solid #eef0f5;
+      display: none;
+      position: relative;
+      /* Crucial for Mapbox rendering */
+      background: #f0f0f0;
+    }
+
+    #closed-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      text-align: center;
+      padding: 40px;
+      backdrop-filter: blur(10px);
+    }
+
+    .closed-card {
+      background: #1a1a1a;
+      padding: 40px 30px;
+      border-radius: 32px;
+      border: 1px solid #333;
+      max-width: 340px;
+      width: 100%;
+    }
+
+    .closed-icon {
+      font-size: 60px;
+      margin-bottom: 20px;
+    }
+
+    .closed-title {
+      font-family: 'Titan One', cursive;
+      font-size: 28px;
+      color: var(--pepper-red);
+      margin-bottom: 10px;
+    }
+
+    .closed-hours {
+      font-size: 14px;
+      color: #888;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #333;
+    }
+
+    .closed-btn {
+      margin-top: 30px;
+      background: white;
+      color: black;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 999px;
+      font-weight: 900;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    /* ============================================================
+       MOBILE LAYOUT — App-nativa en todos los teléfonos
+       ============================================================ */
+    @media (max-width: 768px) {
+
+      /* 1. Base scroll del documento */
+      html,
+      body {
+        height: auto !important;
+        min-height: 100svh;
+        /* svh = small viewport height, ignora barra URL */
+        overflow-x: hidden;
+        overflow-y: auto !important;
+      }
+
+      /* 2. Viewport principal: ocupa pantalla sin scroll de página */
+      .app-viewport {
+        height: auto !important;
+        max-height: none !important;
+        min-height: 100svh;
+      }
+
+      /* 3. Phone: sin transform para no romper stacking context de modals fixed */
+      .phone {
+        height: auto !important;
+        min-height: 100svh;
+        transform: none !important;
+      }
+
+      /* 4. Sección roja superior: altura fluida en pantallas pequeñas */
+      .top {
+        height: clamp(380px, 48svh, 450px);
+      }
+
+      /* 5. Carousel de pizzas: slides fluidos, no overflow horizontal */
+      .pizzasSnap {
+        padding: 0 clamp(16px, 5vw, 44px);
+      }
+
+      .pizzaSlide {
+        flex: 0 0 min(340px, 88vw);
+        /* nunca más ancho que la pantalla */
+        height: min(340px, 88vw);
+      }
+
+      .prodSlideImg {
+        width: min(320px, 84vw);
+        height: min(320px, 84vw);
+      }
+
+      /* 6. Topping layer: no desbordarse en pantallas estrechas */
+      #toppingLayer {
+        width: min(340px, 88vw) !important;
+        height: min(340px, 88vw) !important;
+        margin-left: calc(min(340px, 88vw) / -2) !important;
+      }
+
+      /* 7. Content: scroll interno desactivado, empuja el layout naturalmente */
+      .content {
+        overflow-y: visible !important;
+        flex: none !important;
+        height: auto !important;
+        padding-top: clamp(120px, 18svh, 148px);
+      }
+
+      /* 8. BottomBar pegada abajo con safe area */
+      .bottomBar {
+        position: sticky !important;
+        bottom: 0 !important;
+        z-index: 90 !important;
+        padding-bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+      }
+
+      /* 9. Modals como fixed para salir del stacking context */
+      #cartModal,
+      .modal-legal-overlay {
+        position: fixed !important;
+        inset: 0 !important;
+      }
+
+      /* 10. Botón flotante: fixed en móvil para que no baile con el scroll */
+      .floating-track-btn {
+        position: fixed !important;
+        bottom: calc(80px + env(safe-area-inset-bottom)) !important;
+      }
+
+      /* 11. SuccessScreen: fixed para cubrir toda la pantalla real */
+      #successScreen {
+        position: fixed !important;
+        inset: 0 !important;
+        padding: 40px 24px calc(40px + env(safe-area-inset-bottom)) !important;
+        overflow-y: auto;
+      }
+
+      /* 12. Extras: transición suave sin layout shift */
+      #extrasContainer {
+        min-height: 140px;
+        transition: opacity 0.25s ease;
+        opacity: 1;
+      }
+
+      #extrasContainer[style*="none"] {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* 13. Selector de tamaño: fade en vez de colapso brusco */
+      #sizes {
+        display: flex !important;
+        min-height: 54px;
+        transition: opacity 0.25s ease;
+        opacity: 1;
+      }
+
+      #sizes[style*="none"] {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* 14. Peppe image en success screen: no agrandarse de más */
+      .peppe-anim-container {
+        width: clamp(120px, 45vw, 200px);
+        height: clamp(120px, 45vw, 200px);
+      }
+
+      /* 15. Cart panel: altura máxima fluida */
+      .cartPanel {
+        max-height: 92svh;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-viewport">
+    <div id="closed-overlay">
+      <div class="closed-card">
+        <div class="closed-icon">😴</div>
+        <div class="closed-title">ESTAMOS CERRAOS</div>
+        <p>Nuestro equipo está descansando ahora mismo para traerte lo mejor mañana.</p>
+        <div class="closed-hours">
+          <p><strong>Horario de Atención:</strong></p>
+          <p>Lunes a Domingo<br>13:50 a 23:45 hrs</p>
+        </div>
+        <button class="closed-btn" onclick="location.reload()">Verificar de nuevo</button>
+      </div>
+    </div>
+
+    <div id="modalLegalOverlay" class="modal-legal-overlay">
+      <div class="modal-legal-content">
+        <h2>PEPPE'S LEGAL</h2>
+        <p
+          style="text-align:center; font-weight:800; color:#111; margin-top:-15px; font-size: 11px; letter-spacing: 1px;">
+          TEMPORADA 2026</p>
+
+        <h3>1. CANCELACIÓN</h3>
+        <p>Los pedidos pueden cancelarse exclusivamente durante los primeros <b>3 minutos</b> tras la confirmación desde
+          la pantalla de seguimiento.</p>
+
+        <h3>2. REEMBOLSOS</h3>
+        <p>Si cancelas a tiempo, el reembolso se coordina automáticamente vía WhatsApp con nuestro soporte técnico.</p>
+
+        <h3>3. ENTREGAS</h3>
+        <p>Los tiempos de entrega son estimaciones y pueden variar según la demanda y el clima.</p>
+
+        <button class="btn-entendido-uiverse" onclick="toggleLegal(false)">
+          <span>Entendido</span>
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z">
+            </path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="phone" id="app">
+
+      <button id="btnFloatingTrack" class="floating-track-btn" onclick="mostrarSeguimientoPersistente()">
+        VER ESTADO DEL PEDIDO 🍕
+      </button>
+
+      <div class="top">
+        <div class="topBar">
+          <div style="width:48px"></div>
+          <div class="brand-tag-main">PEPPE'S 2026 ®</div>
+          <div class="iconBtn" id="btnCart">🛒<span class="cartBadge" id="cartBadge">0</span></div>
+        </div>
+        <div class="catRow">
+          <div class="carousel-wrapper">
+            <button class="nav-arrow left" onclick="scrollCarousel('catsSnap', -1)">‹</button>
+            <div class="catsSnap" id="catsSnap">
+              <div class="catsTrack" id="catsWrap"></div>
+            </div>
+            <button class="nav-arrow right visible" onclick="scrollCarousel('catsSnap', 1)">›</button>
+          </div>
+        </div>
+        <div class="productTitle" id="productTitleWrap">
+          <span id="productType" class="productTag"></span>
+          <div id="productName">---</div>
+        </div>
+        <div class="curve"></div>
+        <div class="hero" id="heroArea">
+          <div class="carousel-wrapper">
+            <button class="nav-arrow left" onclick="scrollCarousel('pizzasSnap', -1)">‹</button>
+            <div class="pizzasSnap" id="pizzasSnap"></div>
+            <button class="nav-arrow right visible" onclick="scrollCarousel('pizzasSnap', 1)">›</button>
+          </div>
+          <div id="toppingLayer"
+            style="position:absolute; top: 0; left: 50%; width: min(340px, 88vw); height: min(340px, 88vw); margin-left: calc(min(340px, 88vw) / -2); pointer-events:none; z-index:100;">
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <!-- ✅ FIX: sizes movido dentro del content para que quede en flujo normal -->
+        <div class="sizes" id="sizes">
+          <button class="sizeBtn" data-size="P">P</button>
+          <button class="sizeBtn isActive" data-size="M">M</button>
+          <button class="sizeBtn" data-size="G">G</button>
+        </div>
+        <p class="desc" id="productDesc">---</p>
+        <div id="extrasContainer">
+          <h4 id="extraTitle" style="margin: 0 0 10px 5px; font-weight: 900; font-size: 18px;">Personaliza tu orden</h4>
+          <div class="carousel-wrapper">
+            <button class="nav-arrow left" onclick="scrollCarousel('extrasArea', -1)">‹</button>
+            <div class="extrasSnap" id="extrasArea"></div>
+            <button class="nav-arrow right visible" onclick="scrollCarousel('extrasArea', 1)">›</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottomBar">
+        <div class="barRow">
+          <div class="qtyBox">
+            <button class="qtyBtn" id="minus">−</button>
+            <div class="qtyVal" id="qty" style="font-weight:900">1</div>
+            <button class="qtyBtn" id="plus">+</button>
+          </div>
+          <div class="price" id="totalPrice" style="font-weight:900; font-size:22px">$0</div>
+          <button class="addBtn" id="addToCart">Agregar</button>
+        </div>
+      </div>
+
+      <div id="cartModal">
+        <div class="cartPanel">
+          <center>
+            <div style="width: 40px; height: 4px; background: #e0e0e0; border-radius: 10px; margin-bottom: 20px;"></div>
+          </center>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+            <h2 style="font-size:24px; font-weight:900; margin:0;">Tu Pedido</h2>
+            <button onclick="toggleLegal(true)"
+              style="border:0; background:#f1f3f7; width:36px; height:36px; border-radius:50%; font-size:16px; cursor:pointer; color:#111; font-weight:bold; margin-left: auto; margin-right: 15px;">i</button>
+            <button onclick="toggleCart()"
+              style="border:0; background:none; font-size:20px; cursor:pointer; color:#8a91a5">✕</button>
+          </div>
+          <div class="cartMainScroll" style="flex-grow:1; overflow-y:auto; padding-right:5px; margin-bottom:10px;">
+            <div id="cartItemsList"></div>
+
+            <div class="deliveryToggle">
+              <button class="toggleBtn active" id="btnRetiro" onclick="setDelivery(false)">Retiro</button>
+              <button class="toggleBtn" id="btnDelivery" onclick="setDelivery(true)">Delivery</button>
+            </div>
+
+            <div class="deliveryForm" id="formDatos">
+              <input type="text" id="custName" placeholder="Nombre completo">
+              <input type="tel" id="custPhone" placeholder="Teléfono de contacto">
+              <div id="deliveryFields" style="display:none; flex-direction:column; gap:10px;">
+                <input type="text" id="address_street" placeholder="Calle y Número exacto" class="address-field"
+                  style="display:block; margin-top:0;">
+
+                <div style="text-align: right;">
+                  <button id="btnGPSManual" onclick="useCurrentLocation()"
+                    style="background:none; border:none; color:var(--pepper-red); font-size:12px; cursor:pointer; padding:5px 0;">
+                    📍 Enviar mi ubicación actual (Opcional)
+                  </button>
+                </div>
+              </div>
+              <textarea id="custNote" placeholder="Nota especial (ej: dejar en conserjería...)"
+                style="width: 100%; height: 80px; padding: 12px 20px; border: 1px solid #eef0f5; border-radius: 12px; background: #fbfbfb; font-size: 14px; margin-top: 10px; font-family: inherit; resize: none;"></textarea>
+            </div>
+          </div>
+
+          <div class="cartFooter">
+
+            <!-- CONTENEDOR DE CUPONES -->
+            <div id="couponContainer" style="display:flex; gap:10px; margin-bottom:15px;">
+              <input type="text" id="couponInput" placeholder="¿Código de descuento?"
+                oninput="if(appliedCoupon && this.value.trim().toUpperCase() !== appliedCoupon.code) { appliedCoupon = null; document.getElementById('couponMessage').style.display='none'; updateCartUI(); }"
+                style="flex:1; padding:12px; border-radius:12px; border:1px solid #eef0f5; font-family:inherit; font-size:14px; text-transform:uppercase;">
+              <button onclick="applyCoupon()"
+                style="padding:0 20px; background:var(--black); color:#fff; border:none; border-radius:12px; font-weight:700; cursor:pointer;">Aplicar</button>
+            </div>
+            <div id="couponMessage"
+              style="font-size:12px; font-weight:700; margin-top:-10px; margin-bottom:15px; display:none;"></div>
+
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; color:#8a91a5;">
+              <span>Subtotal</span> <span id="subtotalText">$0</span>
+            </div>
+            <div id="deliveryRow"
+              style="display:none; justify-content:space-between; margin-bottom:10px; color:#8a91a5; font-size:14px;">
+              <span>Costo Envío (Antofagasta)</span> <span>$2.500</span>
+            </div>
+            <div id="discountRow"
+              style="display:none; justify-content:space-between; margin-bottom:10px; color:#2ecc71; font-size:14px; font-weight:700;">
+              <span>Descuento</span> <span id="discountText">-$0</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:5px; font-weight:900; font-size:24px;">
+              <span>Total</span> <span id="cartTotalText">$0</span>
+            </div>
+            <p style="font-size: 11px; color: #8a91a5; margin-top: 10px; text-align: center;">Al confirmar, aceptas
+              nuestras <span onclick="toggleLegal(true)"
+                style="text-decoration:underline; cursor:pointer; color:var(--pepper-red); font-weight:700;">políticas
+                de reembolso</span>.</p>
+            <button class="addBtn btn-confirmar"
+              style="width:100%; margin-top: 15px; background: #000; height: 64px; font-size: 18px; border-radius: 16px;"
+              onclick="confirmOrder(event)">Confirmar y Pagar →</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="successScreen"
+        style="display:none; position:fixed; inset:0; background:#fff; z-index:600; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding: 40px 24px calc(40px + env(safe-area-inset-bottom)); overflow-y:auto;">
+        <div id="statusIconArea" class="peppe-anim-container">
+          <img id="peppeStatusImg" class="peppe-img" src="assets/peppe_listo.png" alt="Peppe">
+        </div>
+
+        <h1 id="successTitle"
+          style="font-family:'Titan One'; color:var(--pepper-red); font-size:30px; text-transform:uppercase; margin-bottom:10px;">
+          ¡Recibido!</h1>
+        <p style="font-size:15px; color:#444;">Pedido de <b id="successClientName"></b></p>
+
+        <div id="statusUpdateArea"
+          style="margin-top: 20px; padding: 15px; background: #fdfdfd; border-radius: 20px; width: 100%; border: 1px solid #eee;">
+          <div id="statusIcon" style="font-size: 30px; margin-bottom: 5px;">⏳</div>
+          <p id="statusText" style="font-weight: 800; font-size: 15px; margin: 0; color: #888;">Procesando...</p>
+
+          <div id="pickupLocationArea">
+            <p style="font-size: 11px; color: #111; margin: 5px 0; font-weight: 700;">Recoger en: <br> <span
+                style="color: var(--pepper-red)">Calle El Niquel 8002</span></p>
+            <a href="https://www.google.com/maps/search/?api=1&query=Calle+El+Niquel+8002" target="_blank"
+              class="btn-maps">
+              📍 CÓMO LLEGAR
+            </a>
+          </div>
+        </div>
+
+        <div id="cancelArea" class="cancelBox" style="display:none;">
+          <p style="font-size:13px; color:#666; margin-bottom:10px;">¿Deseas corregir algo? Tienes <b id="cancelTimer"
+              style="color:var(--pepper-red)">03:00</b></p>
+          <button onclick="solicitarCancelacion()"
+            style="background:none; border:none; color:var(--pepper-red); text-decoration:underline; cursor:pointer; font-weight:800; font-family:inherit; font-size: 11px;">CANCELAR
+            PEDIDO</button>
+        </div>
+
+        <button class="btn-entendido-uiverse" onclick="cerrarSeguimientoTemporal()">
+          <span>Entendido</span>
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z">
+            </path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUCCESS_SOUND = "https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3";
+    const audioObj = new Audio(SUCCESS_SOUND);
+    audioObj.load();
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDUqCjwPffs1kY6ERLKd_IoDa1d_mEqooc",
+      authDomain: "peppes-stock.firebaseapp.com",
+      databaseURL: "https://peppes-stock-default-rtdb.firebaseio.com",
+      projectId: "peppes-stock",
+      storageBucket: "peppes-stock.firebasestorage.app",
+      messagingSenderId: "32282596924",
+      appId: "1:32282596924:web:9d65e5ed462e852ea89539"
+    };
+
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    const db = firebase.database();
+    window.REMOTE_DATA = { inventory: {}, extras: {} };
+    window.STORE_HOURS_CONFIG = { open: "13:30", close: "23:45" }; // Defaults
+    db.ref('store_settings/hours').on('value', snap => {
+      const data = snap.val();
+      if (data && data.open && data.close) {
+        window.STORE_HOURS_CONFIG = data;
+        if (typeof updateConfirmButtonState === 'function') updateConfirmButtonState();
+      }
+    });
+
+    // Helper para obtener datos real-time con fallback a DATA
+    function getRemoteProduct(catId, prodId) {
+      const remoteCat = window.REMOTE_DATA.inventory?.[catId];
+      const remoteProd = remoteCat?.[prodId];
+
+      // Intentar encontrar el producto estático original para fallback
+      const staticList = DATA.products[catId] || [];
+      const staticProd = staticList.find(p => p.id === prodId);
+
+      if (!remoteProd) return staticProd;
+
+      // Fusionar datos: Prioridad Firebase > Estático
+      const merged = {
+        ...staticProd,
+        ...remoteProd,
+        prices: remoteProd.prices || staticProd?.prices || { U: 0 }
+      };
+
+      // La disponibilidad debe ser mandatoria desde Firebase si existe
+      merged.available = remoteProd.available !== undefined ? remoteProd.available : true;
+
+      return merged;
+    }
+
+    function getRemoteExtra(extraId) {
+      const remoteExtra = window.REMOTE_DATA.extras?.[extraId];
+      const staticExtra = DATA.extras.find(e => e.id === extraId);
+
+      if (!remoteExtra) return staticExtra;
+
+      return {
+        ...staticExtra,
+        ...remoteExtra,
+        available: remoteExtra.available !== undefined ? remoteExtra.available : true
+      };
+    }
+
+    function parseVolume(str) {
+      if (!str) return 0;
+      const s = String(str).toLowerCase();
+      // Buscar patrones como 220ml o 1.5l
+      const match = s.match(/([0-9.,]+)\s*(ml|l)/);
+      if (!match) return 9999; // Mandar al final si no se detecta volumen
+
+      let val = parseFloat(match[1].replace(',', '.'));
+      const unit = match[2];
+
+      if (unit === 'l') val *= 1000; // Convertir litros a ml
+      return val;
+    }
+
+    function sortProductsBySubcategory(prods, catId) {
+      if (catId === 'bebidas') {
+        return [...prods].sort((a, b) => parseVolume(a.name) - parseVolume(b.name));
+      }
+      if (catId !== 'pizzas') return prods;
+
+      const catOrder = ["Clásica", "De la Casa", "Especial", "Vegetariana", "Premium"];
+      const prodOrder = [
+        "margarita", "jamon", "napo", "pepperoni",
+        "hawaiana", "pesto", "botticello", "selvaggio", "nonna",
+        "regalona", "pizzana", "mamma", "4quesos",
+        "veggie_it", "veggie_gold", "bella", "nonna_v",
+        "porto", "carnevale", "iberica", "pizzomuno"
+      ];
+
+      return [...prods].sort((a, b) => {
+        // Orden por subcategoría primero
+        const indexCatA = catOrder.indexOf(a.type) === -1 ? 99 : catOrder.indexOf(a.type);
+        const indexCatB = catOrder.indexOf(b.type) === -1 ? 99 : catOrder.indexOf(b.type);
+
+        if (indexCatA !== indexCatB) return indexCatA - indexCatB;
+
+        // Orden por producto dentro de la subcategoría
+        const indexProdA = prodOrder.indexOf(a.id) === -1 ? 99 : prodOrder.indexOf(a.id);
+        const indexProdB = prodOrder.indexOf(b.id) === -1 ? 99 : prodOrder.indexOf(b.id);
+
+        return indexProdA - indexProdB;
+      });
+    }
+
+    function getCleanProductList(catId) {
+      const inventory = window.REMOTE_DATA.inventory || {};
+      const remote = Object.values(inventory[catId] || {}).filter(p => p && typeof p === "object" && p.id);
+      const staticProds = DATA.products[catId] || [];
+      let list = remote.length > 0 ? remote : staticProds;
+
+      // Filtrar por día si es categoría "promo"
+      if (catId === 'promo') {
+        const today = new Date().getDay(); // 0=Dom, 1=Lun, ..., 6=Sab
+        list = list.filter(p => p.days && p.days.includes(today));
+      }
+
+      return sortProductsBySubcategory(list, catId);
+    }
+    db.ref().on('value', (snapshot) => {
+      const data = snapshot.val() || {};
+      window.REMOTE_DATA.inventory = data.inventory_clean || {};
+      window.REMOTE_DATA.extras = data.extras || {};
+      window.REMOTE_DATA.category_config = data.category_config || {};
+
+      window.currentStock = window.REMOTE_DATA.inventory;
+      window.extrasStock = window.REMOTE_DATA.extras;
+
+      // Re-renderizar todo el sistema dinámico si hay cambios
+      renderCategories();
+
+      // Si la categoría actual ya no existe (fue eliminada), volver a la principal
+      const remoteList = Object.keys(window.REMOTE_DATA.inventory);
+      const staticList = DATA.categories.map(c => c.id);
+      if (!remoteList.includes(state.categoryId) && !staticList.includes(state.categoryId)) {
+        selectCategory("pizzas");
+      } else {
+        aplicarRestriccionStock();
+        renderExtras();
+        renderDetails();
+      }
+    });
+
+    const IMG_PATH = "assets/";
+    const TOPPINGS_PATH = "img/toppings/";
+
+    function resolveImgPath(path) {
+      if (!path) return "https://via.placeholder.com/340x340?text=Peppe's+Pizza";
+      const p = String(path).trim();
+      if (p.startsWith('http') || p.startsWith('https://') || p.startsWith('assets/') || p.startsWith('data:')) {
+        return p;
+      }
+      return IMG_PATH + p;
+    }
+
+    const DATA = {
+      categories: [
+        { id: "promo", name: "Promo" }, { id: "pizzas", name: "Pizzas" }, { id: "lasanas", name: "Lasañas" }, { id: "pastas", name: "Pastas" }, { id: "antojos", name: "Antojos" },
+        { id: "ens", name: "Ensaladas" }, { id: "postres", name: "Postres" }, { id: "bebidas", name: "Bebidas" }
+      ],
+      products: {
+        promo: [
+          { id: "personal_beb", type: "Promo", name: "Personal + Bebida", desc: "Pizza personal a elección + bebida lata de 220ml.", img: IMG_PATH + "promo_pizza_personal_bebida_220ml.png", prices: { U: 5490 }, days: [1] },
+          { id: "combo_p", type: "Promo", name: "2x1", desc: "Combo 2x1 para 2 personas.", img: IMG_PATH + "2x1.png", prices: { U: 15990 }, days: [1] },
+          { id: "las_beb", type: "Promo", name: "Lasaña + Bebida", desc: "Lasaña artesanal + bebida lata 220ml.", img: IMG_PATH + "promo-lasaña-boloñesa.png", prices: { U: 6990 }, days: [2] },
+          { id: "martes_fest", type: "Fest", name: "Martes Fest", desc: "Especial del día martes, elige tu pizza clasica favorita.", img: IMG_PATH + "martesfest.png", prices: { U: 21990 }, days: [2] },
+          { id: "gemelas", type: "Promo", name: "Las Gemelas", desc: "Dos pizzas de pepperoni estilo romano.", img: IMG_PATH + "gemelas.png", prices: { U: 8990 }, days: [3] },
+          { id: "combo_2", type: "Promo", name: "Combo para 2", desc: "Pizza Grande + Bebida de 1.5Lt.", img: IMG_PATH + "combo-para-2.png", prices: { U: 14990 }, days: [3] },
+          { id: "pers_pali", type: "Promo", name: "Personal + Palitos", desc: "Pizza personal + porción de palitos de ajo.", img: IMG_PATH + "promo_pizza_personal_bebida_220ml.png", prices: { U: 8990 }, days: [4] },
+          { id: "duo_fam_f", type: "Fest", name: "Dúo Familiar Fest", desc: "2 Pizzas familiares + bebida 1.5L.", img: IMG_PATH + "duo_familiar_fest.png", prices: { U: 26990 }, days: [4, 6] },
+          { id: "viernes_mix", type: "Promo", name: "Fideos + Palitos + Bebida", desc: "Pasta a elección + palitos + bebida 220ml.", img: IMG_PATH + "pasta-boloñesa.png", prices: { U: 9990 }, days: [5] }
+        ],
+        pizzas: [
+          { id: "margarita", type: "Clásica", name: "Margarita", desc: "Salsa de tomate y mozzarella.", img: IMG_PATH + "margarita.png", prices: { P: 4990, M: 9990, G: 12990 } },
+          { id: "jamon", type: "Clásica", name: "Jamón Queso", desc: "Clásica combinación de jamón y queso.", img: IMG_PATH + "jamon-queso.png", prices: { P: 4990, M: 9990, G: 12990 } },
+          { id: "napo", type: "Clásica", name: "Napolitana", desc: "Tomate natural, aceitunas y orégano.", img: IMG_PATH + "napo.png", prices: { P: 4990, M: 9990, G: 12990 } },
+          { id: "pepperoni", type: "Clásica", name: "Pepperoni", desc: "Mucho pepperoni y mozzarella.", img: IMG_PATH + "pepperoni.png", prices: { P: 4990, M: 9990, G: 12990 } },
+          { id: "hawaiana", type: "De la Casa", name: "Hawaiana", desc: "Salsa de tomate mozzarella tocino y piña.", img: IMG_PATH + "hawaiana.png", prices: { P: 5990, M: 9990, G: 14990 } },
+          { id: "pesto", type: "De la Casa", name: "Pesto", desc: "Salsa de tomate con pesto artesanal y mozzarella.", img: IMG_PATH + "pesto.png", prices: { P: 6990, M: 11990, G: 14990 } },
+          { id: "botticello", type: "De la Casa", name: "Botticello", desc: "salsa de tomate mozzarella salame champiñones y aceitunas.", img: IMG_PATH + "botticello.png", prices: { P: 6990, M: 11990, G: 14990 } },
+          { id: "selvaggio", type: "De la Casa", name: "Peppe Selvaggio", desc: "Salsa de tomate mozzarella pepperoni y champiñones.", img: IMG_PATH + "peppe-selvaggio.png", prices: { P: 6990, M: 11990, G: 14990 } },
+          { id: "nonna", type: "De la Casa", name: "La Nonna", desc: "Receta familiar tradicional.", img: IMG_PATH + "nonna.png", prices: { P: 6990, M: 11990, G: 14990 } },
+          { id: "regalona", type: "Especial", name: "Regalona", desc: "Salsa de tomate mozzarella tocino y choclo.", img: IMG_PATH + "regalona.png", prices: { P: 5990, M: 10990, G: 13990 } },
+          { id: "pizzana", type: "Especial", name: "Pizzaña", desc: "Salsa de tomate mozzarella salsa boloñesa y tocino.", img: IMG_PATH + "pizzaña.png", prices: { P: 6990, M: 10990, G: 13990 } },
+          { id: "mamma", type: "Especial", name: "Mamma Nostra", desc: "Salsa de tomate mozzarella tocino champiñon y queso azul.", img: IMG_PATH + "mamma-nostra.png", prices: { P: 6990, M: 10990, G: 14990 } },
+          { id: "4quesos", type: "Especial", name: "4 Quesos", desc: "Mozzarella, azul, parmesano y gouda.", img: IMG_PATH + "4-quesos.png", prices: { P: 6990, M: 12990, G: 15990 } },
+          { id: "veggie_it", type: "Vegetariana", name: "Veggie Italiana", desc: "Verduras frescas al estilo italiano.", img: IMG_PATH + "veggie-italiana.png", prices: { P: 4990, M: 8990, G: 11990 } },
+          { id: "veggie_gold", type: "Vegetariana", name: "Veggie Gold", desc: "La versión premium vegetariana.", img: IMG_PATH + "veggie-gold.png", prices: { P: 4990, M: 8990, G: 11990 } },
+          { id: "bella", type: "Vegetariana", name: "Bella Rossa", desc: "salsa de tomate mozzarella tomate y pimientos.", img: IMG_PATH + "bella-rossa.png", prices: { P: 4990, M: 8990, G: 11990 } },
+          { id: "nonna_v", type: "Vegetariana", name: "Nonna Verde", desc: "salsa de tomate mozzarella espinaca y albahaca.", img: IMG_PATH + "nonna-verde.png", prices: { P: 4990, M: 8990, G: 11990 } },
+          { id: "porto", type: "Premium", name: "Porto", desc: "salsa de tomate mozzarella cebolla tocino y camarones.", img: IMG_PATH + "porto.png", prices: { P: 7990, M: 15990, G: 17990 } },
+          { id: "carnevale", type: "Premium", name: "Carnevale", desc: "Mix carnívoro premium.", img: IMG_PATH + "carnevale.png", prices: { P: 8990, M: 15990, G: 17990 } },
+          { id: "iberica", type: "Premium", name: "Ibérica", desc: "salsa de tomate mozzarella salame pepperoni aceitunas chorizo y pimientos.", img: IMG_PATH + "iberica.png", prices: { P: 8990, M: 15990, G: 17990 } },
+          { id: "pizzomuno", type: "Premium", name: "Pizzomuno", desc: "La especialidad de la casa.", img: IMG_PATH + "pizzomuno.png", prices: { P: 9990, M: 16990, G: 18990 } }
+        ],
+        lasanas: [
+          { id: "las_bolo", type: "Pastas", name: "Lasaña Boloñesa", desc: "Salsa boloñesa artesanal salsa blanca y mozzarella.", img: IMG_PATH + "lasaña-boloñesa.png", prices: { U: 6990 } },
+          { id: "las_veggie", type: "Pastas", name: "Lasaña Vegetariana", desc: "Base salsa napolitana mozzarella y albahaca.", img: IMG_PATH + "lasaña-vegetariana.png", prices: { U: 6990 } }
+        ],
+        pastas: [
+          { id: "pas_bolo", type: "Pastas", name: "Pasta Boloñesa", desc: "Salsa boloñesa artesanal con carne.", img: IMG_PATH + "pasta-boloñesa.png", prices: { U: 6990 } },
+          { id: "pas_4que", type: "Pastas", name: "Pasta 4 Quesos", desc: "Fusión de 4 quesos.", img: IMG_PATH + "pasta-4-quesos.png", prices: { U: 6990 } },
+          { id: "pas_amat", type: "Pastas", name: "Pasta Amatricciana", desc: "Salsa de tomate, cebolla tocino y un toque picante.", img: IMG_PATH + "pasta-amatricciana.png", prices: { U: 6990 } },
+          { id: "pas_pest", type: "Pastas", name: "Pasta Pesto", desc: "Salsa pesto artesanal.", img: IMG_PATH + "pasta-pesto.png", prices: { U: 6990 } }
+        ],
+        antojos: [
+          { id: "palitos_q", type: "Snack", name: "Palitos Ajo-Queso", desc: "8 unidades con ajo y queso.", img: IMG_PATH + "palitos-ajo-queso.png", prices: { U: 5990 } },
+          { id: "palitos_n", type: "Snack", name: "Palitos Napolitanos", desc: "8 unidades con salsa y mozzarella.", img: IMG_PATH + "palitos-napolitanos.png", prices: { U: 5990 } },
+          { id: "pan", type: "Snack", name: "Pan con Ajo", desc: "8 unidades de pan cubiertos con mantequilla con ajo y oregano.", img: IMG_PATH + "pan_con_ajo.png", prices: { U: 4990 } },
+          { id: "deditos", type: "Snack", name: "deditos de mozzarella", desc: "6 deditos de mozzarella.", img: IMG_PATH + "deditos-de-mozzarella.png", prices: { U: 5600 } }
+        ],
+        ens: [
+          { id: "cesar", type: "Fresh", name: "César", desc: "Lechuga, pollo, tocino y aderezo.", img: IMG_PATH + "césar.png", prices: { U: 5990 } }
+        ],
+        postres: [
+          { id: "Brownie", type: "Dulce", name: "Brownie", desc: "Chocolate belga premium.", img: IMG_PATH + "brownie.png", prices: { U: 3990 } }
+        ],
+        bebidas: [
+          { id: "cocacola_original", type: "Bebida", name: "Coca Cola 220ml", desc: "Formato personal.", img: IMG_PATH + "coca-cola-original-220ml.png", prices: { U: 1000 } },
+          { id: "cocacola_zero_220", type: "Bebida", name: "Coca Cola Zero 220ml", desc: "Formato personal.", img: IMG_PATH + "coca-cola-zero-220.png", prices: { U: 1000 } },
+          { id: "sprite_220", type: "Bebida", name: "Sprite 220ml", desc: "Formato personal.", img: IMG_PATH + "sprite-220.png", prices: { U: 1000 } },
+          { id: "sprite_zero_220", type: "Bebida", name: "Sprite Zero 220ml", desc: "Formato personal.", img: IMG_PATH + "sprite-zero-220.png", prices: { U: 1000 } },
+          { id: "fanta_220", type: "Bebida", name: "Fanta 220ml", desc: "Formato personal.", img: IMG_PATH + "fanta-220.png", prices: { U: 1000 } },
+          { id: "fanta_zero_220", type: "Bebida", name: "Fanta Zero 220ml", desc: "Formato personal.", img: IMG_PATH + "fanta-zero-220.png", prices: { U: 1000 } },
+          { id: "cocacola_original_15", type: "Bebida", name: "Coca Cola 1.5L", desc: "Formato familiar.", img: IMG_PATH + "coca-cola-original.png", prices: { U: 2500 } },
+          { id: "cocacola_zero_15", type: "Bebida", name: "Coca Cola zero 1.5L", desc: "Sin azúcar.", img: IMG_PATH + "coca-cola-zero.png", prices: { U: 2500 } },
+        ],
+      },
+      extras: [
+        { id: "choclo", name: "🌽 Choclo", icon: "choclo.png", pm: 1000, g: 2000 },
+        { id: "champi", name: "🍄 Champiñones", icon: "champi.png", pm: 1000, g: 2000 },
+        { id: "tomate", name: "🍅 Tomates", icon: "tomate.png", pm: 1000, g: 2000 },
+        { id: "aceit", name: "🫐 Aceitunas", icon: "aceitunas.png", pm: 1000, g: 2000 },
+        { id: "pimi", name: "🌶️ Pimientos", icon: "pimientos.png", pm: 1000, g: 2000 },
+        { id: "cebolla", name: "🧅 Cebolla", icon: "cebolla.png", pm: 1000, g: 2000 },
+        { id: "tocino", name: "🥓 Tocino", icon: "tocino.png", pm: 1000, g: 2000 },
+        { id: "churra", name: "🥩 Churrasco", icon: "churrasco.png", pm: 1500, g: 3000, carnes: true },
+        { id: "pollo", name: "🍗 Pollo", icon: "pollo.png", pm: 1500, g: 3000, carnes: true },
+        { id: "cama", name: "🍤 Camarones", icon: "camaron.png", pm: 1800, g: 3500 },
+        { id: "ex_mozz", name: "🧀 Extra mozzarella", icon: "queso.png", pm: 1000, g: 2000 },
+        { id: "azul", name: "🧀 Queso azul", icon: "azul.png", pm: 1000, g: 2000 },
+        { id: "parme", name: "🧀 Parmesano", icon: "parme.png", pm: 1000, g: 1500 },
+        { id: "albahaca", name: "🌿 Albahaca", icon: "albahaca.png", pm: 500, g: 1000 },
+        { id: "pina", name: "🍍 Piña", icon: "pina.png", pm: 1000, g: 2000 },
+        { id: "jamon", name: "🍖 Jamón", icon: "jamon.png", pm: 1000, g: 2000 },
+        { id: "chorizo", name: "🍢 Chorizo", icon: "chorizo.png", pm: 1000, g: 2000, carnes: true },
+        { id: "ex_pepp", name: "🍠 Pepperoni extra", icon: "pepperoni.png", pm: 1000, g: 2000 },
+        { id: "ext_oreo", name: "🍪 Oreo", icon: "oreo.png", pm: 500, g: 500, postre: true },
+        { id: "ext_mms", name: "🍬 M&Ms", icon: "mms.png", pm: 500, g: 500, postre: true }
+      ]
+    };
+
+    let state = {
+      categoryId: "pizzas", productIndex: 0, size: "M", qty: 1,
+      cart: [], selectedExtras: new Set(), promoSelections: [], isDelivery: false
+    };
+
+    let includeCutlery = false;
+    let appliedCoupon = null; // { code, type, value, amountCalculated }
+    const CUTLERY_PRICE = 500;
+
+    const scaleBySize = { P: 0.82, M: 1.0, G: 1.15, U: 1.0 };
+    let tiempoRestante = 180;
+    let intervalCancelacion;
+    let currentOrderId = "";
+
+    async function checkPaymentReturn() {
+      const params = new URLSearchParams(window.location.search);
+      const payment = params.get('payment');
+      const orderId = params.get('order');
+      const auth = params.get('auth');
+
+      if (payment && orderId) {
+        // Limpiar URL sin recargar
+        window.history.replaceState({}, document.title, '/');
+
+        localStorage.setItem('peppes_order_key', orderId);
+        if (auth) localStorage.setItem('peppes_order_auth', auth);
+        localStorage.setItem('peppes_view_status', 'visible');
+
+        // Si MP confirmó el pago en el redirect, forzar actualización del estado en Firebase
+        // antes de consultar, para no depender solo del webhook que puede llegar tarde
+        if (payment === 'approved') {
+          try {
+            await fetch(`/.netlify/functions/confirm-payment`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ orderId, authToken: auth || '' })
+            });
+          } catch (e) {
+            console.warn("confirm-payment no disponible, usando webhook solamente:", e.message);
+          }
+        }
+
+        // Reintentar hasta 5 veces con 2s entre intentos para dar tiempo al webhook/confirm
+        let intentos = 0;
+        const MAX_INTENTOS = 5;
+        const DELAY_MS = 2000;
+
+        const intentarCargarOrden = () => {
+          fetch(`/.netlify/functions/get-order?id=${orderId}&token=${auth || ''}`)
+            .then(res => res.json())
+            .then(order => {
+              if (order && !order.error) {
+                checkActiveOrder();
+                // Si sigue en pago_pendiente y no hemos agotado reintentos, volver a intentar
+                if (order.estado === 'pago_pendiente' && intentos < MAX_INTENTOS) {
+                  intentos++;
+                  setTimeout(intentarCargarOrden, DELAY_MS);
+                }
+              }
+            })
+            .catch(e => {
+              console.error("Error validando retorno de pago:", e);
+              if (intentos < MAX_INTENTOS) {
+                intentos++;
+                setTimeout(intentarCargarOrden, DELAY_MS);
+              }
+            });
+        };
+
+        intentarCargarOrden();
+      }
+    }
+
+    // Function to check if the store is open based on Chile time
+    function isStoreOpen() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('test') === 'true') return true; // Bypass de seguridad para pruebas del dueño
+
+      // ✅ FIX: Usar la zona horaria oficial de Chile en vez de offset fijo (-3/-4 según DST)
+      const now = new Date();
+      const chileTimeStr = now.toLocaleString('en-US', { timeZone: 'America/Santiago' });
+      const chileTime = new Date(chileTimeStr);
+
+      const hour = chileTime.getHours();
+      const minute = chileTime.getMinutes();
+
+      // Dynamic store hours from Firebase
+      const [oH, oM] = window.STORE_HOURS_CONFIG.open.split(':').map(Number);
+      const [cH, cM] = window.STORE_HOURS_CONFIG.close.split(':').map(Number);
+
+      const openHour = oH || 13;
+      const openMinute = oM || 30;
+      const closeHour = cH || 23;
+      const closeMinute = cM || 45;
+
+      const currentTimeInMinutes = hour * 60 + minute;
+      const openTimeInMinutes = openHour * 60 + openMinute;
+      const closeTimeInMinutes = closeHour * 60 + closeMinute;
+
+      return currentTimeInMinutes >= openTimeInMinutes && currentTimeInMinutes <= closeTimeInMinutes;
+    }
+
+    let activeOrderListener = null;
+    let activePendingListener = null;
+    let lastKnownEstado = null; // ✅ FIX: rastrear último estado para detectar cambios
+
+    function checkActiveOrder() {
+      const savedOrderId = localStorage.getItem('peppes_order_key');
+      const savedAuthToken = localStorage.getItem('peppes_order_auth');
+
+      if (!savedOrderId) {
+        limpiarSeguimiento();
+        return;
+      }
+
+      // Detener pollings previos
+      if (activeOrderListener) clearInterval(activeOrderListener);
+      activeOrderListener = null;
+
+      const btn = document.getElementById("btnFloatingTrack");
+
+      // Dado que ".read: auth != null" nos bloquea del Firebase directo, usamos un Polling Seguro al endpoint
+      activeOrderListener = setInterval(async () => {
+        try {
+          const res = await fetch(`/.netlify/functions/get-order?id=${savedOrderId}&token=${savedAuthToken || ''}`);
+          if (!res.ok) throw new Error("Order API failed");
+          const order = await res.json();
+
+          if (order && !order.error) {
+            const estadosFinales = ['entregado', 'cancelado', 'cancelado_cliente', 'pago_fallido'];
+            const isFinal = estadosFinales.includes(String(order.estado || "").toLowerCase());
+
+            // ✅ FIX: Si el estado cambió, hacer pulso en el botón flotante aunque la pantalla esté cerrada
+            if (lastKnownEstado && lastKnownEstado !== order.estado && btn) {
+              btn.classList.add("jump");
+              setTimeout(() => btn.classList.remove("jump"), 400);
+              // Si la pantalla estaba cerrada, volver a mostrarla al detectar cambio
+              if (localStorage.getItem('peppes_view_status') === 'hidden') {
+                localStorage.setItem('peppes_view_status', 'visible');
+              }
+            }
+            lastKnownEstado = order.estado;
+
+            if (!isFinal) {
+              if (btn) btn.style.display = "block";
+              if (localStorage.getItem('peppes_view_status') === 'visible') renderSuccessScreen(savedOrderId, order);
+            } else {
+              // ✅ FIX: Mostrar pantalla final al cliente antes de limpiar
+              if (localStorage.getItem('peppes_view_status') === 'visible') {
+                renderSuccessScreen(savedOrderId, order);
+              }
+              limpiarSeguimiento(true);
+            }
+          }
+        } catch (e) {
+          // If we fail a lot, it might be an invalid order. We give it some time, then clear.
+          console.warn("Retrying order fetch...");
+        }
+      }, 7000); // Revisar cada 7 segundos para no bombardear el servidor
+
+      // Hacer la primera carga de inmediato
+      fetch(`/.netlify/functions/get-order?id=${savedOrderId}&token=${savedAuthToken || ''}`)
+        .then(r => r.json())
+        .then(order => {
+          if (order && !order.error) {
+            const estadosFinales = ['entregado', 'cancelado', 'cancelado_cliente', 'pago_fallido'];
+            if (!estadosFinales.includes(String(order.estado || "").toLowerCase())) {
+              if (btn) btn.style.display = "block";
+              if (localStorage.getItem('peppes_view_status') === 'visible') renderSuccessScreen(savedOrderId, order);
+            } else {
+              // ✅ FIX: mostrar pantalla final antes de limpiar
+              if (localStorage.getItem('peppes_view_status') === 'visible') renderSuccessScreen(savedOrderId, order);
+              limpiarSeguimiento(true);
+            }
+          }
+        }).catch(err => console.log(err));
+    }
+
+    function limpiarSeguimiento(mostrarAntes = false) {
+      const btn = document.getElementById("btnFloatingTrack");
+      if (btn) btn.style.display = "none";
+
+      if (activeOrderListener) clearInterval(activeOrderListener);
+      activeOrderListener = null;
+
+      // ✅ FIX: Allow the user to read the final screen. Don't auto-close it.
+      // Clear localStorage after 10 seconds silently so they don't lose tracking if they refresh immediately.
+      const delay = mostrarAntes ? 10000 : 0;
+
+      setTimeout(() => {
+        localStorage.removeItem('peppes_order_key');
+        localStorage.removeItem('peppes_order_auth');
+        localStorage.removeItem('peppes_view_status');
+      }, delay);
+    }
+
+    function mostrarSeguimientoPersistente() {
+      localStorage.setItem('peppes_view_status', 'visible');
+      const savedOrderId = localStorage.getItem('peppes_order_key');
+      const savedAuthToken = localStorage.getItem('peppes_order_auth');
+      if (savedOrderId) {
+        fetch(`/.netlify/functions/get-order?id=${savedOrderId}&token=${savedAuthToken || ''}`)
+          .then(r => r.json())
+          .then(order => {
+            if (order && !order.error) {
+              renderSuccessScreen(savedOrderId, order);
+            }
+          }).catch(err => console.log(err));
+      }
+    }
+
+    function cerrarSeguimientoTemporal() {
+      document.getElementById("successScreen").style.display = "none";
+      localStorage.setItem('peppes_view_status', 'hidden');
+
+      const estadosFinales = ['entregado', 'cancelado', 'cancelado_cliente', 'pago_fallido'];
+      const isFinal = lastKnownEstado && estadosFinales.includes(String(lastKnownEstado).toLowerCase());
+
+      const btn = document.getElementById("btnFloatingTrack");
+      // ✅ FIX: SÓLO mantener el botón si hay pedido activo Y no es estado final.
+      if (btn && localStorage.getItem('peppes_order_key') && !isFinal) {
+        btn.style.display = "block";
+      } else {
+        if (btn) btn.style.display = "none";
+        localStorage.removeItem('peppes_order_key');
+        localStorage.removeItem('peppes_order_auth');
+        localStorage.removeItem('peppes_view_status');
+      }
+    }
+
+    function aplicarRestriccionStock() {
+      const btnAdd = document.getElementById("addToCart");
+      const list = getCleanProductList(state.categoryId);
+      const slides = document.querySelectorAll('.pizzaSlide img');
+
+      list.forEach((p, index) => {
+        const isAgotado = p.available === false;
+        if (slides[index]) {
+          slides[index].style.filter = isAgotado ? `grayscale(1) opacity(0.5)` : `none`;
+        }
+
+        if (index === state.productIndex) {
+          btnAdd.disabled = isAgotado;
+          btnAdd.innerText = isAgotado ? "AGOTADO" : "Agregar";
+          btnAdd.style.background = isAgotado ? "#555" : "var(--black)";
+        }
+      });
+    }
+
+    function renderCategories() {
+      const remoteCats = window.REMOTE_DATA.inventory || {};
+      const staticCats = DATA.categories;
+
+      // Combinar categorías estáticas con las que vienen de Firebase
+      // Esto asegura que si agregas una categoría nueva en Admin, aparecerá aquí.
+      let finalCats = [...staticCats];
+
+      Object.keys(remoteCats).forEach(catId => {
+        // Solo incluir categorías remotas que tengan al menos un producto VÁLIDO
+        const prods = getCleanProductList(catId);
+        if (prods.length > 0 && !finalCats.find(c => c.id === catId)) {
+          // Si es una categoría nueva de Firebase, le ponemos un nombre legible
+          const printableName = catId.charAt(0).toUpperCase() + catId.slice(1).replace(/_/g, ' ');
+          finalCats.push({ id: catId, name: printableName });
+        }
+      });
+
+      document.getElementById("catsWrap").innerHTML = finalCats.map(c => `
+        <button class="catPill ${c.id === state.categoryId ? 'isActive' : ''}" onclick="selectCategory('${c.id}')">${c.name}</button>
+      `).join("");
+    }
+
+    function animateTopping(extraId, iconName) {
+      const layer = document.getElementById("toppingLayer");
+      if (document.getElementById(`active-topping-${extraId}`)) return;
+      const img = document.createElement("img");
+      img.id = `active-topping-${extraId}`;
+      img.src = TOPPINGS_PATH + iconName;
+      img.className = "falling-topping";
+      const randomOffset = 35;
+      const offsetX = Math.floor(Math.random() * (randomOffset * 2)) - randomOffset;
+      const offsetY = Math.floor(Math.random() * (randomOffset * 2)) - randomOffset;
+      img.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+      layer.appendChild(img);
+    }
+
+    function removeVisualTopping(extraId) {
+      const el = document.getElementById(`active-topping-${extraId}`);
+      if (el) el.remove();
+    }
+
+    function clearToppings() { document.getElementById("toppingLayer").innerHTML = ""; }
+
+    /**
+     * Check if current product is a promo that allows pizza base selection
+     */
+    const DUAL_PIZZA_PROMOS = ['duo_fam_f', 'combo_p'];
+
+    function isPromoProduct() {
+      if (state.categoryId !== 'promo') return false;
+      const list = getCleanProductList('promo');
+      const product = list[state.productIndex];
+      const promoIds = ['martes_fest', 'duo_fam_f', 'combo_2', 'combo_p'];
+      return product && promoIds.includes(product.id);
+    }
+
+    /**
+     * Render pizza base selector for promo products or regular extras for other categories
+     */
+    function renderExtras() {
+      const container = document.getElementById("extrasContainer");
+
+      // Handle promo products with pizza base selector
+      if (isPromoProduct()) {
+        const list = getCleanProductList('promo');
+        const p = list[state.productIndex];
+        const isDual = DUAL_PIZZA_PROMOS.includes(p.id);
+
+        container.style.display = "block";
+        document.getElementById("extraTitle").textContent = isDual ? "Elige tus 2 Pizzas" : "Elige tu Pizza Base";
+
+        const allPizzas = getCleanProductList('pizzas');
+        const basePizzas = allPizzas.filter(prz => prz.type === 'Clásica' || prz.type === 'Vegetariana');
+
+        document.getElementById("extrasArea").innerHTML = basePizzas.map(pizza => {
+          const count = state.promoSelections.filter(id => id === pizza.id).length;
+          const isActive = count > 0;
+          return `<div class="extraPill ${isActive ? 'isActive' : ''}" 
+                       onclick="handlePromoBaseSelection('${pizza.id}')"
+                       style="position:relative;">
+                    <span style="font-size: 10px; opacity: 0.7; margin-bottom: -5px;">${pizza.type}</span>
+                    <span>${pizza.name}</span>
+                    ${count > 0 ? `<div class="selectionBadge">${count}</div>` : ''}
+                    <small>Base</small>
+                  </div>`;
+        }).join("");
+        return;
+      }
+
+      // Regular extras for non-promo categories
+      // PRIORIDAD: Configuración dinámica de Firebase
+      const config = (window.REMOTE_DATA.category_config && window.REMOTE_DATA.category_config[state.categoryId]) || {};
+      const hasExtrasFlag = config.hasExtras !== undefined ? config.hasExtras : true;
+
+      // Fallback estático + banderas dinámicas
+      if (!hasExtrasFlag || ['bebidas', 'ens', 'antojos', 'promo'].includes(state.categoryId)) {
+        container.style.display = "none";
+        state.selectedExtras.clear(); clearToppings(); return;
+      }
+
+      container.style.display = "block";
+      const isPastaOrLasagna = (state.categoryId === 'lasanas' || state.categoryId === 'pastas');
+      const isPostre = (state.categoryId === 'postres');
+
+      // Obtener extras desde Firebase (transformar objeto a array si es necesario)
+      const remoteExtras = Object.values(window.REMOTE_DATA.extras || {});
+      const sourceExtras = remoteExtras.length > 0 ? remoteExtras : DATA.extras;
+
+      let extrasFiltrados = isPostre ? sourceExtras.filter(e => e.postre) :
+        (isPastaOrLasagna ? sourceExtras.filter(e => !e.carnes && !e.postre) :
+          sourceExtras.filter(e => !e.postre));
+
+      const limite = isPastaOrLasagna ? 3 : 99;
+      let titleText = isPostre ? "Toppings Brownie" : "Añadir Extras";
+      if (isPastaOrLasagna) titleText += " (máx. 3)";
+      document.getElementById("extraTitle").textContent = titleText;
+      document.getElementById("extrasArea").innerHTML = extrasFiltrados.map(e => {
+        const extraData = getRemoteExtra(e.id);
+        const isAgotado = extraData && extraData.available === false;
+
+        const precio = (state.size === 'G') ? (extraData.g || extraData.price || 0) : (extraData.pm || extraData.price || 0);
+        const isActive = state.selectedExtras.has(e.id);
+        const isDisabled = (!isActive && state.selectedExtras.size >= limite) || isAgotado;
+        return `<div class="extraPill ${isActive ? 'isActive' : ''}" 
+                     style="${isAgotado ? 'opacity: 0.4; filter: grayscale(1); cursor: not-allowed;' : (isDisabled ? 'opacity: 0.5; cursor: not-allowed;' : '')}"
+                     onclick="${isDisabled ? '' : `toggleExtra('${e.id}', '${extraData.icon}')`}">
+                  <span>${extraData.name || 'Sin nombre'}</span>
+                  <small>${isAgotado ? 'AGOTADO' : '+$' + precio.toLocaleString('es-CL')}</small>
+                </div>`;
+      }).join("");
+    }
+
+    /**
+     * Handle promo base pizza selection
+     */
+    function handlePromoBaseSelection(pizzaId) {
+      const list = getCleanProductList('promo');
+      const p = list[state.productIndex];
+      const isDual = DUAL_PIZZA_PROMOS.includes(p.id);
+
+      if (isDual) {
+        const countTotal = state.promoSelections.length;
+        const index = state.promoSelections.indexOf(pizzaId);
+
+        if (countTotal < 2) {
+          // Siempre agregar si hay espacio (permite duplicados)
+          state.promoSelections.push(pizzaId);
+        } else {
+          // Si ya hay 2, y se hace clic en una que ya está, se quita una (toggle/decrement)
+          if (index > -1) {
+            state.promoSelections.splice(index, 1);
+          } else {
+            // Si intenta agregar una tercera diferente
+            alert("Ya seleccionaste 2 pizzas. Haz clic en una seleccionada para quitarla.");
+          }
+        }
+      } else {
+        state.promoSelections = [pizzaId];
+      }
+      renderExtras();
+      renderDetails();
+    }
+
+    function toggleExtra(id, icon) {
+      if (state.selectedExtras.has(id)) {
+        state.selectedExtras.delete(id);
+        removeVisualTopping(id);
+      } else {
+        state.selectedExtras.add(id);
+        animateTopping(id, icon);
+      }
+      renderExtras(); renderDetails();
+    }
+
+    let activeSlideObserver = null; // ✅ FIX: track observer to avoid leaks
+
+    function selectCategory(id) {
+      state.categoryId = id; state.productIndex = 0;
+      state.selectedExtras.clear(); clearToppings();
+      state.promoSelections = []; // ✅ FIX: limpiar selecciones promo al cambiar categoría
+      renderCategories();
+
+      const snap = document.getElementById("pizzasSnap");
+      const list = getCleanProductList(id);
+
+      snap.innerHTML = list.map((p, idx) => `<div class="pizzaSlide" data-index="${idx}"><img class="prodSlideImg" src="${resolveImgPath(p.img)}"></div>`).join("");
+
+      // ✅ FIX: Desconectar observer anterior antes de crear uno nuevo
+      if (activeSlideObserver) { activeSlideObserver.disconnect(); activeSlideObserver = null; }
+
+      const obs = new IntersectionObserver(ents => ents.forEach(e => {
+        if (e.isIntersecting) {
+          state.productIndex = parseInt(e.target.dataset.index);
+          state.selectedExtras.clear(); clearToppings();
+          state.promoSelections = [];
+          renderExtras(); renderDetails();
+        }
+      }), { root: snap, threshold: 0.6 });
+
+      document.querySelectorAll('.pizzaSlide').forEach(s => obs.observe(s));
+      activeSlideObserver = obs;
+      snap.scrollLeft = 0;
+      document.getElementById("sizes").style.display = (id === "pizzas") ? "flex" : "none";
+      state.size = (id === "pizzas") ? "M" : "U";
+      renderExtras(); renderDetails();
+    }
+
+    function renderDetails() {
+      const list = getCleanProductList(state.categoryId);
+      const p = list[state.productIndex];
+
+      if (!p) {
+        document.getElementById("productName").textContent = "Sin productos";
+        document.getElementById("productDesc").textContent = "Categoría vacía";
+        document.getElementById("totalPrice").textContent = "-";
+        document.getElementById("extrasContainer").style.display = "none";
+        return;
+      }
+      document.getElementById("productName").textContent = p.name;
+      const typeLabel = document.getElementById("productType");
+      typeLabel.textContent = p.type || "";
+      typeLabel.style.display = p.type ? "inline-block" : "none";
+      document.getElementById("productDesc").textContent = p.desc;
+
+      let exT = 0;
+      const isPromoType = (state.categoryId === 'promo') || (p.type && ['promo', 'fest'].includes(String(p.type).toLowerCase()));
+
+      if (!isPromoType) {
+        state.selectedExtras.forEach(id => {
+          const ex = getRemoteExtra(id);
+          if (ex) exT += (state.size === 'G' ? (ex.g || ex.price || 0) : (ex.pm || ex.price || 0));
+        });
+      }
+
+      let priceVal = 0;
+      const extractPriceFound = (obj) => {
+        if (!obj) return 0;
+        if (typeof obj === 'number') return obj;
+        if (typeof obj === 'string') return parseFloat(obj) || 0;
+        // Search for any numeric property
+        for (let key in obj) {
+          if (typeof obj[key] === 'number') return obj[key];
+          const parsed = parseFloat(obj[key]);
+          if (!isNaN(parsed)) return parsed;
+        }
+        return 0;
+      };
+
+      if (p.prices) {
+        if (isPromoType) {
+          priceVal = p.prices.U || p.prices.u || extractPriceFound(p.prices);
+        } else {
+          priceVal = p.prices[state.size] || p.prices[state.size.toLowerCase()] || extractPriceFound(p.prices);
+        }
+      }
+      if (!priceVal) priceVal = p.price || p.pm || p.g || 0;
+      if (typeof priceVal === 'string') priceVal = parseFloat(priceVal) || 0;
+
+      document.getElementById("totalPrice").textContent = "$" + ((priceVal + exT) * state.qty).toLocaleString('es-CL');
+      document.getElementById("qty").textContent = state.qty;
+
+      const slides = document.querySelectorAll('.prodSlideImg');
+      if (slides[state.productIndex]) {
+        const finalUrl = resolveImgPath(p.img);
+        slides[state.productIndex].src = finalUrl;
+        // Fallback para errores de carga de imagen
+        slides[state.productIndex].onerror = function () { this.src = 'assets/placeholder.png'; };
+      }
+
+      document.querySelectorAll('.prodSlideImg').forEach(img => img.style.transform = `scale(${scaleBySize[state.size]})`);
+      document.getElementById("toppingLayer").style.transform = `scale(${scaleBySize[state.size]})`;
+      aplicarRestriccionStock();
+    }
+
+    function addToCart() {
+      const list = getCleanProductList(state.categoryId);
+      const p = list[state.productIndex];
+      if (!p) return;
+
+      // Validate promo product has base pizza selected
+      const promoIds = ['martes_fest', 'duo_fam_f', 'combo_2', 'combo_p'];
+      if (state.categoryId === 'promo' && promoIds.includes(p.id)) {
+        const isDual = DUAL_PIZZA_PROMOS.includes(p.id);
+        const count = state.promoSelections.length;
+
+        if (isDual && count < 2) {
+          alert("⚠️ Selecciona 2 pizzas para esta promoción.");
+          return;
+        }
+        if (!isDual && count === 0) {
+          alert("⚠️ Selecciona una pizza base primero.");
+          return;
+        }
+      }
+
+      audioObj.cloneNode().play().catch(e => { });
+      let exT = 0;
+      let extrasIds = Array.from(state.selectedExtras);
+
+      // ✅ FIX: No cobrar extras en NINGÚN producto promo (lista completa)
+      if (!(state.categoryId === 'promo' && promoIds.includes(p.id))) {
+        extrasIds.forEach(id => {
+          const ex = getRemoteExtra(id);
+          if (ex) exT += (state.size === 'G' ? (ex.g || ex.price || 0) : (ex.pm || ex.price || 0));
+        });
+      }
+
+      // El objeto 'p' ya viene de la lista sincronizada (remoteList o staticList)
+      // Pero por seguridad usamos getRemoteProduct que ya gestiona el fallback
+      const syncP = getRemoteProduct(state.categoryId, p.id);
+      const base = syncP.prices[state.size] || Object.values(syncP.prices)[0] || 0;
+
+      const cartItem = {
+        id: Date.now(), name: syncP.name, size: (state.size === "U" ? "" : state.size), img: resolveImgPath(syncP.img), qty: state.qty,
+        selectedExtrasIds: extrasIds, price: (base + exT) * state.qty
+      };
+
+      // Add promo metadata if it's a promo product
+      if (state.categoryId === 'promo' && promoIds.includes(p.id)) {
+        cartItem.isPromo = true;
+        cartItem.promoType = p.id;
+        cartItem.basePizzas = [...state.promoSelections]; // Lista de pizzas seleccionadas
+      }
+
+      state.cart.push(cartItem);
+
+      const btn = document.getElementById("addToCart");
+      btn.textContent = "✅ ¡Agregado!";
+      btn.classList.add("success");
+      const btnCart = document.getElementById("btnCart");
+      btnCart.classList.add("jump");
+      setTimeout(() => btnCart.classList.remove("jump"), 300);
+      setTimeout(() => {
+        btn.textContent = "Agregar";
+        btn.classList.remove("success");
+        state.selectedExtras.clear(); state.promoSelections = []; state.qty = 1; clearToppings(); renderExtras(); renderDetails();
+      }, 1500);
+      updateCartUI();
+    }
+
+    function toggleCutlery(isRequested) {
+      includeCutlery = isRequested;
+      updateCartUI();
+    }
+
+    function updateCartUI() {
+      const badge = document.getElementById("cartBadge");
+      const totalItems = state.cart.reduce((s, i) => s + i.qty, 0);
+      badge.textContent = totalItems;
+      badge.classList.toggle("show", totalItems > 0);
+      let subtotal = 0;
+      const html = state.cart.map(item => {
+        subtotal += item.price;
+        let detailsHTML = '';
+
+        // Handle promo items differently - show pizza base names
+        if (item.isPromo && item.basePizzas) {
+          const pizzaList = getCleanProductList('pizzas');
+          const getName = (id) => {
+            const p = pizzaList.find(x => x.id === id);
+            return p ? p.name : id;
+          };
+
+          // Contar ocurrencias para mostrar x2 si aplica
+          const counts = {};
+          item.basePizzas.forEach(id => counts[id] = (counts[id] || 0) + 1);
+          const namesStr = Object.entries(counts).map(([id, n]) => `${getName(id)}${n > 1 ? ' x' + n : ''}`).join(" + ");
+          detailsHTML = `<span class="cartExtraTag">${namesStr}</span>`;
+        } else {
+          // Regular extras display
+          detailsHTML = item.selectedExtrasIds.map(exId => {
+            const exInfo = DATA.extras.find(x => x.id === exId);
+            if (!exInfo) return `<span class="cartExtraTag">${exId} <b onclick="removeSingleExtra(${item.id}, '${exId}')">✕</b></span>`;
+            return `<span class="cartExtraTag">${exInfo.name} <b onclick="removeSingleExtra(${item.id}, '${exId}')">✕</b></span>`;
+          }).join("");
+        }
+
+        return `<div class="cartItem"><img src="${item.img}"><div class="itemInfo"><div class="itemName">${item.name} ${item.size ? '(' + item.size + ')' : ''}</div><div style="margin-bottom:8px;">${detailsHTML || '<small>Sin extras</small>'}</div><span class="itemQtyBadge">x${item.qty}</span><button class="btnRemove" onclick="removeFromCart(${item.id})">Eliminar</button></div><div class="itemPrice">$${item.price.toLocaleString('es-CL')}</div></div>`;
+      }).join("");
+
+      const cutleryHTML = `
+        <div class="cutlery-option">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:20px;">🍴</span>
+            <div>
+              <div style="font-weight:700; font-size:14px;">¿Necesitas cubiertos?</div>
+              <div style="font-size:12px; color:var(--muted);">+$${CUTLERY_PRICE.toLocaleString('es-CL')}</div>
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" ${includeCutlery ? 'checked' : ''} onchange="toggleCutlery(this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+      `;
+
+      const cartList = document.getElementById("cartItemsList");
+      cartList.innerHTML = html + (subtotal > 0 ? cutleryHTML : '');
+
+      document.getElementById("subtotalText").textContent = "$" + subtotal.toLocaleString('es-CL');
+
+      // Calculate default extra fees
+      const del = (state.isDelivery && subtotal > 0) ? (state.deliveryCost || 0) : 0;
+      const cutleryFee = (includeCutlery && subtotal > 0) ? CUTLERY_PRICE : 0;
+
+      // Apply Coupon Math if Valid
+      let discountAmount = 0;
+      if (appliedCoupon && subtotal > 0) {
+        if (appliedCoupon.type === 'percentage') {
+          discountAmount = Math.round(subtotal * (appliedCoupon.value / 100));
+        } else if (appliedCoupon.type === 'fixed') {
+          discountAmount = appliedCoupon.value;
+        }
+        if (discountAmount > subtotal) discountAmount = subtotal; // No negative totals
+        appliedCoupon.amountCalculated = discountAmount;
+
+        document.getElementById("discountRow").style.display = "flex";
+        document.getElementById("discountText").textContent = "-$" + discountAmount.toLocaleString('es-CL');
+      } else {
+        document.getElementById("discountRow").style.display = "none";
+      }
+
+      const total = subtotal > 0 ? (subtotal + del + cutleryFee - discountAmount) : 0;
+
+      document.getElementById("cartTotalText").textContent = "$" + total.toLocaleString('es-CL');
+
+      const btnConfirmar = document.querySelector(".btn-confirmar");
+      if (btnConfirmar) {
+        if (state.cart.length === 0) {
+          btnConfirmar.disabled = true;
+          btnConfirmar.innerHTML = "Carrito vacío 🛒";
+        } else {
+          updateConfirmButtonState();
+        }
+      }
+    }
+
+    // --- COUPON LOGIC ---
+    function applyCoupon() {
+      const codeInput = document.getElementById("couponInput").value.trim().toUpperCase();
+      const msgEl = document.getElementById("couponMessage");
+      const subtotal = state.cart.reduce((s, i) => s + i.price, 0);
+
+      if (!codeInput) {
+        if (appliedCoupon) {
+          appliedCoupon = null;
+          msgEl.style.display = 'none';
+          updateCartUI();
+        }
+        return;
+      }
+
+      if (subtotal === 0) {
+        msgEl.style.display = 'block';
+        msgEl.style.color = 'var(--pepper-red)';
+        msgEl.textContent = 'Agrega productos al carrito primero';
+        return;
+      }
+
+      msgEl.style.display = 'block';
+      msgEl.style.color = 'var(--muted)';
+      msgEl.textContent = 'Verificando...';
+
+      db.ref('store_settings/coupons/' + codeInput).once('value').then(snap => {
+        const coupon = snap.val();
+        if (coupon && coupon.active) {
+          appliedCoupon = {
+            code: codeInput,
+            type: coupon.type,
+            value: coupon.value
+          };
+          msgEl.style.color = '#2ecc71'; // var(--success-green)
+          msgEl.textContent = '¡Cupón Aplicado! 🍕';
+          updateCartUI();
+        } else {
+          appliedCoupon = null;
+          msgEl.style.color = 'var(--pepper-red)';
+          msgEl.textContent = 'Cupón inválido o expirado';
+          updateCartUI();
+        }
+      }).catch(err => {
+        msgEl.style.color = 'var(--pepper-red)';
+        msgEl.textContent = 'Cupón inválido o expirado';
+      });
+    }
+
+    function removeSingleExtra(cartItemId, extraId) {
+      const item = state.cart.find(i => i.id === cartItemId);
+      if (item) {
+        const exData = DATA.extras.find(x => x.id === extraId) || getRemoteExtra(extraId);
+        if (exData) {
+          item.price -= ((item.size === 'G' ? (exData.g || exData.pm || 0) : (exData.pm || exData.price || 0)) * item.qty);
+        }
+        item.selectedExtrasIds = item.selectedExtrasIds.filter(id => id !== extraId);
+        updateCartUI();
+      }
+    }
+
+    // Pure Text Logic Core
+    window.customerLocation = { address: '', coords: null, glink: '', hasHouseNumber: false, rawAddressDetails: null, distanceKm: null };
+    let geocodeTimeout = null;
+
+    function updatePricingByCoords(lat, lng, addressDetails = null) {
+      if (!state.isDelivery) return;
+
+      const distance = calculateDistanceKm(RESTAURANT_LAT[0], RESTAURANT_LNG[0], lat, lng);
+      const cost = getDeliveryPrice(distance);
+      const deliveryRow = document.getElementById("deliveryRow");
+      const confirmBtn = document.querySelector(".btn-confirmar");
+
+      // Guardar distancia calculada
+      window.customerLocation.distanceKm = parseFloat(distance.toFixed(2));
+
+      // Validate house number presence explicitly (fallback to Regex if Nominatim fails parsing)
+      const userStreetValue = document.getElementById("address_street")?.value || "";
+      const hasNumberInput = /\d/.test(userStreetValue);
+      const hasHouseNumber = (addressDetails && addressDetails.house_number) ? true : hasNumberInput;
+      window.customerLocation.hasHouseNumber = hasHouseNumber;
+      window.customerLocation.rawAddressDetails = addressDetails;
+
+      if (deliveryRow) {
+        deliveryRow.style.display = "flex";
+        if (cost === null) {
+          deliveryRow.innerHTML = `<span style="color:var(--pepper-red); font-weight:700;">Lo sentimos, estamos fuera de nuestra zona de entrega (máx. 10 km) 🚫</span>`;
+          if (confirmBtn) confirmBtn.disabled = true;
+          state.deliveryCost = 0;
+        } else if (!hasHouseNumber) {
+          deliveryRow.innerHTML = `<span style="color:var(--pepper-red); font-weight:700;">Ups! Necesitamos el número de tu casa/edificio 📍</span>`;
+          if (confirmBtn) confirmBtn.disabled = true;
+          state.deliveryCost = cost;
+        } else {
+          deliveryRow.innerHTML = `<span>Costo Envío (${distance.toFixed(2)} km)</span> <span>+$${cost.toLocaleString('es-CL')}</span>`;
+          state.deliveryCost = cost;
+          if (confirmBtn) confirmBtn.disabled = true; // Neutralize briefly
+        }
+      }
+      // Force reactive UI update now that state is strictly resolved
+      // Ensure we clear out the "Calculando envío..." HTML so the validator runs its logic
+      if (confirmBtn && confirmBtn.innerHTML.includes("Calculando envío")) {
+        confirmBtn.innerHTML = "";
+      }
+      updateConfirmButtonState();
+      updateCartUI();
+    }
+
+
+    async function getUserLocation() {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error("Geolocalización no disponible"));
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          (err) => reject(new Error("Error de GPS")),
+          { timeout: 15000, enableHighAccuracy: true, maximumAge: 30000 }
+        );
+      });
+    }
+
+
+    async function handleDeliverySelection(isDelivery) {
+      if (state.isDelivery === isDelivery) return; // Prevent double-click wiping of notes/coupons
+
+      document.getElementById("btnRetiro").classList.toggle("active", !isDelivery);
+      document.getElementById("btnDelivery").classList.toggle("active", isDelivery);
+
+      const confirmBtn = document.querySelector(".btn-confirmar");
+
+      if (isDelivery) {
+        document.getElementById("deliveryFields").style.display = "flex";
+        if (!state.deliveryCost && confirmBtn) {
+          confirmBtn.innerHTML = "Evaluando..."; // Neutral state
+        }
+      } else {
+        document.getElementById("deliveryFields").style.display = "none";
+        document.getElementById("deliveryRow").style.display = "none";
+
+        // Force cleanup of delivery states
+        state.deliveryCost = 0;
+        clearTimeout(geocodeTimeout);
+        customerLocation = { address: '', coords: null, glink: '', hasHouseNumber: false, rawAddressDetails: null };
+
+        if (confirmBtn) {
+          confirmBtn.innerHTML = "Evaluando..."; // Let the explicit logic beneath override it
+        }
+      }
+
+      // Reset coupon states on delivery toggle to prevent math conflicts
+      appliedCoupon = null;
+      const msgEl = document.getElementById("couponMessage");
+      const inputEl = document.getElementById("couponInput");
+      // ✅ FIX: No borrar la nota del cliente al cambiar tipo de entrega
+
+      if (msgEl) {
+        msgEl.style.display = "none";
+        msgEl.textContent = "";
+      }
+      if (inputEl) {
+        inputEl.value = "";
+      }
+
+      state.isDelivery = isDelivery;
+      updateCartUI(); // This inherently triggers updateConfirmButtonState()
+    }
+
+    // No extra map toggle logic
+
+    async function useCurrentLocation() {
+      const btnGPS = document.getElementById("btnGPSManual");
+      btnGPS.style.opacity = "0.5";
+      btnGPS.innerHTML = "⌛ Obteniendo...";
+
+      try {
+        const userLocation = await getUserLocation();
+
+        // Reverse geocode to check if GPS snapped to a house number
+        const revRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}&addressdetails=1`);
+        const revData = await revRes.json();
+
+        const addressAuth = revData && revData.address ? revData.address : null;
+        const osmLink = `https://www.openstreetmap.org/?mlat=${userLocation.lat}&mlon=${userLocation.lng}#map=18/${userLocation.lat}/${userLocation.lng}`;
+
+        customerLocation = { address: "Ubicación GPS", coords: userLocation, glink: osmLink, hasHouseNumber: !!(addressAuth && addressAuth.house_number), rawAddressDetails: addressAuth };
+        btnGPS.innerHTML = "✅ Ubicación capturada";
+        btnGPS.style.color = "var(--success-green)";
+
+        updatePricingByCoords(userLocation.lat, userLocation.lng, addressAuth);
+
+      } catch (error) {
+        alert("No se pudo obtener la ubicación. Por favor ingresa tu dirección manualmente.");
+      } finally {
+        setTimeout(() => {
+          btnGPS.style.opacity = "1";
+          if (!customerLocation.coords) btnGPS.innerHTML = "📍 Enviar mi ubicación actual (Opcional)";
+        }, 3000);
+      }
+    }
+
+    document.getElementById("address_street").oninput = (e) => {
+      const addr = e.target.value.trim();
+      const deliveryRow = document.getElementById("deliveryRow");
+
+      if (!addr || addr.length < 5) {
+        clearTimeout(geocodeTimeout);
+        if (state.isDelivery) {
+          state.deliveryCost = 0;
+          customerLocation = { address: '', coords: null, glink: '', hasHouseNumber: false, rawAddressDetails: null };
+          if (deliveryRow) {
+            deliveryRow.innerHTML = `<span style="color:var(--muted)">Ingresa tu dirección para calcular el envío</span>`;
+          }
+          updateConfirmButtonState();
+          updateCartUI();
+        }
+        return;
+      }
+
+      if (!state.isDelivery) return;
+
+      if (deliveryRow) {
+        deliveryRow.style.display = "flex";
+        deliveryRow.innerHTML = `<span style="color:var(--muted)">Selecciona una dirección de la lista ⬇️</span>`;
+      }
+      const confirmBtn = document.querySelector(".btn-confirmar");
+      if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = "Selecciona dirección de la lista ⬇️";
+      }
+    };
+
+    function isCheckoutValid() {
+      if (!isStoreOpen()) return false;
+      const name = (document.getElementById("custName")?.value || "").trim();
+      const phone = (document.getElementById("custPhone")?.value || "").trim();
+      const street = (document.getElementById("address_street")?.value || "").trim();
+
+      if (!name || !phone || state.cart.length === 0) return false;
+
+      if (state.isDelivery) {
+        if (!street) return false;
+        if (!state.deliveryCost || state.deliveryCost <= 0) return false;
+        if (!customerLocation.hasHouseNumber || !customerLocation.rawAddressDetails) return false;
+      }
+
+      return true;
+    }
+
+    function updateConfirmButtonState() {
+      const btn = document.querySelector(".btn-confirmar");
+      if (!btn) return;
+
+      // ✅ FIX: Block the button immediately if the store is closed, and abort further logic
+      if (!isStoreOpen()) {
+        btn.disabled = true;
+        btn.innerHTML = `Cerrado (Abre ${window.STORE_HOURS_CONFIG?.open || '13:30'} hrs) 🌙`;
+        return;
+      }
+
+      const name = (document.getElementById("custName")?.value || "").trim();
+      const phone = (document.getElementById("custPhone")?.value || "").trim();
+      const hasBaseData = name.length > 0 && phone.length >= 8;
+
+      // 1. Logic for Retiro (Strictly ignores address/geocoding)
+      if (!state.isDelivery) {
+        if (!hasBaseData || state.cart.length === 0) {
+          btn.disabled = true;
+          btn.innerHTML = state.cart.length === 0 ? "Carrito vacío 🛒" : "Completa tus datos";
+        } else {
+          btn.disabled = false;
+          btn.innerHTML = "Confirmar Pedido";
+        }
+        return; // Exit early, no delivery states apply
+      }
+
+      // 2. Logic for Delivery
+      if (state.isDelivery) {
+        if (!hasBaseData || state.cart.length === 0) {
+          btn.disabled = true;
+          btn.innerHTML = state.cart.length === 0 ? "Carrito vacío 🛒" : "Completa tus datos básicos";
+          return;
+        }
+
+        const street = (document.getElementById("address_street")?.value || "").trim();
+
+        if (street.length < 5) {
+          btn.disabled = true;
+          btn.innerHTML = "Ingresa tu dirección";
+          return;
+        }
+
+        // Wait for geocode to finish (neutral state)
+        if (btn.innerHTML.includes("Calculando") && !btn.innerHTML.includes("Confirmar y Pagar")) {
+          btn.disabled = true;
+          return; // Retain current wait state, avoid overwriting
+        }
+
+        const isValid = isCheckoutValid();
+        btn.disabled = !isValid;
+
+        if (isValid) {
+          btn.innerHTML = "Confirmar y Pagar →";
+        } else if (!customerLocation.hasHouseNumber || !customerLocation.rawAddressDetails) {
+          btn.innerHTML = "Revisa tu dirección 📍";
+        } else if (state.deliveryCost === 0) {
+          btn.innerHTML = "Fuera de zona 🚫";
+        } else {
+          btn.innerHTML = "Datos incompletos";
+        }
+      }
+    }
+
+    // Bind real-time reactive listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      ['custName', 'custPhone', 'address_street'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', () => {
+            // Let the address field override visual validation if wiped
+            if (id === 'address_street' && !el.value.trim() && state.isDelivery) {
+              const btn = document.querySelector(".btn-confirmar");
+              if (btn) btn.innerHTML = "Ingresa tu dirección 📍";
+            }
+            updateConfirmButtonState();
+          });
+        }
+      });
+    });
+
+    document.addEventListener("click", (e) => {
+      const suggestionsBox = document.getElementById("addressSuggestions");
+      if (suggestionsBox && !e.target.closest(".address-wrapper")) {
+        suggestionsBox.style.display = "none";
+      }
+    });
+
+    function removeFromCart(id) { state.cart = state.cart.filter(i => i.id !== id); updateCartUI(); }
+
+    function setDelivery(v) {
+      handleDeliverySelection(v);
+    }
+
+    function toggleCart() {
+      const mod = document.getElementById("cartModal");
+      const isOpen = mod.style.display === "flex";
+      mod.style.display = isOpen ? "none" : "flex";
+
+      // Trigger reactive validation naturally upon opening cart
+      if (!isOpen) setTimeout(updateConfirmButtonState, 100);
+    }
+
+    async function confirmOrder(e) {
+      const btn = document.querySelector(".btn-confirmar");
+      const name = document.getElementById("custName").value.trim();
+      const phone = document.getElementById("custPhone").value.trim();
+      const street = document.getElementById("address_street").value.trim();
+      const number = ""; // Safely defaulted since UI field was removed
+      const ref = ""; // Safely defaulted since UI field was removed
+      const note = document.getElementById("custNote").value.trim();
+
+      const showError = (elementId) => {
+        const el = document.getElementById(elementId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.focus();
+          el.style.transition = "box-shadow 0.3s";
+          el.style.boxShadow = "0 0 0 2px var(--pepper-red, red)";
+          setTimeout(() => el.style.boxShadow = "none", 2500);
+        }
+      };
+
+      if (!name) {
+        e?.preventDefault?.();
+        showError("custName");
+        return;
+      }
+      if (!phone) {
+        e?.preventDefault?.();
+        showError("custPhone");
+        return;
+      }
+      if (state.cart.length === 0) { return; }
+
+      // ✅ FIX: Prevent forcefully sending order if store is closed
+      if (!isStoreOpen()) {
+        e?.preventDefault?.();
+        alert(`Lo sentimos, la tienda está cerrada. Volvemos a abrir a las ${window.STORE_HOURS_CONFIG?.open || '13:30'} hrs.`);
+        return;
+      }
+
+      let finalAddress = "";
+      if (state.isDelivery) {
+        if (!street || !state.deliveryCost || state.deliveryCost <= 0 || !customerLocation.hasHouseNumber || !customerLocation.rawAddressDetails) {
+          e?.preventDefault?.();
+          showError("address_street");
+          return;
+        }
+        finalAddress = `${street}${number ? ', ' + number : ''}${ref ? ' (' + ref + ')' : ''}`;
+      }
+
+      btn.disabled = true; btn.innerText = "Procesando...";
+
+      try {
+        // 1. Obtener ID Secuencial mediante transacción en Firebase
+        const counterRef = db.ref('order_counter');
+        const { snapshot } = await counterRef.transaction((currentValue) => {
+          return (currentValue || 0) + 1;
+        });
+
+        const newCounter = snapshot.val();
+        const orderId = "PP-" + String(newCounter).padStart(4, '0');
+
+        // Generar Token de Seguridad aleatorio
+        const authToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
+        const subtotal = state.cart.reduce((s, i) => s + i.price, 0);
+        const deliveryFee = state.isDelivery ? (state.deliveryCost || 0) : 0;
+        const cutleryFee = includeCutlery ? CUTLERY_PRICE : 0;
+        const discountAmount = appliedCoupon ? appliedCoupon.amountCalculated : 0;
+        const total = subtotal + deliveryFee + cutleryFee - discountAmount;
+        const metodo = state.isDelivery ? "Delivery" : "Retiro";
+
+        const orderData = {
+          id: orderId, cliente: name, telefono: phone,
+          metodo,
+          direccion: state.isDelivery ? finalAddress : "Retiro en local",
+          glink: state.isDelivery ? customerLocation.glink : null,
+          coords: state.isDelivery ? customerLocation.coords : null,
+          distanceKm: state.isDelivery ? customerLocation.distanceKm : null,
+          nota: note,
+          items: state.cart,
+          subtotal: subtotal,
+          deliveryCost: deliveryFee,
+          cutleryFee: cutleryFee,
+          discountAmount: discountAmount,
+          total: total,
+          descuento: appliedCoupon ? { code: appliedCoupon.code, amount: appliedCoupon.amountCalculated } : null,
+          incluyeCubiertos: includeCutlery,
+          auth_token: authToken,
+          estado: "pago_pendiente", timestamp: Date.now(), fecha: new Date().toLocaleString()
+        };
+
+        // 1. Guardar pedido en Firebase en colección PENDIENTE
+        localStorage.removeItem('peppes_view_status');
+        await db.ref('pending_orders/' + orderId).set(orderData);
+
+        // 2. Llamar a la Netlify Function para crear la preferencia en MP
+        const res = await fetch('/.netlify/functions/create-preference', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items: state.cart,
+            orderId,
+            metodo,
+            authToken, // Enviar token a Netlify
+            deliveryFee, // Enviar fee a Netlify para preferencia MP
+            addressDetails: state.isDelivery ? customerLocation.rawAddressDetails : null,
+            discountData: appliedCoupon ? { code: appliedCoupon.code, amount: appliedCoupon.amountCalculated } : null
+          })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Error al conectar con Mercado Pago.');
+        }
+
+        const { init_point } = await res.json();
+
+        // 3. Guardar ID de pedido para mostrar pantalla de seguimiento al regresar
+        localStorage.setItem('peppes_order_key', orderId);
+        if (authToken) localStorage.setItem('peppes_order_auth', authToken);
+
+        // 4. Redirigir al checkout de Mercado Pago (NO activamos seguimiento local aún)
+        window.location.href = init_point;
+
+      } catch (e) {
+        alert("Error: " + e.message);
+        btn.disabled = false;
+        btn.innerText = "Confirmar y Pagar →";
+      }
+    }
+
+    function renderSuccessScreen(id, order) {
+      currentOrderId = id;
+      const statusText = document.getElementById("statusText");
+      const statusIcon = document.getElementById("statusIcon");
+      const peppeImg = document.getElementById("peppeStatusImg");
+      const cancelArea = document.getElementById("cancelArea");
+      const btnFloating = document.getElementById("btnFloatingTrack");
+      const pickupArea = document.getElementById("pickupLocationArea");
+
+      let title = "¡RECIBIDO!", sub = "Procesando tu orden...", color = "#888", peppeFile = "peppe_reloj.png";
+
+      peppeImg.classList.remove("oven-animation");
+      pickupArea.style.display = "none";
+
+      // ✅ FIX: Ocultar botón flotante en TODOS los estados finales
+      const estadosFinalesBtn = ['entregado', 'cancelado', 'cancelado_cliente', 'pago_fallido'];
+      if (estadosFinalesBtn.includes(order.estado)) {
+        btnFloating.style.display = "none";
+      } else {
+        btnFloating.style.display = "block";
+      }
+
+      if (order.estado !== "pendiente") {
+        if (cancelArea) cancelArea.style.display = "none";
+        if (intervalCancelacion) { clearInterval(intervalCancelacion); intervalCancelacion = null; }
+      }
+
+      switch (order.estado) {
+        case "pago_pendiente":
+          title = "PAGO PENDIENTE";
+          sub = "Estamos esperando la confirmación de Mercado Pago. Si ya pagaste, esto se actualizará pronto.";
+          color = "#f1c40f";
+          peppeFile = "peppe_reloj.png";
+          break;
+        case "pago_fallido":
+          title = "PAGO FALLIDO";
+          sub = "Hubo un problema con tu pago. Por favor intenta de nuevo o elige otro método.";
+          color = "#e74c3c";
+          peppeFile = "peppe_triste.png";
+          break;
+        case "pendiente":
+          title = "¡RECIBIDO!";
+          sub = "Estamos revisando tu pedido para empezar a cocinarlo pronto.";
+          color = "#888";
+          peppeFile = "confirmación.png";
+          break;
+        case "cocinando":
+          title = "¡EN EL HORNO!";
+          sub = "Tu pizza se está dorando a fuego lento con ingredientes frescos.";
+          color = "#e67e22";
+          peppeFile = "peppe_cocinando.png";
+          peppeImg.classList.add("oven-animation");
+          if (order.metodo === "Retiro") pickupArea.style.display = "flex";
+          break;
+        case "listo":
+          title = (order.metodo === "Retiro") ? "¡RETIRALO!" : "¡PEDIDO LISTO!";
+          sub = (order.metodo === "Retiro") ? "Tu pedido está listo y esperándote en nuestro local." : "Estamos empaquetando todo para que salga calientito.";
+          color = "var(--success-green)";
+          peppeFile = "peppe_listo.png";
+          if (order.metodo === "Retiro") pickupArea.style.display = "flex";
+          break;
+        case "en camino":
+          if (order.metodo === "Retiro") {
+            title = "¡LISTO!"; sub = "¡Ya puedes pasar a retirar tu pedido!"; color = "var(--success-green)";
+            peppeFile = "peppe_listo.png";
+            pickupArea.style.display = "flex";
+          } else {
+            title = "¡EN CAMINO!";
+            sub = "¡Un repartidor ya va rumbo a tu casa con tu pizza favorita!";
+            color = "#3498db";
+            peppeFile = "peppe_moto.png";
+          }
+          break;
+        case "entregado":
+          title = "¡BUEN PROVECHO!";
+          sub = "Esperamos que disfrutes cada trozo. ¡Gracias por elegir Peppe's!";
+          color = "var(--black)";
+          peppeFile = "peppe_feliz.png";
+          break;
+        case "cancelado":
+        case "cancelado_cliente":
+          title = "PEDIDO CANCELADO";
+          sub = "Si fue un error, contáctanos por WhatsApp para ayudarte.";
+          color = "#ff3131";
+          peppeFile = "peppe_triste.png";
+          break;
+        default:
+          title = order.estado?.toUpperCase() || "ESTADO";
+          sub = "Actualizando información del pedido...";
+          color = "#888";
+          peppeFile = "confirmación.png";
+          break;
+      }
+
+      if (localStorage.getItem('peppes_view_status') === 'visible') {
+        document.getElementById("successScreen").style.display = "flex";
+      }
+
+      peppeImg.src = "assets/" + peppeFile;
+      statusIcon.style.display = "none"; // Eliminamos el emoji repetitivo
+      statusText.innerText = sub;
+      statusText.style.color = "#666"; // Color más sutil para el subtitulo
+      statusText.style.fontWeight = "400"; // Menos gordita la fuente abajo
+
+      const mainTitle = document.getElementById("successTitle");
+      mainTitle.innerText = title;
+      mainTitle.style.color = color;
+
+      document.getElementById("successClientName").innerText = order.cliente;
+    }
+
+    function iniciarContadorCancelacion(orderId) {
+      tiempoRestante = 180;
+      document.getElementById("cancelArea").style.display = "flex";
+      if (intervalCancelacion) clearInterval(intervalCancelacion);
+      intervalCancelacion = setInterval(() => {
+        tiempoRestante--;
+        let min = Math.floor(tiempoRestante / 60), seg = tiempoRestante % 60;
+        const timerEl = document.getElementById("cancelTimer");
+        if (timerEl) timerEl.innerText = `${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`;
+
+        if (tiempoRestante <= 0) {
+          clearInterval(intervalCancelacion);
+          document.getElementById("cancelArea").style.display = "none";
+        }
+      }, 1000);
+    }
+
+    async function solicitarCancelacion() {
+      if (confirm("¿Cancelar pedido?")) {
+        try {
+          await db.ref('pending_orders/' + currentOrderId).update({ estado: "cancelado_cliente", canceladoAt: Date.now() });
+          const msg = `Hola Peppe's, cancelé mi pedido ${currentOrderId}. Solicito mi reembolso por favor.`;
+          window.open(`https://wa.me/56920567850?text=${encodeURIComponent(msg)}`, '_blank');
+          localStorage.removeItem('peppes_order_key');
+          localStorage.removeItem('peppes_view_status');
+          location.reload();
+        } catch (e) { alert("Error: " + e.message); }
+      }
+    }
+
+    function toggleLegal(show) {
+      const overlay = document.getElementById('modalLegalOverlay');
+      const app = document.getElementById('app');
+      if (show) {
+        overlay.style.display = 'flex';
+        app.classList.add('blur-background');
+      } else {
+        overlay.style.display = 'none';
+        app.classList.remove('blur-background');
+      }
+    }
+
+    document.getElementById("btnCart").onclick = toggleCart;
+    document.getElementById("plus").onclick = () => { state.qty++; renderDetails(); };
+    document.getElementById("minus").onclick = () => { if (state.qty > 1) state.qty--; renderDetails(); };
+    document.getElementById("addToCart").onclick = addToCart;
+    document.getElementById("sizes").onclick = (e) => {
+      const b = e.target.closest(".sizeBtn");
+      if (b) {
+        state.size = b.dataset.size;
+        document.querySelectorAll(".sizeBtn").forEach(x => x.classList.toggle("isActive", x === b));
+        renderExtras(); renderDetails();
+      }
+    };
+
+    function scrollCarousel(containerId, direction) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const scrollAmount = container.clientWidth * 0.75;
+      container.scrollBy({ left: scrollAmount * direction, behavior: 'smooth' });
+    }
+
+    function updateNavButtons(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const wrapper = container.closest('.carousel-wrapper');
+      if (!wrapper) return;
+
+      const leftArrow = wrapper.querySelector('.nav-arrow.left');
+      const rightArrow = wrapper.querySelector('.nav-arrow.right');
+
+      const isAtStart = container.scrollLeft <= 5;
+      const isAtEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - 5;
+
+      if (leftArrow) leftArrow.classList.toggle('visible', !isAtStart);
+      if (rightArrow) rightArrow.classList.toggle('visible', !isAtEnd);
+    }
+
+    function initCarouselNav() {
+      const carouselIds = ['catsSnap', 'pizzasSnap', 'extrasArea'];
+      carouselIds.forEach(id => {
+        const container = document.getElementById(id);
+        if (container) {
+          container.addEventListener('scroll', () => updateNavButtons(id));
+          // Initial check
+          setTimeout(() => updateNavButtons(id), 500);
+        }
+      });
+      window.addEventListener('resize', () => {
+        carouselIds.forEach(id => updateNavButtons(id));
+      });
+    }
+
+    window.onload = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const isTest = params.get('test') === 'true';
+
+      // Pantalla de cierre de tienda completa ha sido removida 
+      // para permitir ver el sitio. Se bloquea el botón de confirmación en su lugar.
+
+      renderCategories();
+      selectCategory("pizzas");
+      await checkPaymentReturn(); // Manejar retorno de Mercado Pago
+      checkActiveOrder();
+      initCarouselNav(); // Initialize desktop arrows logic
+    };
+  </script>
+</body>
+
+</html>

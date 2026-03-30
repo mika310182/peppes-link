@@ -1,0 +1,92 @@
+{
+  "inventory_clean": {
+    "promo": {
+      "personal_beb": { "id": "personal_beb", "category": "promo", "name": "Personal + Bebida", "desc": "Pizza personal a elección + bebida lata de 220ml.", "img": "assets/promo_pizza_personal_bebida_220ml.png", "prices": { "U": 6990 }, "days": [1], "available": true, "type": "Promo" },
+      "combo_p": { "id": "combo_p", "category": "promo", "name": "2x1", "desc": "Combo 2x1 para 2 personas.", "img": "assets/2x1.png", "prices": { "U": 6990 }, "days": [1], "available": true, "type": "Promo" },
+      "las_beb": { "id": "las_beb", "category": "promo", "name": "Lasaña + Bebida", "desc": "Lasaña artesanal + bebida lata 220ml.", "img": "assets/promo-lasaña-boloñesa.png", "prices": { "U": 6990 }, "days": [2], "available": true, "type": "Promo" },
+      "martes_fest": { "id": "martes_fest", "category": "promo", "name": "Martes Fest", "desc": "Especial del día martes, elige tu pizza clasica favorita.", "img": "assets/martesfest.png", "prices": { "U": 21990 }, "days": [2], "available": true, "type": "Fest" },
+      "gemelas": { "id": "gemelas", "category": "promo", "name": "Las Gemelas", "desc": "Dos pizzas de pepperoni estilo romano.", "img": "assets/gemelas.png", "prices": { "U": 8990 }, "days": [3], "available": true, "type": "Promo" },
+      "combo_2": { "id": "combo_2", "category": "promo", "name": "Combo para 2", "desc": "Pizza Grande + Bebida de 1.5Lt.", "img": "assets/combo-para-2.png", "prices": { "U": 14990 }, "days": [3], "available": true, "type": "Promo" },
+      "pers_pali": { "id": "pers_pali", "category": "promo", "name": "Personal + Palitos", "desc": "Pizza personal + porción de palitos de ajo.", "img": "assets/promo_pizza_personal_bebida_220ml.png", "prices": { "U": 8990 }, "days": [4], "available": true, "type": "Promo" },
+      "duo_fam_f": { "id": "duo_fam_f", "category": "promo", "name": "Dúo Familiar Fest", "desc": "2 Pizzas familiares + bebida 1.5L.", "img": "assets/2x1.png", "prices": { "U": 19990 }, "days": [4, 6], "available": true, "type": "Fest" },
+      "viernes_mix": { "id": "viernes_mix", "category": "promo", "name": "Fideos + Palitos + Bebida", "desc": "Pasta a elección + palitos + bebida 220ml.", "img": "assets/pasta-boloñesa.png", "prices": { "U": 9990 }, "days": [5], "available": true, "type": "Promo" }
+    },
+    "pizzas": {
+      "margarita": { "id": "margarita", "category": "pizzas", "name": "Margarita", "desc": "Salsa de tomate y mozzarella.", "img": "assets/margarita.png", "prices": { "P": 4990, "M": 9990, "G": 12990 }, "available": true, "type": "Clásica" },
+      "jamon": { "id": "jamon", "category": "pizzas", "name": "Jamón Queso", "desc": "Clásica combinación de jamón y queso.", "img": "assets/jamon-queso.png", "prices": { "P": 4990, "M": 9990, "G": 12990 }, "available": true, "type": "Clásica" },
+      "napo": { "id": "napo", "category": "pizzas", "name": "Napolitana", "desc": "Tomate natural, aceitunas y orégano.", "img": "assets/napo.png", "prices": { "P": 4990, "M": 9990, "G": 12990 }, "available": true, "type": "Clásica" },
+      "pepperoni": { "id": "pepperoni", "category": "pizzas", "name": "Pepperoni", "desc": "Mucho pepperoni y mozzarella.", "img": "assets/pepperoni.png", "prices": { "P": 4990, "M": 9990, "G": 12990 }, "available": true, "type": "Clásica" },
+      "regalona": { "id": "regalona", "category": "pizzas", "name": "Regalona", "desc": "Salsa de tomate mozzarella tocino y choclo.", "img": "assets/regalona.png", "prices": { "P": 5990, "M": 10990, "G": 13990 }, "available": true, "type": "Especial" },
+      "pizzana": { "id": "pizzana", "category": "pizzas", "name": "Pizzaña", "desc": "Salsa de tomate mozzarella salsa boloñesa y tocino.", "img": "assets/pizzaña.png", "prices": { "P": 6990, "M": 10990, "G": 13990 }, "available": true, "type": "Especial" },
+      "mamma": { "id": "mamma", "category": "pizzas", "name": "Mamma Nostra", "desc": "Salsa de tomate mozzarella tocino champiñon y queso azul.", "img": "assets/mamma-nostra.png", "prices": { "P": 6990, "M": 10990, "G": 14990 }, "available": true, "type": "Especial" },
+      "4quesos": { "id": "4quesos", "category": "pizzas", "name": "4 Quesos", "desc": "Mozzarella, azul, parmesano y gouda.", "img": "assets/4-quesos.png", "prices": { "P": 6990, "M": 12990, "G": 15990 }, "available": true, "type": "Especial" },
+      "hawaiana": { "id": "hawaiana", "category": "pizzas", "name": "Hawaiana", "desc": "Salsa de tomate mozzarella tocino y piña.", "img": "assets/hawaiana.png", "prices": { "P": 5990, "M": 9990, "G": 14990 }, "available": true, "type": "De la Casa" },
+      "pesto": { "id": "pesto", "category": "pizzas", "name": "Pesto", "desc": "Salsa de tomate con pesto artesanal y mozzarella.", "img": "assets/pesto.png", "prices": { "P": 6990, "M": 11990, "G": 14990 }, "available": true, "type": "De la Casa" },
+      "botticello": { "id": "botticello", "category": "pizzas", "name": "Botticello", "desc": "salsa de tomate mozzarella salame champiñones y aceitunas.", "img": "assets/botticello.png", "prices": { "P": 6990, "M": 11990, "G": 14990 }, "available": true, "type": "De la Casa" },
+      "selvaggio": { "id": "selvaggio", "category": "pizzas", "name": "Peppe Selvaggio", "desc": "Salsa de tomate mozzarella pepperoni y champiñones.", "img": "assets/peppe-selvaggio.png", "prices": { "P": 6990, "M": 11990, "G": 14990 }, "available": true, "type": "De la Casa" },
+      "nonna": { "id": "nonna", "category": "pizzas", "name": "La Nonna", "desc": "Receta familiar tradicional.", "img": "assets/nonna.png", "prices": { "P": 6990, "M": 11990, "G": 14990 }, "available": true, "type": "De la Casa" },
+      "veggie_it": { "id": "veggie_it", "category": "pizzas", "name": "Veggie Italiana", "desc": "Verduras frescas al estilo italiano.", "img": "assets/veggie-italiana.png", "prices": { "P": 4990, "M": 8990, "G": 11990 }, "available": true, "type": "Vegetariana" },
+      "veggie_gold": { "id": "veggie_gold", "category": "pizzas", "name": "Veggie Gold", "desc": "La versión premium vegetariana.", "img": "assets/veggie-gold.png", "prices": { "P": 4990, "M": 8990, "G": 11990 }, "available": true, "type": "Vegetariana" },
+      "bella": { "id": "bella", "category": "pizzas", "name": "Bella Rossa", "desc": "salsa de tomate mozzarella tomate y pimientos.", "img": "assets/bella-rossa.png", "prices": { "P": 4990, "M": 8990, "G": 11990 }, "available": true, "type": "Vegetariana" },
+      "nonna_v": { "id": "nonna_v", "category": "pizzas", "name": "Nonna Verde", "desc": "salsa de tomate mozzarella espinaca y albahaca.", "img": "assets/nonna-verde.png", "prices": { "P": 4990, "M": 8990, "G": 11990 }, "available": true, "type": "Vegetariana" },
+      "porto": { "id": "porto", "category": "pizzas", "name": "Porto", "desc": "salsa de tomate mozzarella cebolla tocino y camarones.", "img": "assets/porto.png", "prices": { "P": 7990, "M": 15990, "G": 17990 }, "available": true, "type": "Premium" },
+      "carnevale": { "id": "carnevale", "category": "pizzas", "name": "Carnevale", "desc": "Mix carnívoro premium.", "img": "assets/carnevale.png", "prices": { "P": 8990, "M": 15990, "G": 17990 }, "available": true, "type": "Premium" },
+      "iberica": { "id": "iberica", "category": "pizzas", "name": "Ibérica", "desc": "salsa de tomate mozzarella salame pepperoni aceitunas chorizo y pimientos.", "img": "assets/iberica.png", "prices": { "P": 8990, "M": 15990, "G": 17990 }, "available": true, "type": "Premium" },
+      "pizzomuno": { "id": "pizzomuno", "category": "pizzas", "name": "Pizzomuno", "desc": "La especialidad de la casa.", "img": "assets/pizzomuno.png", "prices": { "P": 9990, "M": 16990, "G": 18990 }, "available": true, "type": "Premium" }
+    },
+    "lasanas": {
+      "las_bolo": { "id": "las_bolo", "category": "lasanas", "name": "Lasaña Boloñesa", "desc": "Salsa boloñesa artesanal salsa blanca y mozzarella.", "img": "assets/lasaña-boloñesa.png", "prices": { "U": 6990 }, "available": true, "type": "Pastas" },
+      "las_veggie": { "id": "las_veggie", "category": "lasanas", "name": "Lasaña Vegetariana", "desc": "Base salsa napolitana mozzarella y albahaca.", "img": "assets/lasaña-vegetariana.png", "prices": { "U": 6990 }, "available": true, "type": "Pastas" }
+    },
+    "pastas": {
+      "pas_bolo": { "id": "pas_bolo", "category": "pastas", "name": "Pasta Boloñesa", "desc": "Salsa boloñesa artesanal con carne.", "img": "assets/pasta-boloñesa.png", "prices": { "U": 6990 }, "available": true, "type": "Pastas" },
+      "pas_4que": { "id": "pas_4que", "category": "pastas", "name": "Pasta 4 Quesos", "desc": "Fusión de 4 quesos.", "img": "assets/pasta-4-quesos.png", "prices": { "U": 6990 }, "available": true, "type": "Pastas" },
+      "pas_amat": { "id": "pas_amat", "category": "pastas", "name": "Pasta Amatricciana", "desc": "Salsa de tomate, cebolla tocino y un toque picante.", "img": "assets/pasta-amatricciana.png", "prices": { "U": 6990 }, "available": true, "type": "Pastas" },
+      "pas_pest": { "id": "pas_pest", "category": "pastas", "name": "Pasta Pesto", "desc": "Salsa pesto artesanal.", "img": "assets/pasta-pesto.png", "prices": { "U": 6990 }, "available": true, "type": "Pastas" }
+    },
+    "antojos": {
+      "palitos_q": { "id": "palitos_q", "category": "antojos", "name": "Palitos Ajo-Queso", "desc": "8 unidades con ajo y queso.", "img": "assets/palitos-ajo-queso.png", "prices": { "U": 4990 }, "available": true, "type": "Snack" },
+      "palitos_n": { "id": "palitos_n", "category": "antojos", "name": "Palitos Napolitanos", "desc": "8 unidades con salsa y mozzarella.", "img": "assets/palitos-napolitanos.png", "prices": { "U": 4990 }, "available": true, "type": "Snack" },
+      "pan": { "id": "pan", "category": "antojos", "name": "Pan con Ajo", "desc": "8 unidades de pan cubiertos con mantequilla con ajo y oregano.", "img": "assets/pan_con_ajo.png", "prices": { "U": 4990 }, "available": true, "type": "Snack" },
+      "deditos": { "id": "deditos", "category": "antojos", "name": "deditos de mozzarella", "desc": "6 deditos de mozzarella.", "img": "assets/deditos-de-mozzarella.png", "prices": { "U": 4990 }, "available": true, "type": "Snack" }
+    },
+    "ens": {
+      "cesar": { "id": "cesar", "category": "ens", "name": "César", "desc": "Lechuga, pollo, tocino y aderezo.", "img": "assets/césar.png", "prices": { "U": 5990 }, "available": true, "type": "Fresh" }
+    },
+    "postres": {
+      "Brownie": { "id": "Brownie", "category": "postres", "name": "Brownie", "desc": "Chocolate belga premium.", "img": "assets/brownie.png", "prices": { "U": 3990 }, "available": true, "type": "Dulce" }
+    },
+    "bebidas": {
+      "cocacola_original_220": { "id": "cocacola_original_220", "category": "bebidas", "name": "Coca Cola 220ml", "desc": "Formato personal.", "img": "assets/coca-cola-original-220ml.png", "prices": { "U": 1000 }, "available": true, "type": "Bebida" },
+      "cocacola_zero_220": { "id": "cocacola_zero_220", "category": "bebidas", "name": "Coca Cola Zero 220ml", "desc": "Formato personal.", "img": "assets/coca-cola-zero-220.png", "prices": { "U": 1000 }, "available": true, "type": "Bebida" },
+      "sprite_220": { "id": "sprite_220", "category": "bebidas", "name": "Sprite 220ml", "desc": "Formato personal.", "img": "assets/sprite-220.png", "prices": { "U": 1000 }, "available": true, "type": "Bebida" },
+      "sprite_zero_220": { "id": "sprite_zero_220", "category": "bebidas", "name": "Sprite Zero 220ml", "desc": "Formato personal.", "img": "assets/sprite-zero-220.png", "prices": { "U": 1000 }, "available": true, "type": "Bebida" },
+      "fanta_220": { "id": "fanta_220", "category": "bebidas", "name": "Fanta 220ml", "desc": "Formato personal.", "img": "assets/fanta-220.png", "prices": { "U": 1000 }, "available": true, "type": "Bebida" },
+      "fanta_zero_220": { "id": "fanta_zero_220", "category": "bebidas", "name": "Fanta Zero 220ml", "desc": "Formato personal.", "img": "assets/fanta-zero-220.png", "prices": { "U": 1000 }, "available": true, "type": "Bebida" },
+      "cocacola_original_15": { "id": "cocacola_original_15", "category": "bebidas", "name": "Coca Cola 1.5L", "desc": "Formato familiar.", "img": "assets/coca-cola-original.png", "prices": { "U": 2500 }, "available": true, "type": "Bebida" },
+      "cocacola_zero_15": { "id": "cocacola_zero_15", "category": "bebidas", "name": "Coca Cola zero 1.5L", "desc": "Sin azúcar.", "img": "assets/coca-cola-zero.png", "prices": { "U": 2500 }, "available": true, "type": "Bebida" }
+    }
+  },
+  "extras": {
+    "choclo": { "id": "choclo", "name": "🌽 Choclo", "icon": "choclo.png", "pm": 1000, "g": 2000, "available": true, "price": 1000 },
+    "champi": { "id": "champi", "name": "🍄 Champiñones", "icon": "champi.png", "pm": 1000, "g": 2000, "available": true, "price": 1000 },
+    "tomate": { "id": "tomate", "name": "🍅 Tomates", "icon": "tomate.png", "pm": 1000, "g": 2000, "available": true, "price": 1000 },
+    "aceit": { "id": "aceit", "name": "🫐 Aceitunas", "icon": "aceitunas.png", "pm": 1000, "g": 2000, "available": true, "price": 1000 },
+    "pimi": { "id": "pimi", "name": "🌶️ Pimientos", "icon": "pimientos.png", "pm": 1000, "g": 2000, "available": true, "price": 1000 },
+    "cebolla": { "id": "cebolla", "name": "🧅 Cebolla", "icon": "cebolla.png", "pm": 1000, "g": 2000, "available": true, "price": 1000 },
+    "tocino": { "id": "tocino", "name": "🥓 Tocino", "icon": "tocino.png", "pm": 1000, "g": 2000, "available": true, "price": 1000 },
+    "churra": { "id": "churra", "name": "🥩 Churrasco", "icon": "churrasco.png", "pm": 1500, "g": 3000, "carnes": true, "available": true, "price": 1500 },
+    "pollo": { "id": "pollo", "name": "🍗 Pollo", "icon": "pollo.png", "pm": 1500, "g": 3000, "carnes": true, "available": true, "price": 1500 },
+    "cama": { "id": "cama", "name": "🍤 Camarones", "icon": "camaron.png", "pm": 1800, "g": 3500, "available": true, "price": 1800 },
+    "ex_mozz": { "id": "ex_mozz", "name": "🧀 Extra mozzarella", "icon": "queso.png", "pm": 1000, "g": 2000, "available": true, "price": 1000 },
+    "azul": { "id": "azul", "name": "🧀 Queso azul", "icon": "azul.png", "pm": 1000, "g": 2000, "available": true, "price": 1000 },
+    "parme": { "id": "parme", "name": "🧀 Parmesano", "icon": "parme.png", "pm": 1000, "g": 1500, "available": true, "price": 1000 },
+    "albahaca": { "id": "albahaca", "name": "🌿 Albahaca", "icon": "albahaca.png", "pm": 500, "g": 1000, "available": true, "price": 500 },
+    "pina": { "id": "pina", "name": "🍍 Piña", "icon": "pina.png", "pm": 1000, "g": 2000, "available": true, "price": 1000 },
+    "jamon": { "id": "jamon", "name": "🍖 Jamón", "icon": "jamon.png", "pm": 1000, "g": 2000, "available": true, "price": 1000 },
+    "chorizo": { "id": "chorizo", "name": "🍢 Chorizo", "icon": "chorizo.png", "pm": 1000, "g": 2000, "carnes": true, "available": true, "price": 1000 },
+    "ex_pepp": { "id": "ex_pepp", "name": "🍠 Pepperoni extra", "icon": "pepperoni.png", "pm": 1000, "g": 2000, "available": true, "price": 1000 },
+    "ext_oreo": { "id": "ext_oreo", "name": "🍪 Oreo", "icon": "oreo.png", "pm": 500, "g": 500, "postre": true, "available": true, "price": 500 },
+    "ext_mms": { "id": "ext_mms", "name": "🍬 M&Ms", "icon": "mms.png", "pm": 500, "g": 500, "postre": true, "available": true, "price": 500 }
+  }
+}

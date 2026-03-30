@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Producto | Peppe’s</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+
+  <style>
+    :root{
+      --pepper-red:#ff3131;
+      --text:#111;
+      --muted:#6b6b6b;
+      --card:#ffffff;
+      --shadow: 0 18px 50px rgba(0,0,0,.18);
+      --soft-shadow: 0 14px 30px rgba(0,0,0,.12);
+      --black:#121212;
+      --pill:#111;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family: 'Poppins', sans-serif;
+      background:#000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px 14px;
+      overflow-x:hidden;
+    }
+
+    .screen{
+      width:428px;
+      height:926px;
+      border-radius:34px;
+      overflow:hidden;
+      background: var(--card);
+      box-shadow: 0 26px 70px rgba(0,0,0,.55);
+      position:relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero{
+      position:relative;
+      height: 460px;
+      background: var(--pepper-red);
+      overflow:hidden;
+      flex-shrink: 0;
+    }
+
+    .hero::after{
+      content:"";
+      position:absolute;
+      left:-10%; right:-10%; bottom:-170px;
+      height: 340px;
+      background:#fff;
+      border-radius: 50%;
+      z-index: 1;
+    }
+
+    .topbar{
+      position:absolute;
+      top: 24px; left: 20px; right: 20px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      z-index:10;
+    }
+
+    /* ✅ CARRITO CORREGIDO (IGUAL AL INDEX) */
+    .icon-btn{
+      width: 48px; height: 48px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.15);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; border: 1px solid rgba(255,255,255,0.2);
+      color: white; position: relative;
+    }
+
+    .cartBadge{
+      position:absolute;
+      top: -2px; right: -2px;
+      min-width:20px; height:20px;
+      padding:0 4px; border-radius:999px;
+      background: var(--black); color:#fff;
+      font-size:11px; font-weight:900;
+      display:flex; align-items:center; justify-content:center;
+      border:2px solid var(--pepper-red);
+      transform: scale(0); opacity: 0;
+      transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .cartBadge.show{ transform:scale(1); opacity:1; }
+
+    .back-arrow {
+      width: 12px; height: 12px;
+      border-top: 3px solid white;
+      border-left: 3px solid white;
+      transform: rotate(-45deg);
+      margin-left: 4px;
+    }
+
+    .title-wrap{
+      position:absolute;
+      top: 80px; left: 0; right: 0;
+      text-align:center; z-index:4; color:#fff;
+    }
+    .title-wrap h1{
+      margin: 4px 0 0;
+      font-size: 40px;
+      font-weight: 900;
+      font-family: 'Titan One', cursive;
+    }
+
+    .pizza-stage{
+      position:absolute;
+      left:0; right:0; top: 150px;
+      display:flex; align-items:center; justify-content:center;
+      z-index:3;
+    }
+
+    #pizzasSwiper{ width: 100%; overflow: visible; }
+    .pizza-slide img{
+      width: 290px;
+      filter: drop-shadow(0 25px 35px rgba(0,0,0,.35));
+    }
+
+    .size-row{
+      position:absolute;
+      left:0; right:0; bottom: 50px;
+      display:flex; align-items:center; justify-content:center;
+      gap: 20px; z-index:30;
+    }
+
+    .size{
+      width:58px; height:58px;
+      border-radius:999px; background:#fff;
+      display:grid; place-items:center;
+      font-weight:900; color: var(--pepper-red);
+      box-shadow: var(--soft-shadow);
+      cursor:pointer; transition: all .2s ease;
+    }
+    .size.active{ background: var(--black); color:#fff; }
+
+    .content{
+      padding: 24px;
+      background:#fff;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .desc{
+      font-size: 15px; color: var(--muted);
+      text-align: center; margin: 0 auto 24px;
+    }
+
+    .extras-row{
+      display:flex; gap: 12px; overflow-x:auto; padding-bottom: 10px;
+    }
+    .extra-pill{
+      flex: 0 0 auto; height: 46px; padding: 0 16px;
+      border-radius: 999px; border: 0; font-weight: 900;
+      background: #f2f2f2; cursor: pointer;
+    }
+    .extra-pill.active{
+      background: var(--pepper-red); color: #fff;
+    }
+
+    .bottom{
+      margin-top: auto;
+      display:flex; align-items:center; justify-content:space-between;
+      gap: 12px; padding-bottom: 20px;
+    }
+    .qty{
+      width: 120px; height: 56px; border-radius: 999px;
+      background: #f2f2f2; display:flex; align-items:center;
+      justify-content:space-between; padding: 6px;
+    }
+    .qbtn{
+      width: 44px; height: 44px; border-radius: 999px;
+      border: 0; background:#fff; font-weight: 900; cursor:pointer;
+    }
+    .add{
+      flex: 1; height:56px; border-radius: 999px;
+      border:0; font-weight: 900; background: var(--black);
+      color:#fff; cursor:pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <section class="screen">
+    <div class="hero">
+      <div class="topbar">
+        <button class="icon-btn" onclick="window.history.back()"><div class="back-arrow"></div></button>
+        <button class="icon-btn" id="btnCart">🛒<span class="cartBadge" id="cartBadge">0</span></button>
+      </div>
+
+      <div class="title-wrap">
+        <div style="font-size:12px; letter-spacing:2px; font-weight:900">PIZZAS</div>
+        <h1 id="productName">---</h1>
+      </div>
+
+      <div class="pizza-stage">
+        <div class="swiper" id="pizzasSwiper">
+          <div class="swiper-wrapper" id="pizzasWrap"></div>
+        </div>
+      </div>
+
+      <div class="size-row">
+        <div class="size" data-size="P">P</div>
+        <div class="size active" data-size="M">M</div>
+        <div class="size" data-size="G">G</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <p class="desc" id="desc">---</p>
+      <div style="font-weight:900; margin-bottom:12px">Añadir extras</div>
+      <div class="extras-row">
+        <button class="extra-pill" data-extra="choclo">🌽 Choclo +$900</button>
+        <button class="extra-pill" data-extra="aceitunas">🫒 Aceitunas +$900</button>
+      </div>
+
+      <div class="bottom">
+        <div class="qty">
+          <button class="qbtn" id="minusBtn">−</button>
+          <div id="qtyNum" style="font-weight:900">1</div>
+          <button class="qbtn" id="plusBtn">+</button>
+        </div>
+        <div id="price" style="font-weight:900; font-size:20px">$0</div>
+        <button class="add" id="addBtn">Agregar</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script>
+    const PRODUCTS = {
+      margarita: { name:"Margarita", img:"https://i.imgur.com/wVU49uv.png", desc:"Mozzarella derretida y albahaca fresca.", prices:{P:7990, M:9990, G:11990} },
+      pepperoni: { name:"Pepperoni", img:"https://i.imgur.com/bgKOo6t.png", desc:"El clásico con pepperoni crujiente.", prices:{P:8790, M:10990, G:12990} },
+      napo: { name:"Napolitana", img:"https://i.imgur.com/siTLd6y.png", desc:"Tomate, mozzarella y un toque de orégano.", prices:{P:8490, M:10490, G:12490} }
+    };
+
+    const ORDER = Object.keys(PRODUCTS);
+    let params = new URLSearchParams(window.location.search);
+    let key = (params.get("pizza") || "pepperoni").toLowerCase();
+    let size = "M";
+    let qty = 1;
+    let selectedExtras = new Set();
+    let cartCount = 0;
+
+    const wrap = document.getElementById("pizzasWrap");
+    wrap.innerHTML = ORDER.map(k => `
+      <div class="swiper-slide pizza-slide" data-key="${k}">
+        <img src="${PRODUCTS[k].img}" alt="${PRODUCTS[k].name}">
+      </div>
+    `).join("");
+
+    const swiper = new Swiper("#pizzasSwiper", {
+      slidesPerView: "auto",
+      centeredSlides: true,
+      initialSlide: ORDER.indexOf(key),
+      watchSlidesProgress: true,
+      on: {
+        progress: function() {
+          this.slides.forEach(slide => {
+            const scale = 1 - (Math.abs(slide.progress) * 0.2);
+            slide.querySelector("img").style.transform = `scale(${scale})`;
+          });
+        },
+        slideChange: function() {
+          key = this.slides[this.activeIndex].dataset.key;
+          render();
+        }
+      }
+    });
+
+    function render() {
+      const p = PRODUCTS[key];
+      document.getElementById("productName").textContent = p.name;
+      document.getElementById("desc").textContent = p.desc;
+      const total = (p.prices[size] + (selectedExtras.size * 900)) * qty;
+      document.getElementById("price").textContent = "$" + total.toLocaleString('es-CL');
+      document.getElementById("qtyNum").textContent = qty;
+    }
+
+    document.querySelectorAll(".size").forEach(btn => {
+      btn.onclick = () => {
+        size = btn.dataset.size;
+        document.querySelectorAll(".size").forEach(s => s.classList.remove("active"));
+        btn.classList.add("active");
+        render();
+      };
+    });
+
+    document.querySelectorAll(".extra-pill").forEach(btn => {
+      btn.onclick = () => {
+        const extra = btn.dataset.extra;
+        selectedExtras.has(extra) ? selectedExtras.delete(extra) : selectedExtras.add(extra);
+        btn.classList.toggle("active");
+        render();
+      };
+    });
+
+    document.getElementById("plusBtn").onclick = () => { qty++; render(); };
+    document.getElementById("minusBtn").onclick = () => { if(qty > 1) qty--; render(); };
+
+    document.getElementById("addBtn").onclick = () => {
+      cartCount += qty;
+      const badge = document.getElementById("cartBadge");
+      badge.textContent = cartCount;
+      badge.classList.add("show");
+      
+      const btn = document.getElementById("addBtn");
+      btn.textContent = "¡Agregado!";
+      btn.style.background = "#22c55e";
+      setTimeout(() => { btn.textContent = "Agregar"; btn.style.background = ""; }, 1000);
+    };
+
+    render();
+  </script>
+</body>
+</html>

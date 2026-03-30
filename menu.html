@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#ff3131" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Menú | Peppe's</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Titan+One&family=Poppins:wght@400;500;600;900&display=swap" rel="stylesheet">
+
+  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
+
+  <style>
+    :root {
+      --pepper-red: #ff3131;
+      --text: #111;
+      --muted: #6b6b6b;
+      --black: #121212;
+      --bg: #0b0b0b;
+      --radius: 24px;
+      --success-green: #2ecc71;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100svh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 24px;
+      background: var(--bg);
+      font-family: 'Poppins', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      min-height: 100svh;
+      overflow-x: hidden;
+    }
+
+    .app-viewport {
+      position: relative;
+      width: 100%;
+      max-width: 428px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 0; }
+      .app-viewport { max-width: none; min-height: 100svh; }
+      .phone { border-radius: 0; }
+    }
+
+    .phone {
+      width: 100%;
+      min-height: 100svh;
+      border-radius: var(--radius);
+      background: #f8f9fa;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── TOP ROJO ── */
+    .top {
+      background: var(--pepper-red);
+      height: 420px;
+      position: relative;
+      color: #fff;
+      padding: calc(20px + env(safe-area-inset-top)) 18px 0;
+      flex-shrink: 0;
+    }
+
+    .topBar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .back-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111;
+      color: #fff;
+      font-size: 22px;
+      text-decoration: none;
+      font-weight: 900;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .brand-tag-main {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.9);
+      text-align: center;
+      flex-grow: 1;
+    }
+
+    .spacer-btn { width: 48px; flex-shrink: 0; }
+
+    /* ── CATEGORÍAS ── */
+    .catRow { margin-top: 14px; }
+
+    .catsSnap {
+      padding: 8px 14px 10px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+    .catsSnap::-webkit-scrollbar { display: none; }
+
+    .catsTrack {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .catPill {
+      flex: 0 0 auto;
+      scroll-snap-align: center;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.25);
+      color: #fff;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .catPill.isActive {
+      background: #fff;
+      color: var(--pepper-red);
+    }
+
+    /* ── TÍTULO PRODUCTO ── */
+    .productTitle {
+      margin: 8px auto 0;
+      text-align: center;
+      font-family: 'Titan One', cursive;
+      font-size: 26px;
+      text-transform: uppercase;
+      z-index: 6;
+      position: relative;
+      height: 72px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.8);
+      -webkit-text-stroke: 0.5px rgba(0,0,0,0.15);
+    }
+
+    .productTag {
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      background: rgba(0,0,0,0.35);
+      padding: 3px 12px;
+      border-radius: 999px;
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+    }
+
+    /* ── CURVA ── */
+    .curve {
+      position: absolute;
+      left: 0; right: 0; bottom: -1px;
+      height: 110px;
+      background: #f8f9fa;
+      border-top-left-radius: 220px 110px;
+      border-top-right-radius: 220px 110px;
+      z-index: 1;
+    }
+
+    /* ── CARRUSEL IMÁGENES ── */
+    .hero {
+      position: absolute;
+      left: 0; right: 0;
+      top: 160px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 5;
+    }
+
+    .pizzasSnap {
+      width: 100%;
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      padding: 0 44px;
+    }
+    .pizzasSnap::-webkit-scrollbar { display: none; }
+
+    .pizzaSlide {
+      flex: 0 0 300px;
+      scroll-snap-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 300px;
+    }
+
+    .prodSlideImg {
+      width: 280px;
+      height: 280px;
+      object-fit: contain;
+      filter: drop-shadow(0 20px 20px rgba(0,0,0,0.25));
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .agotado-overlay {
+      filter: grayscale(1) opacity(0.45) !important;
+    }
+
+    /* ── CONTENIDO INFERIOR ── */
+    .content {
+      padding: 120px 22px 40px;
+      flex: 1;
+      background: #f8f9fa;
+    }
+
+    /* Badge tipo/subcategoría */
+    .product-type-badge {
+      display: inline-block;
+      background: #fff0f0;
+      color: var(--pepper-red);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-bottom: 6px;
+    }
+
+    .product-name {
+      font-family: 'Titan One', cursive;
+      font-size: 24px;
+      text-transform: uppercase;
+      color: var(--text);
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .product-desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      text-align: center;
+      margin-bottom: 20px;
+      min-height: 38px;
+    }
+
+    /* ── PRECIOS ── */
+    .prices-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .price-chip {
+      background: #fff;
+      border: 2px solid #eef0f5;
+      border-radius: 14px;
+      padding: 10px 18px;
+      text-align: center;
+      min-width: 80px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    .price-chip .size-label {
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .price-chip .size-price {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--pepper-red);
+    }
+
+    .price-chip.agotado {
+      opacity: 0.45;
+      background: #f5f5f5;
+    }
+
+    /* Badge AGOTADO */
+    .badge-agotado {
+      display: inline-block;
+      background: #ff3131;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 4px 14px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+    }
+
+    /* ── DOTS INDICADORES ── */
+    .dots-row {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ddd;
+      transition: all 0.3s;
+    }
+
+    .dot.active {
+      background: var(--pepper-red);
+      width: 18px;
+      border-radius: 3px;
+    }
+
+    /* ── BOTÓN IR A PEDIR ── */
+    .btn-pedir {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: var(--pepper-red);
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+      font-weight: 900;
+      border: none;
+      border-radius: 18px;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #b32222;
+      transition: transform 0.15s, box-shadow 0.15s;
+      margin-top: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-pedir:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #b32222;
+    }
+
+    /* ── LOADING ── */
+    .loading-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      color: var(--muted);
+      gap: 12px;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid #eee;
+      border-top-color: var(--pepper-red);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── MOBILE ── */
+    @media (max-width: 480px) {
+      .top { height: clamp(360px, 46svh, 420px); }
+      .pizzaSlide { flex: 0 0 min(300px, 86vw); height: min(300px, 86vw); }
+      .prodSlideImg { width: min(280px, 80vw); height: min(280px, 80vw); }
+      .content { padding-top: clamp(110px, 16svh, 130px); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-viewport">
+    <div class="phone">
+
+      <!-- TOP ROJO -->
+      <div class="top">
+        <div class="topBar">
+          <a href="index.html" class="back-btn">‹</a>
+          <div class="brand-tag-main">PEPPE'S — MENÚ</div>
+          <div class="spacer-btn"></div>
+        </div>
+
+        <!-- Categorías -->
+        <div class="catRow">
+          <div class="catsSnap" id="catsSnap">
+            <div class="catsTrack" id="catsTrack">
+              <!-- Generado por JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Título del producto activo -->
+        <div class="productTitle" id="productTitleWrap">
+          <span id="productType" class="productTag" style="display:none"></span>
+          <div id="productName">Cargando...</div>
+        </div>
+
+        <div class="curve"></div>
+
+        <!-- Carrusel de imágenes -->
+        <div class="hero">
+          <div class="pizzasSnap" id="pizzasSnap">
+            <!-- Slides generados por JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTENIDO INFERIOR -->
+      <div class="content" id="productContent">
+        <div class="loading-placeholder">
+          <div class="spinner"></div>
+          <span>Cargando menú...</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ── FIREBASE CONFIG ──
+    const firebaseConfig = {
+      apiKey: "AIzaSyDUqCjwPffs1kY6ERLKd_IoDa1d_mEqooc",
+      authDomain: "peppes-stock.firebaseapp.com",
+      databaseURL: "https://peppes-stock-default-rtdb.firebaseio.com",
+      projectId: "peppes-stock",
+      storageBucket: "peppes-stock.firebasestorage.app",
+      messagingSenderId: "32282596924",
+      appId: "1:32282596924:web:9d65e5ed462e852ea89539"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const IMG_PATH = "assets/";
+
+    function resolveImg(path) {
+      if (!path) return "https://via.placeholder.com/300x300?text=Peppe's";
+      const p = String(path).trim();
+      if (p.startsWith('http') || p.startsWith('assets/') || p.startsWith('data:')) return p;
+      return IMG_PATH + p;
+    }
+
+    // ── DATOS ESTÁTICOS DE RESPALDO ──
+    const STATIC_PRODUCTS = {
+      pizzas: [
+        { id: "margarita",  type: "Clásica",      name: "Margarita",       desc: "Salsa de tomate y mozzarella.",                                     img: "assets/margarita.png",         prices: { P: 4990, M: 9990, G: 12990 }, available: true },
+        { id: "jamon",      type: "Clásica",      name: "Jamón Queso",     desc: "Clásica combinación de jamón y queso.",                             img: "assets/jamon-queso.png",       prices: { P: 4990, M: 9990, G: 12990 }, available: true },
+        { id: "napo",       type: "Clásica",      name: "Napolitana",      desc: "Tomate natural, aceitunas y orégano.",                              img: "assets/napo.png",              prices: { P: 4990, M: 9990, G: 12990 }, available: true },
+        { id: "pepperoni",  type: "Clásica",      name: "Pepperoni",       desc: "Mucho pepperoni y mozzarella.",                                     img: "assets/pepperoni.png",         prices: { P: 4990, M: 9990, G: 12990 }, available: true },
+        { id: "hawaiana",   type: "De la Casa",   name: "Hawaiana",        desc: "Salsa de tomate, mozzarella, tocino y piña.",                       img: "assets/hawaiana.png",          prices: { P: 5990, M: 9990, G: 14990 }, available: true },
+        { id: "pesto",      type: "De la Casa",   name: "Pesto",           desc: "Salsa de tomate con pesto artesanal y mozzarella.",                 img: "assets/pesto.png",             prices: { P: 6990, M: 11990, G: 14990 }, available: true },
+        { id: "botticello", type: "De la Casa",   name: "Botticello",      desc: "Salsa de tomate, mozzarella, salame, champiñones y aceitunas.",     img: "assets/botticello.png",        prices: { P: 6990, M: 11990, G: 14990 }, available: true },
+        { id: "selvaggio",  type: "De la Casa",   name: "Peppe Selvaggio", desc: "Salsa de tomate, mozzarella, pepperoni y champiñones.",             img: "assets/peppe-selvaggio.png",   prices: { P: 6990, M: 11990, G: 14990 }, available: true },
+        { id: "regalona",   type: "Especial",     name: "Regalona",        desc: "Salsa de tomate, mozzarella, tocino y choclo.",                     img: "assets/regalona.png",          prices: { P: 5990, M: 10990, G: 13990 }, available: true },
+        { id: "pizzana",    type: "Especial",     name: "Pizzaña",         desc: "Salsa de tomate, mozzarella, salsa boloñesa y tocino.",             img: "assets/pizzaña.png",           prices: { P: 6990, M: 10990, G: 13990 }, available: true },
+        { id: "mamma",      type: "Especial",     name: "Mamma Nostra",    desc: "Salsa de tomate, mozzarella, tocino, champiñón y queso azul.",      img: "assets/mamma-nostra.png",      prices: { P: 6990, M: 10990, G: 14990 }, available: true },
+        { id: "4quesos",    type: "Especial",     name: "4 Quesos",        desc: "Mozzarella, azul, parmesano y gouda.",                             img: "assets/4-quesos.png",          prices: { P: 6990, M: 12990, G: 15990 }, available: true },
+        { id: "veggie_it",  type: "Vegetariana",  name: "Veggie Italiana", desc: "Verduras frescas al estilo italiano.",                              img: "assets/veggie-italiana.png",   prices: { P: 4990, M: 8990, G: 11990 }, available: true },
+        { id: "veggie_gold",type: "Vegetariana",  name: "Veggie Gold",     desc: "La versión premium vegetariana.",                                   img: "assets/veggie-gold.png",       prices: { P: 4990, M: 8990, G: 11990 }, available: true },
+        { id: "bella",      type: "Vegetariana",  name: "Bella Rossa",     desc: "Salsa de tomate, mozzarella, tomate y pimientos.",                  img: "assets/bella-rossa.png",       prices: { P: 4990, M: 8990, G: 11990 }, available: true },
+        { id: "nonna_v",    type: "Vegetariana",  name: "Nonna Verde",     desc: "Salsa de tomate, mozzarella, espinaca y albahaca.",                 img: "assets/nonna-verde.png",       prices: { P: 4990, M: 8990, G: 11990 }, available: true },
+        { id: "porto",      type: "Premium",      name: "Porto",           desc: "Salsa de tomate, mozzarella, cebolla, tocino y camarones.",        img: "assets/porto.png",             prices: { P: 7990, M: 15990, G: 17990 }, available: true },
+        { id: "carnevale",  type: "Premium",      name: "Carnevale",       desc: "Mix carnívoro premium.",                                           img: "assets/carnevale.png",         prices: { P: 8990, M: 15990, G: 17990 }, available: true },
+        { id: "iberica",    type: "Premium",      name: "Ibérica",         desc: "Salsa de tomate, mozzarella, salame, pepperoni, aceitunas y chorizo.", img: "assets/iberica.png",        prices: { P: 8990, M: 15990, G: 17990 }, available: true },
+        { id: "pizzomuno",  type: "Premium",      name: "Pizzomuno",       desc: "La especialidad de la casa.",                                      img: "assets/pizzomuno.png",         prices: { P: 9990, M: 16990, G: 18990 }, available: true }
+      ],
+      lasanas: [
+        { id: "las_bolo",   type: "Pastas", name: "Lasaña Boloñesa",     desc: "Salsa boloñesa artesanal, salsa blanca y mozzarella.", img: "assets/lasaña-boloñesa.png",    prices: { U: 6990 }, available: true },
+        { id: "las_veggie", type: "Pastas", name: "Lasaña Vegetariana",  desc: "Base salsa napolitana, mozzarella y albahaca.",        img: "assets/lasaña-vegetariana.png", prices: { U: 6990 }, available: true }
+      ],
+      pastas: [
+        { id: "pas_bolo",  type: "Pastas", name: "Pasta Boloñesa",     desc: "Salsa boloñesa artesanal con carne.",              img: "assets/pasta-boloñesa.png",    prices: { U: 6990 }, available: true },
+        { id: "pas_4que",  type: "Pastas", name: "Pasta 4 Quesos",     desc: "Fusión de 4 quesos.",                              img: "assets/pasta-4-quesos.png",    prices: { U: 6990 }, available: true },
+        { id: "pas_amat",  type: "Pastas", name: "Pasta Amatricciana", desc: "Salsa de tomate, cebolla, tocino y toque picante.", img: "assets/pasta-amatricciana.png",prices: { U: 6990 }, available: true },
+        { id: "pas_pest",  type: "Pastas", name: "Pasta Pesto",        desc: "Salsa pesto artesanal.",                           img: "assets/pasta-pesto.png",       prices: { U: 6990 }, available: true }
+      ],
+      antojos: [
+        { id: "palitos_q", type: "Snack", name: "Palitos Ajo-Queso",     desc: "8 unidades con ajo y queso.",                        img: "assets/palitos-ajo-queso.png",     prices: { U: 5990 }, available: true },
+        { id: "palitos_n", type: "Snack", name: "Palitos Napolitanos",   desc: "8 unidades con salsa y mozzarella.",                 img: "assets/palitos-napolitanos.png",   prices: { U: 5990 }, available: true },
+        { id: "pan",       type: "Snack", name: "Pan con Ajo",           desc: "8 unidades con mantequilla de ajo y orégano.",      img: "assets/pan_con_ajo.png",           prices: { U: 4990 }, available: true },
+        { id: "deditos",   type: "Snack", name: "Deditos de Mozzarella", desc: "6 deditos de mozzarella.",                          img: "assets/deditos-de-mozzarella.png", prices: { U: 5600 }, available: true }
+      ],
+      ens: [
+        { id: "cesar", type: "Fresh", name: "César", desc: "Lechuga, pollo, tocino y aderezo.", img: "assets/césar.png", prices: { U: 5990 }, available: true }
+      ],
+      postres: [
+        { id: "Brownie", type: "Dulce", name: "Brownie", desc: "Chocolate belga premium.", img: "assets/brownie.png", prices: { U: 3990 }, available: true }
+      ],
+      bebidas: [
+        { id: "cocacola_original",   type: "Bebida", name: "Coca Cola 220ml",      desc: "Formato personal.",  img: "assets/coca-cola-original-220ml.png", prices: { U: 1000 }, available: true },
+        { id: "cocacola_zero_220",   type: "Bebida", name: "Coca Cola Zero 220ml", desc: "Formato personal.",  img: "assets/coca-cola-zero-220.png",       prices: { U: 1000 }, available: true },
+        { id: "sprite_220",          type: "Bebida", name: "Sprite 220ml",         desc: "Formato personal.",  img: "assets/sprite-220.png",               prices: { U: 1000 }, available: true },
+        { id: "cocacola_original_15",type: "Bebida", name: "Coca Cola 1.5L",       desc: "Formato familiar.",  img: "assets/coca-cola-original.png",       prices: { U: 2500 }, available: true },
+        { id: "cocacola_zero_15",    type: "Bebida", name: "Coca Cola Zero 1.5L",  desc: "Sin azúcar.",        img: "assets/coca-cola-zero.png",            prices: { U: 2500 }, available: true }
+      ]
+    };
+
+    // Categorías visibles en el menú (excluimos promo que tiene su propia lógica)
+    const CATEGORIES = [
+      { id: "pizzas",  name: "Pizzas" },
+      { id: "lasanas", name: "Lasañas" },
+      { id: "pastas",  name: "Pastas" },
+      { id: "antojos", name: "Antojos" },
+      { id: "ens",     name: "Ensaladas" },
+      { id: "postres", name: "Postres" },
+      { id: "bebidas", name: "Bebidas" }
+    ];
+
+    const SIZE_LABELS = { P: "Personal", M: "Mediana", G: "Grande", U: "Precio" };
+
+    let remoteInventory = {};
+    let activeCatId = "pizzas";
+    let activeIndex = 0;
+    let currentProducts = [];
+
+    // ── HELPERS ──
+    function getProducts(catId) {
+      const remote = Object.values(remoteInventory[catId] || {}).filter(p => p && p.id);
+      if (remote.length > 0) return remote;
+      return STATIC_PRODUCTS[catId] || [];
+    }
+
+    function formatPrice(n) {
+      return "$" + Number(n).toLocaleString("es-CL");
+    }
+
+    // ── RENDER CATEGORÍAS ──
+    function renderCategories() {
+      const track = document.getElementById("catsTrack");
+      track.innerHTML = CATEGORIES.map(cat => `
+        <button class="catPill ${cat.id === activeCatId ? 'isActive' : ''}"
+                onclick="selectCategory('${cat.id}')">
+          ${cat.name}
+        </button>
+      `).join("");
+    }
+
+    // ── RENDER CARRUSEL DE IMÁGENES ──
+    function renderCarousel() {
+      const snap = document.getElementById("pizzasSnap");
+      snap.innerHTML = currentProducts.map((p, idx) => `
+        <div class="pizzaSlide" data-index="${idx}">
+          <img
+            class="prodSlideImg ${p.available === false ? 'agotado-overlay' : ''}"
+            src="${resolveImg(p.img)}"
+            alt="${p.name}"
+            onerror="this.src='https://via.placeholder.com/300x300?text=Peppe\\'s'"
+          />
+        </div>
+      `).join("");
+
+      // Observer para detectar slide visible
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            activeIndex = parseInt(e.target.dataset.index);
+            renderProductInfo();
+            renderDots();
+          }
+        });
+      }, { root: snap, threshold: 0.6 });
+
+      document.querySelectorAll(".pizzaSlide").forEach(s => observer.observe(s));
+      snap.scrollLeft = 0;
+      activeIndex = 0;
+    }
+
+    // ── RENDER DOTS ──
+    function renderDots() {
+      const container = document.getElementById("dotsRow");
+      if (!container) return;
+      if (currentProducts.length <= 1) { container.innerHTML = ""; return; }
+      container.innerHTML = currentProducts.map((_, i) =>
+        `<div class="dot ${i === activeIndex ? 'active' : ''}"></div>`
+      ).join("");
+    }
+
+    // ── RENDER TÍTULO (en la zona roja) ──
+    function renderTitle() {
+      const p = currentProducts[activeIndex];
+      if (!p) return;
+      const typeEl = document.getElementById("productType");
+      const nameEl = document.getElementById("productName");
+      if (p.type) {
+        typeEl.textContent = p.type;
+        typeEl.style.display = "inline-block";
+      } else {
+        typeEl.style.display = "none";
+      }
+      nameEl.textContent = p.name || "---";
+    }
+
+    // ── RENDER INFO PRODUCTO (zona blanca) ──
+    function renderProductInfo() {
+      const p = currentProducts[activeIndex];
+      if (!p) return;
+
+      renderTitle();
+
+      const prices = p.prices || {};
+      const priceKeys = Object.keys(prices).filter(k => prices[k] > 0);
+      const isAgotado = p.available === false;
+
+      const pricesHtml = priceKeys.length > 0
+        ? `<div class="prices-row">
+            ${priceKeys.map(k => `
+              <div class="price-chip ${isAgotado ? 'agotado' : ''}">
+                <span class="size-label">${SIZE_LABELS[k] || k}</span>
+                <span class="size-price">${formatPrice(prices[k])}</span>
+              </div>
+            `).join("")}
+          </div>`
+        : "";
+
+      document.getElementById("productContent").innerHTML = `
+        <div style="text-align: center;">
+          ${isAgotado ? '<span class="badge-agotado">AGOTADO</span>' : ''}
+          <p class="product-desc">${p.desc || ""}</p>
+          ${pricesHtml}
+          <div id="dotsRow" class="dots-row"></div>
+          <a href="index.html" class="btn-pedir">🍕 Hacer Pedido</a>
+        </div>
+      `;
+
+      renderDots();
+    }
+
+    // ── SELECCIONAR CATEGORÍA ──
+    function selectCategory(catId) {
+      activeCatId = catId;
+      activeIndex = 0;
+      currentProducts = getProducts(catId);
+
+      renderCategories();
+      renderCarousel();
+
+      if (currentProducts.length > 0) {
+        renderProductInfo();
+      } else {
+        document.getElementById("productName").textContent = "Sin productos";
+        document.getElementById("productType").style.display = "none";
+        document.getElementById("productContent").innerHTML = `
+          <div class="loading-placeholder">
+            <span>No hay productos en esta categoría aún.</span>
+          </div>
+        `;
+      }
+    }
+
+    // ── INIT ──
+    function init() {
+      renderCategories();
+      selectCategory("pizzas");
+
+      // Cargar datos de Firebase
+      db.ref("inventory_clean").on("value", snap => {
+        const data = snap.val();
+        if (data) {
+          remoteInventory = data;
+          // Re-renderizar la categoría activa con datos actualizados
+          selectCategory(activeCatId);
+        }
+      });
+    }
+
+    window.addEventListener("load", init);
+  </script>
+</body>
+</html>

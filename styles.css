@@ -1,0 +1,509 @@
+/* =========================
+   RESET & BASE
+   ========================= */
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:#000;
+  color:#fff;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  display:flex;
+  justify-content:center;
+  padding:24px 16px;
+}
+
+/* =========================
+   LAYOUT
+   ========================= */
+.wrap{ width:min(520px, 100%); }
+
+.glass{
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.16);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+}
+
+.card{
+  border-radius:28px;
+  padding:24px 20px;
+  text-align:center;
+}
+
+/* =========================
+   HOME
+   ========================= */
+.status{
+  font-weight:800;
+  font-size:18px;
+  margin:14px 0;
+}
+
+.promo-box{
+  margin:14px auto;
+  padding:16px;
+  border-radius:22px;
+}
+
+.promo-badge{
+  display:inline-block;
+  padding:6px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+  margin-bottom:10px;
+  background: rgba(255,255,255,0.15);
+}
+
+.promo-text{
+  font-size:18px;
+  font-weight:900;
+}
+
+.order-btn{
+  display:block;
+  width:100%;
+  margin:18px auto;
+  padding:20px;
+  border-radius:999px;
+  text-align:center;
+  text-decoration:none;
+  font-weight:900;
+  font-size:20px;
+  color:#fff;
+  background: linear-gradient(180deg, #ff2a2a, #c60000);
+  box-shadow: 0 18px 36px rgba(0,0,0,0.55);
+}
+
+.review-btn{
+  display:block;
+  margin:14px auto;
+  padding:18px;
+  border-radius:999px;
+  text-decoration:none;
+  color:#fff;
+  font-weight:900;
+  background: rgba(255,255,255,0.1);
+}
+
+/* =========================
+   BOTÓN MENÚ (HOME)
+   ========================= */
+.menu-btn{
+  display:block;
+  width:100%;
+  margin:16px auto;
+  padding:18px;
+  border-radius:22px;
+  text-align:center;
+  text-decoration:none;
+  font-weight:900;
+  font-size:18px;
+  color:#fff;
+  background: linear-gradient(180deg, #ff2a2a, #c60000);
+  box-shadow: 0 16px 36px rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.menu-btn:active{ transform:scale(0.98); }
+
+/* =========================
+   MENÚ
+   ========================= */
+.menu-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:16px;
+}
+
+.back-btn{
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  text-decoration:none;
+  font-size:26px;
+  color:#fff;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.18);
+}
+
+.menu-title{
+  font-size:22px;
+  font-weight:900;
+  margin:0;
+}
+
+.menu-spacer{ width:42px; }
+
+/* categorías (menú antiguo) */
+.menu-categories{
+  display:flex;
+  gap:10px;
+  overflow-x:auto;
+  margin-bottom:18px;
+}
+
+.cat{
+  padding:10px 16px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.08);
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+.cat.active{
+  background: linear-gradient(180deg, #ff2a2a, #c60000);
+  border-color:transparent;
+}
+
+/* productos (menú antiguo) */
+.menu-list{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.menu-item{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:14px;
+  border-radius:22px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+.menu-item img{
+  width:96px;
+  height:auto;
+  object-fit:contain;
+}
+.menu-info{
+  flex:1;
+  text-align:left;
+}
+.menu-info h3{
+  margin:0 0 4px;
+  font-size:16px;
+  font-weight:900;
+}
+.menu-info p{
+  margin:0;
+  font-size:13px;
+  color: rgba(255,255,255,0.7);
+}
+.menu-info .price{
+  display:block;
+  margin-top:6px;
+  font-size:16px;
+  font-weight:900;
+}
+.view-btn{
+  padding:10px 14px;
+  border-radius:14px;
+  text-decoration:none;
+  font-weight:900;
+  color:#fff;
+  background: linear-gradient(180deg, #ff2a2a, #c60000);
+}
+
+/* =========================
+   FOOTER
+   ========================= */
+footer{
+  margin-top:14px;
+  font-size:12px;
+  color: rgba(255,255,255,0.5);
+}
+
+/* =========================
+   PRODUCTO (pantalla única)
+   - estilos específicos
+   ========================= */
+
+/* carrito arriba derecha */
+.topBar{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:12px;
+}
+
+/* =========================
+   SWIPERS: reglas compartidas
+   ========================= */
+
+/* ✅ Fix: Swiper auto width (categorías y extras) */
+.swiper.cats .swiper-slide,
+.swiper.extras .swiper-slide{
+  width:auto !important;
+}
+.swiper.cats .swiper-wrapper,
+.swiper.extras .swiper-wrapper{
+  align-items:center;
+}
+
+/* 🎯 Efecto micro suave en categorías */
+.swiper.cats .swiper-slide{
+  transition: transform .22s ease, opacity .22s ease;
+  transform-origin:center;
+}
+
+/* ✅ DRAG DESKTOP cats */
+#catsSwiper{
+  width:100%;
+  overflow:hidden;
+  touch-action: pan-y;
+  -webkit-user-select:none;
+  user-select:none;
+}
+#catsSwiper .swiper-wrapper{ touch-action:auto; }
+#catsSwiper .swiper-slide{ cursor:grab; }
+#catsSwiper:active .swiper-slide{ cursor:grabbing; }
+#catsSwiper .catPill{
+  touch-action: pan-y;
+  -webkit-user-drag:none;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+/* Si por error #catsSwiper tiene .menu-categories, neutraliza sus reglas */
+#catsSwiper.menu-categories{
+  display:block;
+  overflow:hidden;
+  gap:0;
+}
+
+/* =========================
+   TIPOGRAFÍA PEPPE'S
+   ========================= */
+.productTitle{
+  font-family:'Titan One', cursive;
+  font-weight:400;
+  font-size:18px;
+  line-height:1.1;
+  letter-spacing:0.4px;
+  text-transform:uppercase;
+}
+
+.productPrice{
+  font-family:'Poppins', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight:600;
+  font-size:15px;
+}
+
+/* =========================
+   PRODUCTS SWIPER (pizza img)
+   ========================= */
+#productsSwiper{
+  width:240px;
+  height:240px;
+}
+
+#productsSwiper .swiper-slide{
+  width:240px;
+  height:240px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.prodSlideImg{
+  width:240px;
+  height:240px;
+  object-fit:contain;
+  filter: drop-shadow(0 18px 18px rgba(0,0,0,.18));
+  transform: translateY(8px);
+  transition: transform 220ms ease, opacity 220ms ease;
+}
+
+/* ===== Tamaños P/M/G (escala de pizza) ===== */
+/* Nota: el JS debe setear data-size en #productsSwiper */
+
+#productsSwiper[data-size="P"] .prodSlideImg{
+  transform: translateY(8px) scale(0.92);
+}
+
+#productsSwiper[data-size="M"] .prodSlideImg{
+  transform: translateY(8px) scale(1);
+}
+
+#productsSwiper[data-size="G"] .prodSlideImg{
+  transform: translateY(8px) scale(1.10);
+}
+
+
+/* =========================
+   DESCRIPCIÓN PRODUCTO
+   ========================= */
+.desc#desc{
+  font-size:14px;
+  line-height:1.55;
+  color:#6b6b6b;
+  text-align:center;
+  max-width:300px;
+  padding:0 16px;
+
+  /* mantiene layout estable cuando cambia la descripción */
+  min-height:44px;
+
+  /* sube un poco el bloque y deja aire con Extras */
+  margin: -12px auto 32px;
+
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+/* =========================
+   SELECTOR TAMAÑO
+   ========================= */
+.size-row{
+  margin-bottom:28px;
+  position:relative;
+  z-index:20; /* asegura click sobre overlays */
+}
+.size{ pointer-events:auto; }
+
+/* =========================
+   EXTRAS
+   ========================= */
+.sectionTitle{
+  margin-top:36px;
+  margin-bottom:14px;
+  font-size:16px;
+  font-weight:700;
+  color:#111;
+}
+#extrasSwiper{ margin-bottom:22px; }
+
+/* =========================
+   PIZZAS SWIPER (feel pills)
+   ========================= */
+#pizzasSwiper{
+  width:310px;
+  max-width:78%;
+  overflow:visible;
+  touch-action: pan-y;
+  cursor:pointer;
+  user-select:none;
+  padding:6px 0 0;
+}
+#pizzasSwiper:active{ cursor:pointer; }
+#pizzasSwiper .swiper-slide{ width:auto; }
+#pizzasSwiper .pizza-slide{
+  width:260px; /* ajusta 240–300 */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition: transform .18s ease;
+}
+#pizzasSwiper .pizza-slide:hover{ transform: translateY(-2px); }
+#pizzasSwiper .pizza-slide:active{ transform: scale(0.99); }
+#pizzasSwiper .pizza-slide img{
+  width:100%;
+  display:block;
+  pointer-events:none;
+  user-select:none;
+  filter: drop-shadow(0 22px 36px rgba(0,0,0,.35));
+}
+
+/* =========================
+   TOPPINGS OVERLAY
+   - evita bloquear clicks
+   ========================= */
+.toppings-layer,
+.topping{
+  pointer-events:none;
+}
+
+/* =========================
+   CANTIDAD (producto.html)
+   ========================= */
+.qty{
+  flex:1.1;
+  height:56px;
+  border-radius:999px;
+  background:#f4f4f4;
+  color:#111; /* contexto oscuro (no hereda blanco) */
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:6px;
+  box-shadow: 0 14px 28px rgba(0,0,0,.12);
+}
+
+.qbtn{
+  width:44px;
+  height:44px;
+  border-radius:999px;
+  border:0;
+  background:#fff;
+  cursor:pointer;
+  font-size:22px;
+  font-weight:900;
+  color:#111;
+  box-shadow: 0 10px 20px rgba(0,0,0,.14);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.qbtn:hover{ transform: translateY(-1px); }
+.qbtn:active{
+  transform: scale(0.94);
+  box-shadow: 0 6px 14px rgba(0,0,0,.12);
+}
+
+.qnum{
+  width:52px;
+  text-align:center;
+  font-size:18px;
+  font-weight:900;
+  color:#111;
+  opacity:1;
+  line-height:1;
+  user-select:none;
+  pointer-events:none;
+}
+
+/* =========================
+   CANTIDAD (index/menu.html)
+   - estructura qtyBox/qtyBtn/qtyVal
+   ========================= */
+.qtyBox{
+  background:#f4f4f4;
+  border-radius:999px;
+  padding:6px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:#111;
+}
+
+.qtyBtn{
+  width:44px;
+  height:44px;
+  border-radius:999px;
+  border:0;
+  background:#fff;
+  cursor:pointer;
+  font-size:22px;
+  font-weight:900;
+  color:#111;
+  box-shadow: 0 10px 20px rgba(0,0,0,.14);
+}
+
+#qty,
+.qtyVal{
+  width:44px;
+  font-weight:900;
+  font-size:18px;
+  color:#111;
+  opacity:1;
+  text-align:center;
+  user-select:none;
+  pointer-events:none;
+}
