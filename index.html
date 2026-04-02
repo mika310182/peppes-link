@@ -58,12 +58,21 @@
           console.log('[GooglePlaces] place_changed disparado, place:', place);
 
           if (!place.geometry || !place.address_components) {
-            console.log('[GooglePlaces] place NO tiene geometry o address_components');
+            console.warn('[GooglePlaces] Place ignorado (sin datos completos):', place);
             return;
           }
 
+          console.log('[GooglePlaces] Place válido procesado:', place);
+
+          const route = place.address_components.find(c => c.types.includes('route'));
           const streetNumber = place.address_components.find(c => c.types.includes('street_number'));
           console.log('[GooglePlaces] streetNumber:', streetNumber);
+
+          // Extraer valores como strings
+          const street = route?.long_name || '';
+          const streetNumberVal = streetNumber?.long_name || '';
+          
+          console.log('[GooglePlaces] street:', street, 'streetNumber:', streetNumberVal);
 
           // Usar window para asegurar acceso global
           window.customerLocation = {
@@ -71,6 +80,8 @@
             coords: { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() },
             glink: `https://www.google.com/maps?q=${place.geometry.location.lat()},${place.geometry.location.lng()}`,
             hasHouseNumber: !!streetNumber,
+            street: street,
+            streetNumber: streetNumberVal,
             rawAddressDetails: place.address_components
           };
 
@@ -2755,6 +2766,10 @@
       const hasHouseNumber = (addressDetails && addressDetails.house_number) ? true : hasNumberInput;
       window.customerLocation.hasHouseNumber = hasHouseNumber;
       window.customerLocation.rawAddressDetails = addressDetails;
+      window.customerLocation.street = addressDetails?.road || userStreetValue;
+      window.customerLocation.streetNumber = addressDetails?.house_number || '';
+
+      console.log("VALIDACIÓN updatePricingByCoords:", window.customerLocation);
 
       if (deliveryRow) {
         deliveryRow.style.display = "flex";
@@ -2817,7 +2832,7 @@
         // Force cleanup of delivery states
         state.deliveryCost = 0;
         clearTimeout(geocodeTimeout);
-        customerLocation = { address: '', coords: null, glink: '', hasHouseNumber: false, rawAddressDetails: null };
+        customerLocation = { address: '', coords: null, glink: '', hasHouseNumber: false, street: '', streetNumber: '', rawAddressDetails: null };
 
         if (confirmBtn) {
           confirmBtn.innerHTML = "Evaluando..."; // Let the explicit logic beneath override it
@@ -2859,7 +2874,8 @@
         const addressAuth = revData && revData.address ? revData.address : null;
         const osmLink = `https://www.openstreetmap.org/?mlat=${userLocation.lat}&mlon=${userLocation.lng}#map=18/${userLocation.lat}/${userLocation.lng}`;
 
-        customerLocation = { address: "Ubicación GPS", coords: userLocation, glink: osmLink, hasHouseNumber: !!(addressAuth && addressAuth.house_number), rawAddressDetails: addressAuth };
+        customerLocation = { address: "Ubicación GPS", coords: userLocation, glink: osmLink, hasHouseNumber: !!(addressAuth && addressAuth.house_number), street: addressAuth?.road || '', streetNumber: addressAuth?.house_number || '', rawAddressDetails: addressAuth };
+        console.log("VALIDACIÓN GPS:", customerLocation);
         btnGPS.innerHTML = "✅ Ubicación capturada";
         btnGPS.style.color = "var(--success-green)";
 
@@ -2883,7 +2899,7 @@
         clearTimeout(geocodeTimeout);
         if (state.isDelivery) {
           state.deliveryCost = 0;
-          customerLocation = { address: '', coords: null, glink: '', hasHouseNumber: false, rawAddressDetails: null };
+          customerLocation = { address: '', coords: null, glink: '', hasHouseNumber: false, street: '', streetNumber: '', rawAddressDetails: null };
           if (deliveryRow) {
             deliveryRow.innerHTML = `<span style="color:var(--muted)">Ingresa tu dirección para calcular el envío</span>`;
           }
@@ -2917,7 +2933,7 @@
       if (state.isDelivery) {
         if (!street) return false;
         if (!state.deliveryCost || state.deliveryCost <= 0) return false;
-        if (!customerLocation.hasHouseNumber || !customerLocation.rawAddressDetails) return false;
+        if (!customerLocation?.hasHouseNumber) return false;
       }
 
       return true;
@@ -2977,7 +2993,7 @@
 
         if (isValid) {
           btn.innerHTML = "Confirmar y Pagar →";
-        } else if (!customerLocation.hasHouseNumber || !customerLocation.rawAddressDetails) {
+        } else if (!customerLocation?.hasHouseNumber) {
           btn.innerHTML = "Revisa tu dirección 📍";
         } else if (state.deliveryCost === 0) {
           btn.innerHTML = "Fuera de zona 🚫";
@@ -3035,7 +3051,7 @@
       const ref = ""; // Safely defaulted since UI field was removed
       const note = document.getElementById("custNote").value.trim();
 
-      const showError = (elementId) => {
+      const showError = (elementId, message) => {
         const el = document.getElementById(elementId);
         if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -3043,6 +3059,11 @@
           el.style.transition = "box-shadow 0.3s";
           el.style.boxShadow = "0 0 0 2px var(--pepper-red, red)";
           setTimeout(() => el.style.boxShadow = "none", 2500);
+        }
+        if (message) {
+          alert(message);
+        }
+      };
         }
       };
 
@@ -3067,9 +3088,15 @@
 
       let finalAddress = "";
       if (state.isDelivery) {
-        if (!street || !state.deliveryCost || state.deliveryCost <= 0 || !customerLocation.hasHouseNumber || !customerLocation.rawAddressDetails) {
+        console.log("VALIDACIÓN:", customerLocation);
+        if (!street || !state.deliveryCost || state.deliveryCost <= 0) {
           e?.preventDefault?.();
           showError("address_street");
+          return;
+        }
+        if (!customerLocation?.hasHouseNumber) {
+          e?.preventDefault?.();
+          showError("address_street", "Falta calle o número para Delivery");
           return;
         }
         finalAddress = `${street}${number ? ', ' + number : ''}${ref ? ' (' + ref + ')' : ''}`;

@@ -26,11 +26,31 @@ exports.handler = async (event) => {
             return { statusCode: 500, body: JSON.stringify({ error: 'Missing MP_ACCESS_TOKEN env variable' }) };
         }
 
+        // Normalizar addressDetails (puede venir como array de Google Places o como objeto de Nominatim)
+        let normalizedAddress = null;
+        if (addressDetails) {
+            if (Array.isArray(addressDetails)) {
+                // Es array de Google Places - parsear para extraer road y house_number
+                const road = addressDetails.find(c => c.types.includes('route'));
+                const house_number = addressDetails.find(c => c.types.includes('street_number'));
+                normalizedAddress = {
+                    road: road?.long_name || null,
+                    house_number: house_number?.long_name || null
+                };
+            } else {
+                // Es objeto de Nominatim/OSM
+                normalizedAddress = {
+                    road: addressDetails.road || null,
+                    house_number: addressDetails.house_number || null
+                };
+            }
+        }
+
         if (metodo === 'Delivery') {
             if (!deliveryFee || deliveryFee <= 0) {
                 return { statusCode: 400, body: JSON.stringify({ error: 'Falta costo de envío para Delivery' }) };
             }
-            if (!addressDetails || !addressDetails.road || !addressDetails.house_number) {
+            if (!normalizedAddress || !normalizedAddress.road || !normalizedAddress.house_number) {
                 return { statusCode: 400, body: JSON.stringify({ error: 'Falta calle o número para Delivery' }) };
             }
         }
