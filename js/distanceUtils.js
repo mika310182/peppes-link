@@ -6,11 +6,9 @@
 const RESTAURANT_LAT = [-23.59636];
 const RESTAURANT_LNG = [-70.39323];
 
-/**
- * Calculates the Haversine distance between two points on Earth.
- * Returns distance in kilometers with 2 decimal precision.
- */
-function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+console.log("distanceUtils cargado correctamente");
+
+window.calculateDistanceKm = function(lat1, lon1, lat2, lon2) {
     const R = 6371; // Earth's radius in km
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -25,7 +23,7 @@ function calculateDistanceKm(lat1, lon1, lat2, lon2) {
 
     // Return distance in kilometers with 2 decimal precision as requested.
     return parseFloat(distance.toFixed(2));
-}
+};
 
 /**
  * Strict Delivery Pricing Table
@@ -34,7 +32,7 @@ function calculateDistanceKm(lat1, lon1, lat2, lon2) {
  * 1.1–2.0 km → $2500
  * ...
  */
-function getDeliveryPrice(distance) {
+window.getDeliveryPrice = function(distance) {
     if (distance < 0) return null;
     if (distance <= 1.0) return 2000;
     if (distance <= 2.0) return 2500;
@@ -49,4 +47,4 @@ function getDeliveryPrice(distance) {
 
     // If distance > 10 km: Return null
     return null;
-}
+};
