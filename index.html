@@ -1506,6 +1506,14 @@
       }
     }
   </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-16493571935"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'AW-16493571935');
+</script>
 </head>
 
 <body>
@@ -3227,6 +3235,16 @@
           sub = "Estamos revisando tu pedido para empezar a cocinarlo pronto.";
           color = "#888";
           peppeFile = "confirmación.png";
+          if (typeof gtag === 'function' && !localStorage.getItem('gtag_conversion_fired_' + id)) {
+            try {
+              gtag('event', 'conversion', {
+                'send_to': 'AW-16493571935/CONVERSION_ID',
+                'value': order.total || order.subtotal || 9990,
+                'currency': 'CLP'
+              });
+              localStorage.setItem('gtag_conversion_fired_' + id, 'true');
+            } catch (e) { console.warn('gtag conversion error:', e); }
+          }
           break;
         case "cocinando":
           title = "¡EN EL HORNO!";
