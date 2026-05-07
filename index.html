@@ -2060,7 +2060,7 @@
         // antes de consultar, para no depender solo del webhook que puede llegar tarde
         if (payment === 'approved') {
           try {
-            await fetch(`/.netlify/functions/confirm-payment`, {
+            await fetch(`/api/confirm-payment`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ orderId, authToken: auth || '' })
@@ -2076,7 +2076,7 @@
         const DELAY_MS = 2000;
 
         const intentarCargarOrden = () => {
-          fetch(`/.netlify/functions/get-order?id=${orderId}&token=${auth || ''}`)
+          fetch(`/api/get-order?id=${orderId}&token=${auth || ''}`)
             .then(res => res.json())
             .then(order => {
               if (order && !order.error) {
@@ -2152,7 +2152,7 @@
       // Dado que ".read: auth != null" nos bloquea del Firebase directo, usamos un Polling Seguro al endpoint
       activeOrderListener = setInterval(async () => {
         try {
-          const res = await fetch(`/.netlify/functions/get-order?id=${savedOrderId}&token=${savedAuthToken || ''}`);
+          const res = await fetch(`/api/get-order?id=${savedOrderId}&token=${savedAuthToken || ''}`);
           if (!res.ok) throw new Error("Order API failed");
           const order = await res.json();
 
@@ -2189,7 +2189,7 @@
       }, 7000); // Revisar cada 7 segundos para no bombardear el servidor
 
       // Hacer la primera carga de inmediato
-      fetch(`/.netlify/functions/get-order?id=${savedOrderId}&token=${savedAuthToken || ''}`)
+      fetch(`/api/get-order?id=${savedOrderId}&token=${savedAuthToken || ''}`)
         .then(r => r.json())
         .then(order => {
           if (order && !order.error) {
@@ -2229,7 +2229,7 @@
       const savedOrderId = localStorage.getItem('peppes_order_key');
       const savedAuthToken = localStorage.getItem('peppes_order_auth');
       if (savedOrderId) {
-        fetch(`/.netlify/functions/get-order?id=${savedOrderId}&token=${savedAuthToken || ''}`)
+        fetch(`/api/get-order?id=${savedOrderId}&token=${savedAuthToken || ''}`)
           .then(r => r.json())
           .then(order => {
             if (order && !order.error) {
@@ -3178,7 +3178,7 @@
         await db.ref('pending_orders/' + orderId).set(orderData);
 
         // 2. Llamar a la Netlify Function para crear la preferencia en MP
-        const res = await fetch('/.netlify/functions/create-preference', {
+        const res = await fetch('/api/create-preference', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

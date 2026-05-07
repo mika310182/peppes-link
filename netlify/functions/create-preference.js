@@ -89,7 +89,7 @@ exports.handler = async (event) => {
         const preference = {
             items: mpItems,
             external_reference: orderId,
-            notification_url: "https://peppes.cl/.netlify/functions/mp-webhook", // Endpoint para el webhook
+            notification_url: "https://peppes.cl/api/mp-webhook",
             back_urls: {
                 success: `https://peppes.cl/?payment=success&order=${orderId}&auth=${authToken}`,
                 pending: `https://peppes.cl/?payment=pending&order=${orderId}&auth=${authToken}`,
