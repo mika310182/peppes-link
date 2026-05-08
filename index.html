@@ -457,6 +457,14 @@
       color: #fff;
     }
 
+    .sizeBtn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      background: #eee;
+      color: #999;
+      pointer-events: none;
+    }
+
     .content {
       /* hero top(180) + pizza(340) - top height(450) = 70px overflow + sizes(54px) + aire(24px) = 148px */
       padding: 148px 22px 40px;
@@ -2278,7 +2286,11 @@
       const slides = document.querySelectorAll('.pizzaSlide img');
 
       list.forEach((p, index) => {
-        const isAgotado = p.available === false;
+        const hasStockBySize = p.stockBySize && typeof p.stockBySize === 'object';
+        const isAgotado = hasStockBySize
+          ? !Object.values(p.stockBySize).some(v => v === true)
+          : p.available === false;
+
         if (slides[index]) {
           slides[index].style.filter = isAgotado ? `grayscale(1) opacity(0.5)` : `none`;
         }
@@ -2287,8 +2299,34 @@
           btnAdd.disabled = isAgotado;
           btnAdd.innerText = isAgotado ? "AGOTADO" : "Agregar";
           btnAdd.style.background = isAgotado ? "#555" : "var(--black)";
+
+          updateSizeButtons(p);
         }
       });
+    }
+
+    function updateSizeButtons(p) {
+      const hasStockBySize = p.stockBySize && typeof p.stockBySize === 'object';
+      const sizeBtns = document.querySelectorAll(".sizeBtn");
+
+      sizeBtns.forEach(btn => {
+        if (hasStockBySize) {
+          btn.disabled = p.stockBySize[btn.dataset.size] === false;
+        } else {
+          btn.disabled = false;
+        }
+      });
+
+      const active = document.querySelector(".sizeBtn.isActive");
+      if (active && active.disabled) {
+        const firstAvailable = document.querySelector(".sizeBtn:not(:disabled)");
+        if (firstAvailable) {
+          state.size = firstAvailable.dataset.size;
+          sizeBtns.forEach(x => x.classList.toggle("isActive", x === firstAvailable));
+          renderExtras();
+          renderDetails();
+        }
+      }
     }
 
     function renderCategories() {
@@ -3389,7 +3427,7 @@
     document.getElementById("addToCart").onclick = addToCart;
     document.getElementById("sizes").onclick = (e) => {
       const b = e.target.closest(".sizeBtn");
-      if (b) {
+      if (b && !b.disabled) {
         state.size = b.dataset.size;
         document.querySelectorAll(".sizeBtn").forEach(x => x.classList.toggle("isActive", x === b));
         renderExtras(); renderDetails();

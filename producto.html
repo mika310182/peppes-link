@@ -145,6 +145,7 @@
       cursor:pointer; transition: all .2s ease;
     }
     .size.active{ background: var(--black); color:#fff; }
+    .size:disabled{ opacity:0.3; cursor:not-allowed; background:#eee; color:#999; pointer-events:none; }
 
     .content{
       padding: 24px;
@@ -300,6 +301,7 @@
 
     document.querySelectorAll(".size").forEach(btn => {
       btn.onclick = () => {
+        if (btn.disabled) return;
         size = btn.dataset.size;
         document.querySelectorAll(".size").forEach(s => s.classList.remove("active"));
         btn.classList.add("active");

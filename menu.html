@@ -586,7 +586,7 @@
       snap.innerHTML = currentProducts.map((p, idx) => `
         <div class="pizzaSlide" data-index="${idx}">
           <img
-            class="prodSlideImg ${p.available === false ? 'agotado-overlay' : ''}"
+            class="prodSlideImg ${(p.stockBySize && typeof p.stockBySize === 'object' ? !Object.values(p.stockBySize).some(v => v === true) : p.available === false) ? 'agotado-overlay' : ''}"
             src="${resolveImg(p.img)}"
             alt="${p.name}"
             onerror="this.src='https://via.placeholder.com/300x300?text=Peppe\\'s'"
@@ -644,12 +644,21 @@
 
       const prices = p.prices || {};
       const priceKeys = Object.keys(prices).filter(k => prices[k] > 0);
-      const isAgotado = p.available === false;
+      const hasStockBySize = p.stockBySize && typeof p.stockBySize === 'object';
+
+      const allAgotado = hasStockBySize
+        ? !Object.values(p.stockBySize).some(v => v === true)
+        : p.available === false;
+
+      const isSizeAgotado = (k) => {
+        if (hasStockBySize) return p.stockBySize[k] === false;
+        return allAgotado;
+      };
 
       const pricesHtml = priceKeys.length > 0
         ? `<div class="prices-row">
             ${priceKeys.map(k => `
-              <div class="price-chip ${isAgotado ? 'agotado' : ''}">
+              <div class="price-chip ${isSizeAgotado(k) ? 'agotado' : ''}">
                 <span class="size-label">${SIZE_LABELS[k] || k}</span>
                 <span class="size-price">${formatPrice(prices[k])}</span>
               </div>
@@ -659,7 +668,7 @@
 
       document.getElementById("productContent").innerHTML = `
         <div style="text-align: center;">
-          ${isAgotado ? '<span class="badge-agotado">AGOTADO</span>' : ''}
+          ${allAgotado ? '<span class="badge-agotado">AGOTADO</span>' : ''}
           <p class="product-desc">${p.desc || ""}</p>
           ${pricesHtml}
           <div id="dotsRow" class="dots-row"></div>

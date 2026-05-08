@@ -337,6 +337,32 @@
             color: var(--red);
         }
 
+        .size-badges {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 4px;
+        }
+        .size-badge {
+            padding: 2px 8px;
+            border-radius: 50px;
+            font-size: 9px;
+            font-weight: 800;
+            text-align: center;
+            line-height: 1.8;
+            min-width: 22px;
+        }
+        .size-badge.on {
+            background: rgba(46, 204, 113, 0.2);
+            color: var(--green);
+        }
+        .size-badge.off {
+            background: rgba(255, 49, 49, 0.2);
+            color: var(--red);
+            text-decoration: line-through;
+        }
+
         /* Orders Feed */
         .order-card {
             background: var(--card-bg);
@@ -812,6 +838,15 @@
                     </select>
                 </div>
 
+                <div class="form-group" style="margin-top:10px;">
+                    <label>Stock por Tamaño <small style="color:#888;font-weight:400;">(Pizzas con varios tamaños)</small></label>
+                    <div style="display:flex;gap:15px;margin-top:5px;">
+                        <label style="font-size:13px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="p-stock-p" checked> Personal (P)</label>
+                        <label style="font-size:13px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="p-stock-m" checked> Mediana (M)</label>
+                        <label style="font-size:13px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="p-stock-g" checked> Grande (G)</label>
+                    </div>
+                </div>
+
                 <div id="promo-days-area" style="display: none; margin-top: 15px;">
                     <label>Días de Promoción (Solo para categoria Promo)</label>
                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 5px;">
@@ -1238,9 +1273,18 @@
                 const price = p.prices?.U || p.prices?.P || 0;
                 return `
                 <div class="prod-card" onclick="editProduct('${p.id}', '${p.category}')">
-                    <span class="badge ${p.available ? 'badge-on' : 'badge-off'}">
-                        ${p.available ? 'DISPONIBLE' : 'AGOTADO'}
-                    </span>
+                    ${p.stockBySize && typeof p.stockBySize === 'object'
+                        ? Object.values(p.stockBySize).some(v => v === true)
+                            ? `<div class="size-badges">
+                                ${['P','M','G'].map(s => `
+                                  <span class="size-badge ${p.stockBySize[s] ? 'on' : 'off'}">${s}</span>
+                                `).join('')}
+                              </div>`
+                            : `<span class="badge badge-off">AGOTADO</span>`
+                        : `<span class="badge ${p.available ? 'badge-on' : 'badge-off'}">
+                            ${p.available ? 'DISPONIBLE' : 'AGOTADO'}
+                           </span>`
+                    }
                     <img src="${p.img || 'https://via.placeholder.com/300x180?text=Peppes+Pizza'}" class="prod-img" onerror="this.src='https://via.placeholder.com/300x180?text=Error+Imagen'">
                     <div class="prod-content">
                         <div class="prod-cat">${p.category || 'Sin categoría'}</div>
@@ -1447,6 +1491,15 @@
             // Compatibilidad para promociones y precios base
             if (product.prices.U > 0) product.prices.P = product.prices.U;
 
+            // Stock por tamaño para productos multi-tamaño (P/M/G)
+            if (product.prices.M > 0 || product.prices.G > 0) {
+                product.stockBySize = {
+                    P: document.getElementById('p-stock-p').checked,
+                    M: document.getElementById('p-stock-m').checked,
+                    G: document.getElementById('p-stock-g').checked
+                };
+            }
+
             try {
                 // Si la categoría cambió, borrar el producto de la categoría antigua
                 const oldCat = document.getElementById('p-cat').dataset.oldCat;
@@ -1487,6 +1540,17 @@
             document.getElementById('p-price-u').value = p.prices?.U || p.prices?.P || 0;
             document.getElementById('p-price-m').value = p.prices?.M || '';
             document.getElementById('p-price-g').value = p.prices?.G || '';
+
+            // Stock por tamaño
+            if (p.stockBySize) {
+                document.getElementById('p-stock-p').checked = p.stockBySize.P !== false;
+                document.getElementById('p-stock-m').checked = p.stockBySize.M !== false;
+                document.getElementById('p-stock-g').checked = p.stockBySize.G !== false;
+            } else {
+                document.getElementById('p-stock-p').checked = true;
+                document.getElementById('p-stock-m').checked = true;
+                document.getElementById('p-stock-g').checked = true;
+            }
 
             // Resetear y marcar días si es promo
             document.querySelectorAll('.promo-day').forEach(c => c.checked = false);
