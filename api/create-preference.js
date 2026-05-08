@@ -84,14 +84,14 @@ module.exports = async (req, res) => {
         failure: `${baseUrl}/?payment=failure&order=${orderId}&auth=${authToken}`
       },
       auto_return: 'approved',
-      statement_descriptor: 'PEPPES PIZZAS',
-      payment_methods: {
-        excluded_payment_types: [],
-        installments: 1
-      }
+      statement_descriptor: 'PEPPES PIZZAS'
     };
 
+    console.log("[create-preference] Enviando a MP:", JSON.stringify(preference, null, 2));
     const mpResponse = await postToMP('/checkout/preferences', ACCESS_TOKEN, preference);
+    console.log("[create-preference] RESPUESTA MP:", JSON.stringify(mpResponse, null, 2));
+    console.log("[create-preference] init_point:", mpResponse.init_point);
+    console.log("[create-preference] payment_methods permitidos:", JSON.stringify((mpResponse.payment_methods || []).map(pm => pm.id)));
 
     return res.status(200).json({
       init_point: mpResponse.init_point,
