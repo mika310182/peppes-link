@@ -5,47 +5,65 @@ const firebaseConfig = {
 };
 
 module.exports = async (req, res) => {
-  console.log("Webhook recibido:", req.body);
+  console.log("[MP-Webhook] method:", req.method);
+  console.log("[MP-Webhook] headers:", JSON.stringify(req.headers));
+  console.log("[MP-Webhook] query:", JSON.stringify(req.query));
+  console.log("[MP-Webhook] req.body (raw):", req.body);
+
+  if (req.method === 'GET') {
+    return res.status(200).send('OK');
+  }
 
   if (req.method !== 'POST') {
     return res.status(405).send('Metodo no permitido');
   }
 
   try {
-    const payload = req.body;
+    const payload = await parseBody(req);
+    console.log("[MP-Webhook] payload:", JSON.stringify(payload));
 
-    if (payload.type !== 'payment' || !payload.data || !payload.data.id) {
-      return res.status(200).send('Ignorado (no es un pago)');
+    let paymentId = payload?.data?.id || payload?.id || null;
+
+    const topic = payload?.topic || req.query?.topic;
+    if (topic === 'payment' && payload?.id) paymentId = payload.id;
+
+    if (!paymentId) {
+      paymentId = req.query?.id || req.query?.["data.id"] || null;
     }
 
-    const paymentId = payload.data.id;
-    const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
+    if (!paymentId) {
+      console.log("[MP-Webhook] No se encontro payment_id");
+      return res.status(200).send('Ignorado (no hay payment_id)');
+    }
 
+    console.log("[MP-Webhook] payment_id:", paymentId);
+
+    const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
     if (!ACCESS_TOKEN) {
-      console.error("Falta MP_ACCESS_TOKEN");
+      console.error("[MP-Webhook] Falta MP_ACCESS_TOKEN");
       return res.status(500).send('Error interno');
     }
 
     const payment = await getFromMP(`/v1/payments/${paymentId}`, ACCESS_TOKEN);
-    console.log(`Pago ${paymentId} estado: ${payment.status}`);
+    console.log(`[MP-Webhook] Pago ${paymentId} estado: ${payment.status}`);
 
     if (payment.status === 'approved') {
       const orderId = payment.external_reference;
       if (!orderId) {
-        console.error("No se encontro external_reference (orderId) en el pago");
+        console.error("[MP-Webhook] No se encontro external_reference");
         return res.status(200).send('Error: No hay ID de pedido');
       }
 
       const existingOrder = await getFirebaseData(`orders/${orderId}`);
       if (existingOrder) {
-        console.log(`El pedido ${orderId} ya estaba procesado.`);
+        console.log(`[MP-Webhook] Pedido ${orderId} ya estaba procesado`);
         return res.status(200).send('Ya procesado');
       }
 
       const pendingOrder = await getFirebaseData(`pending_orders/${orderId}`);
 
       if (!pendingOrder) {
-        console.error(`No se encontro el pedido ${orderId} en pending_orders`);
+        console.error(`[MP-Webhook] No se encontro ${orderId} en pending_orders`);
         return res.status(200).send('Pedido no encontrado');
       }
 
@@ -60,23 +78,54 @@ module.exports = async (req, res) => {
       await updateFirebaseData(`orders/${orderId}`, operationalOrder);
       await deleteFirebaseData(`pending_orders/${orderId}`);
 
-      console.log(`Pedido ${orderId} PROMOCIONADO exitosamente con estado "pendiente".`);
+      console.log(`[MP-Webhook] Pedido ${orderId} promovido exitosamente`);
 
     } else if (payment.status === 'rejected' || payment.status === 'cancelled') {
       const orderId = payment.external_reference;
       if (orderId) {
         await updateFirebaseData(`pending_orders/${orderId}`, { estado: "pago_fallido" });
-        console.log(`Pago rechazado para pedido ${orderId}`);
+        console.log(`[MP-Webhook] Pago rechazado para pedido ${orderId}`);
       }
     }
 
     return res.status(200).send('OK');
 
   } catch (err) {
-    console.error('Error en webhook:', err);
-    return res.status(500).send('Internal Server Error');
+    console.error('[MP-Webhook] Error:', err);
+    return res.status(200).send('OK');
   }
 };
+
+async function parseBody(req) {
+  if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
+    return req.body;
+  }
+
+  if (typeof req.body === 'string' && req.body.trim()) {
+    try { return JSON.parse(req.body); } catch (e) { /* not JSON */ }
+    try { return Object.fromEntries(new URLSearchParams(req.body)); } catch (e) { /* not form */ }
+    return { raw: req.body };
+  }
+
+  try {
+    const raw = await new Promise((resolve) => {
+      const chunks = [];
+      let settled = false;
+      req.on('data', chunk => { if (!settled) chunks.push(chunk); });
+      req.on('end', () => { settled = true; resolve(Buffer.concat(chunks).toString()); });
+      req.on('error', () => { settled = true; resolve(''); });
+      setTimeout(() => { if (!settled) { settled = true; resolve(''); } }, 5000);
+    });
+
+    if (!raw) return {};
+
+    try { return JSON.parse(raw); } catch (e) { /* not JSON */ }
+    try { return Object.fromEntries(new URLSearchParams(raw)); } catch (e) { /* not form */ }
+    return { raw };
+  } catch (e) {
+    return {};
+  }
+}
 
 function getFromMP(path, token) {
   return new Promise((resolve, reject) => {
