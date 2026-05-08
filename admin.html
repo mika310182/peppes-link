@@ -894,6 +894,12 @@
                 <button type="button" class="btn btn-secondary" style="flex: 1;"
                     onclick="closeModal('order')">Cerrar</button>
             </div>
+            <div style="margin-top: 10px;">
+                <button type="button" class="btn" style="width:100%; background:#441111; color:#ff6b6b; border:1px solid #662222;"
+                    onclick="archiveOrder()">🗂️ Archivar Pedido</button>
+                <p style="color: var(--text-dim); font-size: 11px; margin-top: 6px; text-align: center;">
+                    Archivar mueve el pedido a archived_orders como respaldo antes de eliminar.</p>
+            </div>
         </div>
     </div>
 
@@ -1200,49 +1206,6 @@
                 updateDashboardStats();
             });
 
-            // FIX CRITICO: Escuchar pending_orders/ para rescatar pedidos pagados
-            // que el webhook de MP no movio a orders/ (fallo del webhook)
-            db.ref('pending_orders').on('child_added', async snap => {
-                const order = { id: snap.key, ...snap.val() };
-                const estado = (order.estado || '').toLowerCase();
-                const esReciente = (Date.now() - (order.timestamp || 0)) < 3 * 60 * 1000;
-
-                if (estado === 'pendiente' || estado === 'pagado') {
-                    // El webhook lo marco como pendiente pero no lo movio a orders/
-                    console.warn("Pedido en pending_orders con estado pagado, rescatando:", order.id);
-                    try {
-                        await db.ref('orders/' + order.id).set(order);
-                        await db.ref('pending_orders/' + order.id).remove();
-                        console.log("Pedido rescatado a orders/:", order.id);
-                    } catch (e) {
-                        console.error("Error rescatando pedido:", e.message);
-                    }
-                } else if (estado === 'pago_pendiente' && !esReciente) {
-                    // Lleva mas de 3 min esperando - mostrarlo con alerta
-                    const alreadyShown = allOrders.some(o => o.id === order.id);
-                    if (!alreadyShown) {
-                        console.warn("Pedido atascado en pago_pendiente:", order.id);
-                        allOrders.unshift({ ...order, _atascado: true });
-                        renderOrders(allOrders);
-                        updateDashboardStats();
-                    }
-                }
-            });
-
-            // Cuando el webhook llega tarde y actualiza pending_orders
-            db.ref('pending_orders').on('child_changed', async snap => {
-                const order = { id: snap.key, ...snap.val() };
-                const estado = (order.estado || '').toLowerCase();
-                if (estado === 'pendiente' || estado === 'pagado') {
-                    console.log("Webhook tardio detectado, rescatando:", order.id);
-                    try {
-                        await db.ref('orders/' + order.id).set(order);
-                        await db.ref('pending_orders/' + order.id).remove();
-                    } catch (e) {
-                        console.error("Error moviendo pedido:", e.message);
-                    }
-                }
-            });
         }
 
         // --- RENDERING ---
@@ -1336,8 +1299,7 @@
             }
 
             const html = orders.map(o => `
-                <div class="order-card" onclick="manageOrder('${o.id}')" style="cursor: pointer; ${o._atascado ? 'border-color: #f1c40f; background: rgba(241,196,15,0.05);' : ''}">
-                    ${o._atascado ? '<div style="background: #f1c40f; color: #000; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 6px 6px 0 0; margin: -20px -20px 10px -20px;">⚠️ PAGO NO CONFIRMADO - Verificar en MP</div>' : ''}
+                <div class="order-card" onclick="manageOrder('${o.id}')" style="cursor: pointer;">
                     <div class="order-info">
                         <div style="display: flex; align-items: center; gap: 10px;">
                            <div style="width: 8px; height: 8px; border-radius: 50%; background: ${o.estado === 'pendiente' ? 'var(--blue)' : 'transparent'}"></div>
@@ -1830,10 +1792,39 @@
             try {
                 await db.ref(`orders/${id}`).update({ estado: newStatus });
                 closeModal('order');
-                // No alert para no interrumpir el flujo si hay muchos pedidos, 
-                // pero como el usuario lo pidió, pondremos una pequeña confirmación visual
             } catch (e) {
                 alert("❌ Error: " + e.message);
+            }
+        }
+
+        async function archiveOrder() {
+            const id = document.getElementById('manage-order-id').value;
+            if (!id) return;
+
+            if (!confirm(`🗂️ ¿Archivar pedido #${id.slice(-5)}?\n\nSe moverá a archived_orders como respaldo y se eliminará del dashboard operativo.`)) return;
+
+            try {
+                const snap = await db.ref(`orders/${id}`).once('value');
+                const order = snap.val();
+                if (!order) {
+                    alert("❌ Pedido no encontrado en Firebase.");
+                    return;
+                }
+
+                const archiveData = {
+                    ...order,
+                    _archivedAt: Date.now(),
+                    _archivedBy: (auth.currentUser && auth.currentUser.email) || 'admin'
+                };
+
+                await db.ref(`archived_orders/${id}`).set(archiveData);
+                await db.ref(`orders/${id}`).remove();
+
+                closeModal('order');
+                console.log(`🗂️ Pedido ${id} archivado exitosamente.`);
+            } catch (e) {
+                console.error("❌ Error al archivar:", e);
+                alert("❌ Error al archivar: " + e.message);
             }
         }
 
