@@ -91,7 +91,8 @@ module.exports = async (req, res) => {
     const mpResponse = await postToMP('/checkout/preferences', ACCESS_TOKEN, preference);
     console.log("[create-preference] RESPUESTA MP:", JSON.stringify(mpResponse, null, 2));
     console.log("[create-preference] init_point:", mpResponse.init_point);
-    console.log("[create-preference] payment_methods permitidos:", JSON.stringify((mpResponse.payment_methods || []).map(pm => pm.id)));
+    const pmList = Array.isArray(mpResponse.payment_methods) ? mpResponse.payment_methods : [];
+    console.log("[create-preference] payment_methods permitidos:", JSON.stringify(pmList.map(pm => pm.id || pm.type || pm)));
 
     return res.status(200).json({
       init_point: mpResponse.init_point,
