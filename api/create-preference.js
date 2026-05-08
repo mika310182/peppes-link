@@ -42,6 +42,10 @@ module.exports = async (req, res) => {
       }
     }
 
+    const host = req.headers['x-forwarded-host'] || req.headers.host || 'peppes.cl';
+    const baseUrl = process.env.FRONTEND_URL || `https://${host}`;
+    console.log(`[create-preference] Creando preferencia orderId=${orderId} baseUrl=${baseUrl} metodo=${metodo}`);
+
     const mpItems = items.map(item => ({
       id: item.id || 'producto',
       title: item.name || 'Producto',
@@ -73,11 +77,11 @@ module.exports = async (req, res) => {
     const preference = {
       items: mpItems,
       external_reference: orderId,
-      notification_url: "https://peppes.cl/api/mp-webhook",
+      notification_url: `${baseUrl}/api/mp-webhook`,
       back_urls: {
-        success: `https://peppes.cl/?payment=success&order=${orderId}&auth=${authToken}`,
-        pending: `https://peppes.cl/?payment=pending&order=${orderId}&auth=${authToken}`,
-        failure: `https://peppes.cl/?payment=failure&order=${orderId}&auth=${authToken}`
+        success: `${baseUrl}/?payment=success&order=${orderId}&auth=${authToken}`,
+        pending: `${baseUrl}/?payment=pending&order=${orderId}&auth=${authToken}`,
+        failure: `${baseUrl}/?payment=failure&order=${orderId}&auth=${authToken}`
       },
       auto_return: 'approved',
       statement_descriptor: 'PEPPES PIZZAS',

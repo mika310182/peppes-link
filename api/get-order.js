@@ -20,23 +20,27 @@ module.exports = async (req, res) => {
   }
 
   try {
+    console.log(`[get-order] Buscando pedido ${orderId} en orders/`);
     let order = await getFirebaseData(`orders/${orderId}`);
     let source = 'orders';
 
     if (!order) {
+      console.log(`[get-order] No encontrado en orders. Buscando en pending_orders/...`);
       order = await getFirebaseData(`pending_orders/${orderId}`);
       source = 'pending_orders';
     }
 
     if (!order) {
+      console.log(`[get-order] Pedido ${orderId} NO encontrado en orders ni pending_orders`);
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
 
     if (token && order.auth_token && order.auth_token !== token) {
+      console.log(`[get-order] Token invalido para pedido ${orderId}`);
       return res.status(403).json({ error: 'Token invalido' });
     }
 
-    console.log(`Pedido ${orderId} encontrado en ${source} con estado: ${order.estado}`);
+    console.log(`[get-order] Pedido ${orderId} encontrado en ${source} con estado: ${order.estado} paymentStatus: ${order.paymentStatus || 'N/A'}`);
 
     return res.status(200).json({
       id: orderId,
@@ -44,6 +48,8 @@ module.exports = async (req, res) => {
       cliente: order.cliente,
       total: order.total,
       metodo: order.metodo,
+      paymentStatus: order.paymentStatus || order.estado || null,
+      source: source,
     });
 
   } catch (err) {

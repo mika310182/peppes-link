@@ -26,7 +26,11 @@ module.exports = async (req, res) => {
   }, SAFETY_TIMEOUT_MS);
 
   try {
+    console.log("[MP-Webhook] ========= WEBHOOK RECIBIDO =========");
     console.log("[MP-Webhook] method:", req.method);
+    console.log("[MP-Webhook] url:", req.url);
+    console.log("[MP-Webhook] query:", JSON.stringify(req.query));
+    console.log("[MP-Webhook] headers:", JSON.stringify(req.headers));
 
     if (req.method === 'GET') {
       clearTimeout(safetyTimer);
@@ -46,6 +50,7 @@ module.exports = async (req, res) => {
 
     console.log("[MP-Webhook] rawBody:", rawBody);
     console.log("[MP-Webhook] parsed payload:", JSON.stringify(payload));
+    console.log("[MP-Webhook] merged (payload + query):", JSON.stringify(merged));
 
     const action = merged.action || '';
     const type = merged.type || '';
@@ -54,15 +59,14 @@ module.exports = async (req, res) => {
     console.log("[MP-Webhook] action:", action, "type:", type, "topic:", topic);
 
     const paymentId = extractPaymentId(merged, req);
+    console.log("[MP-Webhook] payment_id extraido:", paymentId);
 
     if (!paymentId) {
-      console.log("[MP-Webhook] WARNING: no se encontro payment_id. 200 para evitar reintentos.");
+      console.log("[MP-Webhook] WARNING: no se encontro payment_id. Responde 200 para evitar reintentos.");
       clearTimeout(safetyTimer);
       safetyTimer = null;
       return safeRespond(res, 200, { status: 'ignored', reason: 'no_payment_id' });
     }
-
-    console.log("[MP-Webhook] payment_id extraido:", paymentId);
 
     const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
     if (!ACCESS_TOKEN) {
@@ -72,9 +76,11 @@ module.exports = async (req, res) => {
       return safeRespond(res, 200, { status: 'error', reason: 'missing_token' });
     }
 
+    console.log("[MP-Webhook] Consultando pago a MP API: /v1/payments/" + paymentId);
     const payment = await getFromMP(`/v1/payments/${paymentId}`, ACCESS_TOKEN);
-    console.log("[MP-Webhook] payment status:", payment && payment.status);
-    console.log("[MP-Webhook] external_reference:", payment && payment.external_reference);
+    console.log("[MP-Webhook] RESPUESTA MP - status:", payment && payment.status);
+    console.log("[MP-Webhook] RESPUESTA MP - external_reference:", payment && payment.external_reference);
+    console.log("[MP-Webhook] RESPUESTA MP - payment completo:", JSON.stringify(payment));
 
     if (payment && payment.status === 'approved') {
       const orderId = payment.external_reference;
@@ -85,21 +91,25 @@ module.exports = async (req, res) => {
         return safeRespond(res, 200, { status: 'error', reason: 'no_external_reference' });
       }
 
+      console.log("[MP-Webhook] Buscando pedido en orders/", orderId);
       const existingOrder = await getFirebaseData(`orders/${orderId}`);
       if (existingOrder) {
-        console.log("[MP-Webhook] Pedido ya procesado:", orderId);
+        console.log("[MP-Webhook] Pedido ya procesado anteriormente en orders:", orderId);
         clearTimeout(safetyTimer);
         safetyTimer = null;
         return safeRespond(res, 200, { status: 'already_processed', orderId });
       }
 
+      console.log("[MP-Webhook] Buscando pedido en pending_orders/", orderId);
       const pendingOrder = await getFirebaseData(`pending_orders/${orderId}`);
       if (!pendingOrder) {
-        console.error("[MP-Webhook] No se encontro pending_order:", orderId);
+        console.error("[MP-Webhook] ERROR: No se encontro pending_order/", orderId);
+        console.log("[MP-Webhook] El pedido no existe en pending_orders. Revisar Firebase.");
         clearTimeout(safetyTimer);
         safetyTimer = null;
         return safeRespond(res, 200, { status: 'error', reason: 'pending_order_not_found', orderId });
       }
+      console.log("[MP-Webhook] Pending order encontrado:", JSON.stringify(pendingOrder));
 
       const operationalOrder = {
         ...pendingOrder,
@@ -109,19 +119,24 @@ module.exports = async (req, res) => {
         pagadoAt: Date.now()
       };
 
+      console.log("[MP-Webhook] PROMOVIENDO pedido a orders/", orderId);
+      console.log("[MP-Webhook] Datos a guardar en orders:", JSON.stringify(operationalOrder));
       await updateFirebaseData(`orders/${orderId}`, operationalOrder);
+      console.log("[MP-Webhook] Pedido guardado en orders. Eliminando de pending_orders...");
       await deleteFirebaseData(`pending_orders/${orderId}`);
+      console.log("[MP-Webhook] Pago APROBADO. OrderId:", orderId, "PaymentId:", paymentId);
+      console.log("[MP-Webhook] Pedido promovido EXITOSAMENTE:", orderId);
 
-      console.log("[MP-Webhook] Pedido promovido exitosamente:", orderId);
       clearTimeout(safetyTimer);
       safetyTimer = null;
       return safeRespond(res, 200, { status: 'processed', orderId });
 
     } else if (payment && (payment.status === 'rejected' || payment.status === 'cancelled')) {
       const orderId = payment.external_reference;
+      console.log("[MP-Webhook] Pago RECHAZADO/CANCELADO. OrderId:", orderId, "Status:", payment.status);
       if (orderId) {
         await updateFirebaseData(`pending_orders/${orderId}`, { estado: "pago_fallido" });
-        console.log("[MP-Webhook] Pago rechazado para pedido:", orderId);
+        console.log("[MP-Webhook] pending_orders actualizado a pago_fallido para:", orderId);
       }
       clearTimeout(safetyTimer);
       safetyTimer = null;

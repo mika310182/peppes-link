@@ -19,12 +19,15 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Falta orderId' });
     }
 
-    console.log(`Confirm-payment llamado para orderId: ${orderId}`);
+    console.log(`[confirm-payment] ========= CONFIRM PAYMENT =========`);
+    console.log(`[confirm-payment] orderId: ${orderId}, authToken: ${authToken ? '***' : 'sin_token'}`);
 
     // Verificar si existe en pending_orders
+    console.log(`[confirm-payment] Buscando en pending_orders/${orderId}`);
     const pending = await getFirebaseData(`pending_orders/${orderId}`);
     if (pending) {
       const estadoActual = (pending.estado || '').toLowerCase();
+      console.log(`[confirm-payment] Encontrado en pending_orders. Estado: ${estadoActual}, paymentStatus: ${pending.paymentStatus || 'N/A'}`);
       // Solo promover si está en estado pagable
       if (estadoActual === 'pago_pendiente' || estadoActual === 'pagado') {
         const orderData = {
@@ -33,20 +36,26 @@ module.exports = async (req, res) => {
           paymentStatus: "confirmed",
           confirmadoAt: Date.now()
         };
+        console.log(`[confirm-payment] Promoviendo a orders/${orderId}...`);
         await updateFirebaseData(`orders/${orderId}`, orderData);
+        console.log(`[confirm-payment] Eliminando de pending_orders...`);
         await deleteFirebaseData(`pending_orders/${orderId}`);
-        console.log(`Pedido ${orderId} promovido por confirm-payment`);
+        console.log(`[confirm-payment] Pedido ${orderId} promovido EXITOSAMENTE`);
         return res.status(200).json({ success: true, estado: "pendiente" });
       }
+      console.log(`[confirm-payment] Estado ${estadoActual} no requiere promocion`);
       return res.status(200).json({ success: true, estado: estadoActual, note: "No se requiere promocion" });
     }
 
     // Verificar si ya está en orders
+    console.log(`[confirm-payment] No encontrado en pending_orders. Buscando en orders/${orderId}`);
     const existing = await getFirebaseData(`orders/${orderId}`);
     if (existing) {
-      return res.status(200).json({ success: true, estado: existing.estado, note: "Ya estaba en orders" });
+      console.log(`[confirm-payment] Pedido ya estaba en orders. Estado: ${existing.estado}`);
+      return res.status(200).json({ success: true, estado: existing.estado, paymentStatus: existing.paymentStatus, note: "Ya estaba en orders" });
     }
 
+    console.log(`[confirm-payment] Pedido ${orderId} NO encontrado ni en pending_orders ni en orders`);
     return res.status(404).json({ error: 'Pedido no encontrado' });
 
   } catch (err) {
