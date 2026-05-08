@@ -1916,7 +1916,19 @@
         function saveStoreHours() {
             const openTime = document.getElementById('h-open').value;
             const closeTime = document.getElementById('h-close').value;
+            console.log("[Horarios] Intento guardar:", { openTime, closeTime });
+
+            const user = auth.currentUser;
+            if (!user) {
+                console.warn("[Horarios] No hay sesión activa");
+                document.getElementById('login-error').innerText = "Sesión expirada. Vuelve a iniciar sesión.";
+                document.getElementById('login-error').style.display = 'block';
+                return;
+            }
+            console.log("[Horarios] Usuario autenticado:", user.email);
+
             if (!openTime || !closeTime) {
+                console.warn("[Horarios] Campos vacíos");
                 alert("Completa ambos horarios");
                 return;
             }
@@ -1925,9 +1937,14 @@
                 open: openTime,
                 close: closeTime
             }).then(() => {
+                console.log("[Horarios] Guardado exitoso en Firebase:", { openTime, closeTime });
                 alert("Horarios actualizados exitosamente.");
                 document.getElementById('modal-hours').style.display = 'none';
-            }).catch(err => alert("Error al guardar: " + err.message));
+            }).catch(err => {
+                console.error("[Horarios] Error Firebase al guardar:", err.message);
+                document.getElementById('login-error').innerText = "Error al guardar en Firebase: " + err.message;
+                document.getElementById('login-error').style.display = 'block';
+            });
         }
 
         // --- COUPONS LOGIC ---
