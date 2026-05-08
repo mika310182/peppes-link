@@ -266,6 +266,15 @@
             background: #333;
         }
 
+        .btn-success {
+            background: var(--green);
+            color: white;
+        }
+        .btn-success:hover {
+            background: #3ddb84;
+            transform: translateY(-2px);
+        }
+
         .grid-products {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -683,6 +692,8 @@
                     <option value="bebidas">Bebidas</option>
                     <option value="promo">Promociones</option>
                 </select>
+                <button class="btn btn-success" id="btn-enable-cat" style="display:none; margin-left:10px;" onclick="bulkToggleCategory(true)">✓ Activar Todo</button>
+                <button class="btn btn-danger" id="btn-disable-cat" style="display:none; margin-left:10px;" onclick="bulkToggleCategory(false)">✗ Desactivar Todo</button>
                 <button class="btn btn-danger" id="btn-delete-cat" style="display:none; margin-left: 10px;"
                     onclick="deleteCategory()">🗑️ Borrar Categoría</button>
             </div>
@@ -1629,10 +1640,31 @@
             }
         }
 
+        async function bulkToggleCategory(enable) {
+            const cat = document.getElementById('filter-cat').value;
+            if (cat === 'all') return;
+            const products = fullInventory.filter(p => p.category === cat);
+            if (!products.length) return alert("No hay productos en esta categoría.");
+            const action = enable ? 'activar' : 'desactivar';
+            if (!confirm(`¿Seguro que quieres ${action} TODOS los productos de "${cat}"?\nProductos afectados: ${products.length}`)) return;
+            try {
+                const updates = {};
+                products.forEach(p => { updates[`inventory_clean/${cat}/${p.id}/available`] = enable; });
+                await db.ref().update(updates);
+                alert(`✅ ${products.length} productos ${action}dos en "${cat}".`);
+            } catch (e) {
+                alert("❌ Error al actualizar: " + e.message);
+            }
+        }
+
         function filterByCategory(cat) {
             const staticCats = ['all', 'pizzas', 'lasanas', 'pastas', 'antojos', 'ens', 'postres', 'bebidas', 'promo'];
             const btnDelete = document.getElementById('btn-delete-cat');
+            const btnEnable = document.getElementById('btn-enable-cat');
+            const btnDisable = document.getElementById('btn-disable-cat');
             if (btnDelete) btnDelete.style.display = staticCats.includes(cat) ? 'none' : 'block';
+            if (btnEnable) btnEnable.style.display = cat !== 'all' ? 'inline-flex' : 'none';
+            if (btnDisable) btnDisable.style.display = cat !== 'all' ? 'inline-flex' : 'none';
 
             if (cat === 'all') {
                 renderInventory(fullInventory);
