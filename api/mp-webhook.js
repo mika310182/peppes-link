@@ -77,10 +77,21 @@ module.exports = async (req, res) => {
     }
 
     console.log("[MP-Webhook] Consultando pago a MP API: /v1/payments/" + paymentId);
-    const payment = await getFromMP(`/v1/payments/${paymentId}`, ACCESS_TOKEN);
-    console.log("[MP-Webhook] RESPUESTA MP - status:", payment && payment.status);
-    console.log("[MP-Webhook] RESPUESTA MP - external_reference:", payment && payment.external_reference);
-    console.log("[MP-Webhook] RESPUESTA MP - payment completo:", JSON.stringify(payment));
+    let payment;
+    try {
+      payment = await getFromMP(`/v1/payments/${paymentId}`, ACCESS_TOKEN);
+      console.log("[MP-Webhook] HTTP status: 200");
+    } catch (mpErr) {
+      console.error("[MP-Webhook] HTTP status:", mpErr.httpStatus || 'ERROR');
+      console.error("[MP-Webhook] Error consultando pago a MP:", mpErr.message);
+      clearTimeout(safetyTimer);
+      safetyTimer = null;
+      return safeRespond(res, 200, { status: 'error', reason: 'mp_api_error', detail: mpErr.message });
+    }
+    console.log("[MP-Webhook] Payment status REAL:", payment && payment.status);
+    console.log("[MP-Webhook] external_reference:", payment && payment.external_reference);
+    console.log("[MP-Webhook] paymentId REAL:", payment && payment.id);
+    console.log("[MP-Webhook] response.data completa:", JSON.stringify(payment));
 
     if (payment && payment.status === 'approved') {
       const orderId = payment.external_reference;
@@ -144,7 +155,11 @@ module.exports = async (req, res) => {
 
     } else {
       const st = (payment && payment.status) || 'unknown';
-      console.log("[MP-Webhook] Estado de pago no necesita accion:", st);
+      if (st === 'pending' || st === 'in_process') {
+        console.log("[MP-Webhook] Pago EN PROCESO (pending/in_process). Se mantiene en pending_orders:", st);
+      } else {
+        console.log("[MP-Webhook] Estado de pago sin accion requerida:", st);
+      }
       clearTimeout(safetyTimer);
       safetyTimer = null;
       return safeRespond(res, 200, { status: 'no_action_needed', paymentStatus: st });
@@ -253,7 +268,16 @@ function getFromMP(path, token) {
       let buffer = '';
       res.on('data', chunk => buffer += chunk);
       res.on('end', () => {
-        try { resolve(JSON.parse(buffer)); }
+        try {
+          const data = JSON.parse(buffer);
+          if (res.statusCode !== 200) {
+            const err = new Error(`MP HTTP ${res.statusCode}: ${data.message || data.error || 'unknown'}`);
+            err.httpStatus = res.statusCode;
+            reject(err);
+          } else {
+            resolve(data);
+          }
+        }
         catch (e) { reject(new Error('MP response not JSON: ' + buffer.slice(0, 200))); }
       });
     });
