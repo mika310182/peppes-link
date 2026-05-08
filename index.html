@@ -1771,11 +1771,19 @@
     window.STORE_HOURS_CONFIG = { open: "13:30", close: "23:45" }; // Defaults
     db.ref('store_settings/hours').on('value', snap => {
       const data = snap.val();
-      if (data && data.open && data.close) {
-        window.STORE_HOURS_CONFIG = data;
+      if (data) {
+        window.STORE_HOURS_CONFIG = {
+          open: data.open || window.STORE_HOURS_CONFIG.open,
+          close: data.close || window.STORE_HOURS_CONFIG.close
+        };
         if (typeof updateConfirmButtonState === 'function') updateConfirmButtonState();
       }
-    });
+    }, err => console.warn("[Horarios] Error leyendo Firebase:", err));
+
+    // Refrescar estado abierto/cerrado cada 30s (cubre transiciones automáticas)
+    setInterval(() => {
+      if (typeof updateConfirmButtonState === 'function') updateConfirmButtonState();
+    }, 30000);
 
     function trackConversion(order) {
       try {
@@ -2106,28 +2114,34 @@
       const params = new URLSearchParams(window.location.search);
       if (params.get('test') === 'true') return true; // Bypass de seguridad para pruebas del dueño
 
-      // ✅ FIX: Usar la zona horaria oficial de Chile en vez de offset fijo (-3/-4 según DST)
-      const now = new Date();
-      const chileTimeStr = now.toLocaleString('en-US', { timeZone: 'America/Santiago' });
-      const chileTime = new Date(chileTimeStr);
+      // Hora actual en Chile usando Intl (respeta DST automáticamente)
+      const chileParts = new Intl.DateTimeFormat('es-CL', {
+        timeZone: 'America/Santiago',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).formatToParts(new Date());
+      let hour = 0, minute = 0;
+      for (const p of chileParts) {
+        if (p.type === 'hour') hour = parseInt(p.value, 10);
+        if (p.type === 'minute') minute = parseInt(p.value, 10);
+      }
 
-      const hour = chileTime.getHours();
-      const minute = chileTime.getMinutes();
+      const open = (window.STORE_HOURS_CONFIG && window.STORE_HOURS_CONFIG.open) || '13:30';
+      const close = (window.STORE_HOURS_CONFIG && window.STORE_HOURS_CONFIG.close) || '23:45';
 
-      // Dynamic store hours from Firebase
-      const [oH, oM] = window.STORE_HOURS_CONFIG.open.split(':').map(Number);
-      const [cH, cM] = window.STORE_HOURS_CONFIG.close.split(':').map(Number);
+      const [oH, oM] = open.split(':').map(Number);
+      const [cH, cM] = close.split(':').map(Number);
 
-      const openHour = oH || 13;
-      const openMinute = oM || 30;
-      const closeHour = cH || 23;
-      const closeMinute = cM || 45;
+      const openMin = oH * 60 + oM;
+      const closeMin = cH * 60 + cM;
+      const nowMin = hour * 60 + minute;
 
-      const currentTimeInMinutes = hour * 60 + minute;
-      const openTimeInMinutes = openHour * 60 + openMinute;
-      const closeTimeInMinutes = closeHour * 60 + closeMinute;
-
-      return currentTimeInMinutes >= openTimeInMinutes && currentTimeInMinutes <= closeTimeInMinutes;
+      // Soporta horarios que cruzan medianoche (cierre < apertura)
+      if (closeMin > openMin) {
+        return nowMin >= openMin && nowMin <= closeMin;
+      }
+      return nowMin >= openMin || nowMin <= closeMin;
     }
 
     let activeOrderListener = null;
