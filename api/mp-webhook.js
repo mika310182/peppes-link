@@ -4,23 +4,45 @@ const firebaseConfig = {
   databaseURL: "https://peppes-stock-default-rtdb.firebaseio.com"
 };
 
+const SAFETY_TIMEOUT_MS = 9000;
+
+function safeRespond(res, statusCode, data) {
+  try {
+    const body = JSON.stringify(data);
+    res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+    res.end(body);
+  } catch (_) {
+    try {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{"status":"error","reason":"respond_failed"}');
+    } catch (_) {}
+  }
+}
+
 module.exports = async (req, res) => {
-  console.log("[MP-Webhook] method:", req.method);
-  console.log("[MP-Webhook] headers:", JSON.stringify(req.headers));
-  console.log("[MP-Webhook] query:", JSON.stringify(req.query));
-
-  if (req.method === 'GET') {
-    return res.status(200).json({ status: 'ok' });
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(200).json({ error: 'metodo_no_soportado' });
-  }
+  let safetyTimer = setTimeout(() => {
+    console.error("[MP-Webhook] SAFETY TIMEOUT - forza respuesta 200");
+    safeRespond(res, 200, { status: 'timeout', reason: 'safety_timeout' });
+  }, SAFETY_TIMEOUT_MS);
 
   try {
+    console.log("[MP-Webhook] method:", req.method);
+
+    if (req.method === 'GET') {
+      clearTimeout(safetyTimer);
+      safetyTimer = null;
+      return safeRespond(res, 200, { status: 'ok' });
+    }
+
+    if (req.method !== 'POST') {
+      clearTimeout(safetyTimer);
+      safetyTimer = null;
+      return safeRespond(res, 200, { error: 'metodo_no_soportado' });
+    }
+
     const rawBody = await readRawBody(req);
     const payload = parseRawBody(rawBody);
-    const merged = { ...payload, ...req.query };
+    const merged = { ...payload, ...normalizeQuery(req) };
 
     console.log("[MP-Webhook] rawBody:", rawBody);
     console.log("[MP-Webhook] parsed payload:", JSON.stringify(payload));
@@ -31,16 +53,13 @@ module.exports = async (req, res) => {
 
     console.log("[MP-Webhook] action:", action, "type:", type, "topic:", topic);
 
-    const paymentId = merged?.data?.id
-      || merged?.id
-      || merged?.["data.id"]
-      || req.query?.id
-      || req.query?.["data.id"]
-      || null;
+    const paymentId = extractPaymentId(merged, req);
 
     if (!paymentId) {
-      console.log("[MP-Webhook] WARNING: no se encontro payment_id. Respondiendo 200 para evitar reintentos.");
-      return res.status(200).json({ status: 'ignored', reason: 'no_payment_id' });
+      console.log("[MP-Webhook] WARNING: no se encontro payment_id. 200 para evitar reintentos.");
+      clearTimeout(safetyTimer);
+      safetyTimer = null;
+      return safeRespond(res, 200, { status: 'ignored', reason: 'no_payment_id' });
     }
 
     console.log("[MP-Webhook] payment_id extraido:", paymentId);
@@ -48,30 +67,38 @@ module.exports = async (req, res) => {
     const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
     if (!ACCESS_TOKEN) {
       console.error("[MP-Webhook] ERROR: Falta MP_ACCESS_TOKEN");
-      return res.status(200).json({ status: 'error', reason: 'missing_token' });
+      clearTimeout(safetyTimer);
+      safetyTimer = null;
+      return safeRespond(res, 200, { status: 'error', reason: 'missing_token' });
     }
 
     const payment = await getFromMP(`/v1/payments/${paymentId}`, ACCESS_TOKEN);
-    console.log("[MP-Webhook] payment status:", payment.status);
-    console.log("[MP-Webhook] external_reference:", payment.external_reference);
+    console.log("[MP-Webhook] payment status:", payment && payment.status);
+    console.log("[MP-Webhook] external_reference:", payment && payment.external_reference);
 
-    if (payment.status === 'approved') {
+    if (payment && payment.status === 'approved') {
       const orderId = payment.external_reference;
       if (!orderId) {
         console.error("[MP-Webhook] No hay external_reference en el pago");
-        return res.status(200).json({ status: 'error', reason: 'no_external_reference' });
+        clearTimeout(safetyTimer);
+        safetyTimer = null;
+        return safeRespond(res, 200, { status: 'error', reason: 'no_external_reference' });
       }
 
       const existingOrder = await getFirebaseData(`orders/${orderId}`);
       if (existingOrder) {
         console.log("[MP-Webhook] Pedido ya procesado:", orderId);
-        return res.status(200).json({ status: 'already_processed', orderId });
+        clearTimeout(safetyTimer);
+        safetyTimer = null;
+        return safeRespond(res, 200, { status: 'already_processed', orderId });
       }
 
       const pendingOrder = await getFirebaseData(`pending_orders/${orderId}`);
       if (!pendingOrder) {
         console.error("[MP-Webhook] No se encontro pending_order:", orderId);
-        return res.status(200).json({ status: 'error', reason: 'pending_order_not_found', orderId });
+        clearTimeout(safetyTimer);
+        safetyTimer = null;
+        return safeRespond(res, 200, { status: 'error', reason: 'pending_order_not_found', orderId });
       }
 
       const operationalOrder = {
@@ -86,49 +113,106 @@ module.exports = async (req, res) => {
       await deleteFirebaseData(`pending_orders/${orderId}`);
 
       console.log("[MP-Webhook] Pedido promovido exitosamente:", orderId);
-      return res.status(200).json({ status: 'processed', orderId });
+      clearTimeout(safetyTimer);
+      safetyTimer = null;
+      return safeRespond(res, 200, { status: 'processed', orderId });
 
-    } else if (payment.status === 'rejected' || payment.status === 'cancelled') {
+    } else if (payment && (payment.status === 'rejected' || payment.status === 'cancelled')) {
       const orderId = payment.external_reference;
       if (orderId) {
         await updateFirebaseData(`pending_orders/${orderId}`, { estado: "pago_fallido" });
         console.log("[MP-Webhook] Pago rechazado para pedido:", orderId);
       }
-      return res.status(200).json({ status: 'payment_rejected', orderId });
+      clearTimeout(safetyTimer);
+      safetyTimer = null;
+      return safeRespond(res, 200, { status: 'payment_rejected', orderId });
 
     } else {
-      console.log("[MP-Webhook] Estado de pago no necesita accion:", payment.status);
-      return res.status(200).json({ status: 'no_action_needed', paymentStatus: payment.status });
+      const st = (payment && payment.status) || 'unknown';
+      console.log("[MP-Webhook] Estado de pago no necesita accion:", st);
+      clearTimeout(safetyTimer);
+      safetyTimer = null;
+      return safeRespond(res, 200, { status: 'no_action_needed', paymentStatus: st });
     }
 
   } catch (err) {
     console.error("[MP-Webhook] EXCEPCION:", err);
-    console.error("[MP-Webhook] stack:", err.stack);
-    return res.status(200).json({ status: 'error', error: err.message });
+    console.error("[MP-Webhook] stack:", err && err.stack);
+    if (safetyTimer) {
+      clearTimeout(safetyTimer);
+      safetyTimer = null;
+    }
+    return safeRespond(res, 200, { status: 'error', error: err && err.message });
   }
 };
+
+function extractPaymentId(merged, req) {
+  return merged && merged.data && merged.data.id
+    || merged && merged.id
+    || merged && merged["data.id"]
+    || req.query && req.query.id
+    || req.query && req.query["data.id"]
+    || null;
+}
+
+function normalizeQuery(req) {
+  if (!req.query || typeof req.query !== 'object') return {};
+  const out = {};
+  for (const key of Object.keys(req.query)) {
+    out[key] = req.query[key];
+  }
+  return out;
+}
 
 async function readRawBody(req) {
   if (typeof req.body === 'string' && req.body.trim()) {
     return req.body.trim();
   }
-  if (req.body && typeof req.body === 'object') {
+
+  if (Buffer.isBuffer(req.body) && req.body.length > 0) {
+    return req.body.toString('utf8');
+  }
+
+  if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
     try { return JSON.stringify(req.body); } catch (e) { return ''; }
   }
+
   return new Promise((resolve) => {
     if (req.readableEnded || req.destroyed) return resolve('');
     const chunks = [];
     let done = false;
-    const onData = (chunk) => { if (!done) chunks.push(chunk); };
-    const onEnd = () => { done = true; cleanup(); resolve(Buffer.concat(chunks).toString()); };
-    const onError = () => { done = true; cleanup(); resolve(''); };
-    const timer = setTimeout(() => { if (!done) { done = true; cleanup(); resolve(''); } }, 1000);
+
+    const onData = (chunk) => { if (!done && chunk) chunks.push(chunk); };
+    const onEnd = () => {
+      if (done) return;
+      done = true;
+      cleanup();
+      const raw = Buffer.concat(chunks).toString('utf8');
+      resolve(raw);
+    };
+    const onError = () => {
+      if (done) return;
+      done = true;
+      cleanup();
+      resolve('');
+    };
+
+    let timer = setTimeout(() => {
+      if (!done) {
+        done = true;
+        cleanup();
+        resolve('');
+      }
+    }, 5000);
+
     const cleanup = () => {
       clearTimeout(timer);
+      timer = null;
       req.removeListener('data', onData);
       req.removeListener('end', onEnd);
       req.removeListener('error', onError);
     };
+
     req.on('data', onData);
     req.on('end', onEnd);
     req.on('error', onError);
