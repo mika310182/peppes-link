@@ -2916,10 +2916,6 @@
         state.deliveryCost = 0;
         clearTimeout(geocodeTimeout);
         customerLocation = { address: '', coords: null, glink: '', hasHouseNumber: false, street: '', streetNumber: '', rawAddressDetails: null };
-
-        if (confirmBtn) {
-          confirmBtn.innerHTML = "Evaluando..."; // Let the explicit logic beneath override it
-        }
       }
 
       // Reset coupon states on delivery toggle to prevent math conflicts
@@ -2937,7 +2933,8 @@
       }
 
       state.isDelivery = isDelivery;
-      updateCartUI(); // This inherently triggers updateConfirmButtonState()
+      updateCartUI();
+      updateConfirmButtonState();
     }
 
     // No extra map toggle logic
@@ -3037,7 +3034,7 @@
       const phone = (document.getElementById("custPhone")?.value || "").trim();
       const hasBaseData = name.length > 0 && phone.length >= 8;
 
-      // 1. Logic for Retiro (Strictly ignores address/geocoding)
+      // 1. Logic for Retiro — NEVER checks address or delivery
       if (!state.isDelivery) {
         if (!hasBaseData || state.cart.length === 0) {
           btn.disabled = true;
@@ -3046,43 +3043,42 @@
           btn.disabled = false;
           btn.innerHTML = "Confirmar Pedido";
         }
-        return; // Exit early, no delivery states apply
+        return;
       }
 
       // 2. Logic for Delivery
-      if (state.isDelivery) {
-        if (!hasBaseData || state.cart.length === 0) {
-          btn.disabled = true;
-          btn.innerHTML = state.cart.length === 0 ? "Carrito vacío 🛒" : "Completa tus datos básicos";
-          return;
-        }
+      if (!hasBaseData || state.cart.length === 0) {
+        btn.disabled = true;
+        btn.innerHTML = state.cart.length === 0 ? "Carrito vacío 🛒" : "Completa tus datos básicos";
+        return;
+      }
 
-        const street = (document.getElementById("address_street")?.value || "").trim();
+      const street = (document.getElementById("address_street")?.value || "").trim();
 
-        if (street.length < 5) {
-          btn.disabled = true;
-          btn.innerHTML = "Ingresa tu dirección";
-          return;
-        }
+      if (street.length < 5) {
+        btn.disabled = true;
+        btn.innerHTML = "Ingresa tu dirección";
+        return;
+      }
 
-        // Wait for geocode to finish (neutral state)
-        if (btn.innerHTML.includes("Calculando") && !btn.innerHTML.includes("Confirmar y Pagar")) {
-          btn.disabled = true;
-          return; // Retain current wait state, avoid overwriting
-        }
+      // Wait for geocode to finish (neutral state)
+      if (btn.innerHTML.includes("Calculando") && !btn.innerHTML.includes("Confirmar y Pagar")) {
+        btn.disabled = true;
+        return;
+      }
 
-        const isValid = isCheckoutValid();
-        btn.disabled = !isValid;
+      const customerLoc = customerLocation || window.customerLocation || {};
+      const isValid = isCheckoutValid();
+      btn.disabled = !isValid;
 
-        if (isValid) {
-          btn.innerHTML = "Confirmar y Pagar →";
-        } else if (!customerLocation?.hasHouseNumber) {
-          btn.innerHTML = "Revisa tu dirección 📍";
-        } else if (state.deliveryCost === 0) {
-          btn.innerHTML = "Fuera de zona 🚫";
-        } else {
-          btn.innerHTML = "Datos incompletos";
-        }
+      if (isValid) {
+        btn.innerHTML = "Confirmar y Pagar →";
+      } else if (!customerLoc.hasHouseNumber) {
+        btn.innerHTML = "Revisa tu dirección 📍";
+      } else if (state.deliveryCost === 0) {
+        btn.innerHTML = "Fuera de zona 🚫";
+      } else {
+        btn.innerHTML = "Datos incompletos";
       }
     }
 
@@ -3169,13 +3165,14 @@
 
       let finalAddress = "";
       if (state.isDelivery) {
-        console.log("VALIDACIÓN:", customerLocation);
+        const customerLoc = customerLocation || window.customerLocation || {};
+        console.log("VALIDACIÓN:", customerLoc);
         if (!street || !state.deliveryCost || state.deliveryCost <= 0) {
           e?.preventDefault?.();
           showError("address_street");
           return;
         }
-        if (!customerLocation?.hasHouseNumber) {
+        if (!customerLoc.hasHouseNumber) {
           e?.preventDefault?.();
           showError("address_street", "Falta calle o número para Delivery");
           return;
