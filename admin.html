@@ -1999,17 +1999,17 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Precio Unitario / P</label>
+                        <label id="price-u-label">Precio Unitario / P</label>
                         <input type="number" id="p-price-u" placeholder="0">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="price-m-wrapper">
                         <label>Precio Mediano (M)</label>
                         <input type="number" id="p-price-m" placeholder="Opcional">
                     </div>
                 </div>
 
                 <div class="form-row">
-                    <div class="form-group">
+                    <div class="form-group" id="price-g-wrapper">
                         <label>Precio Familiar (G)</label>
                         <input type="number" id="p-price-g" placeholder="Opcional">
                     </div>
@@ -2027,8 +2027,8 @@
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label>Stock por Tamaño <span class="text-dim">(pizzas con varios tamaños)</span></label>
+                <div class="form-group" id="stock-sizes-section">
+                    <label>Stock por Tamaño <span class="text-dim">(solo pizzas)</span></label>
                     <div class="stock-sizes">
                         <label class="stock-size-label"><input type="checkbox" id="p-stock-p" checked> Personal (P)</label>
                         <label class="stock-size-label"><input type="checkbox" id="p-stock-m" checked> Mediana (M)</label>
@@ -2760,6 +2760,13 @@
             // Mostrar selector de días si es promo
             document.getElementById('promo-days-area').style.display = (val === 'promo') ? 'block' : 'none';
 
+            // Mostrar/ocultar campos de talla múltiple (P/M/G) solo para pizzas
+            const isPizza = val === 'pizzas';
+            document.getElementById('price-m-wrapper').style.display = isPizza ? '' : 'none';
+            document.getElementById('price-g-wrapper').style.display = isPizza ? '' : 'none';
+            document.getElementById('stock-sizes-section').style.display = isPizza ? '' : 'none';
+            document.getElementById('price-u-label').textContent = isPizza ? 'Precio Unitario / P' : 'Precio Único';
+
             if (val && val !== 'new') {
                 existingSettings.style.display = 'block';
                 // Cargar estado actual de extras para esta categoría
@@ -2819,6 +2826,12 @@
 
             // Compatibilidad para promociones y precios base
             if (product.prices.U > 0) product.prices.P = product.prices.U;
+
+            // Solo pizzas usan tallas M/G; productos simples siempre tienen M=0, G=0
+            if (cat !== 'pizzas') {
+                product.prices.M = 0;
+                product.prices.G = 0;
+            }
 
             // Stock por tamaño para productos multi-tamaño (P/M/G)
             if (product.prices.M > 0 || product.prices.G > 0) {
