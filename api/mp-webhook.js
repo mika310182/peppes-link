@@ -1,4 +1,5 @@
 const https = require('https');
+const { consumeCoupon } = require('./coupon-utils');
 
 const firebaseConfig = {
   databaseURL: "https://peppes-stock-default-rtdb.firebaseio.com"
@@ -125,8 +126,9 @@ module.exports = async (req, res) => {
       const operationalOrder = {
         ...pendingOrder,
         estado: "pendiente",
+        paymentStatus: "paid",
+        orderStatus: "recibido",
         paymentId: paymentId,
-        paymentStatus: "approved",
         pagadoAt: Date.now()
       };
 
@@ -136,6 +138,21 @@ module.exports = async (req, res) => {
       console.log("[MP-Webhook] Pedido guardado en orders. Eliminando de pending_orders...");
       await deleteFirebaseData(`pending_orders/${orderId}`);
       console.log("[MP-Webhook] Pago APROBADO. OrderId:", orderId, "PaymentId:", paymentId);
+
+      // Consumir cupón si existe en el pedido
+      if (pendingOrder.descuento && pendingOrder.descuento.code) {
+        console.log("[MP-Webhook] Consumiendo cupon:", pendingOrder.descuento.code, "para order:", orderId);
+        const couponResult = await consumeCoupon(
+          pendingOrder.descuento.code,
+          pendingOrder.telefono || '',
+          orderId
+        );
+        console.log("[MP-Webhook] Resultado consumo cupon:", JSON.stringify(couponResult));
+        if (couponResult.consumed) {
+          await updateFirebaseData(`orders/${orderId}/couponConsumedAt`, Date.now());
+        }
+      }
+
       console.log("[MP-Webhook] Pedido promovido EXITOSAMENTE:", orderId);
 
       clearTimeout(safetyTimer);
@@ -146,7 +163,11 @@ module.exports = async (req, res) => {
       const orderId = payment.external_reference;
       console.log("[MP-Webhook] Pago RECHAZADO/CANCELADO. OrderId:", orderId, "Status:", payment.status);
       if (orderId) {
-        await updateFirebaseData(`pending_orders/${orderId}`, { estado: "pago_fallido" });
+        await updateFirebaseData(`pending_orders/${orderId}`, {
+          estado: "pago_fallido",
+          paymentStatus: "failed",
+          orderStatus: "cancelado"
+        });
         console.log("[MP-Webhook] pending_orders actualizado a pago_fallido para:", orderId);
       }
       clearTimeout(safetyTimer);

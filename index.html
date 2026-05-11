@@ -1939,7 +1939,7 @@
     const TOPPINGS_PATH = "img/toppings/";
 
     function resolveImgPath(path) {
-      if (!path) return "https://via.placeholder.com/340x340?text=Peppe's+Pizza";
+      if (!path) return "assets/placeholder.png";
       const p = String(path).trim();
       if (p.startsWith('http') || p.startsWith('https://') || p.startsWith('assets/') || p.startsWith('data:')) {
         return p;
@@ -2795,24 +2795,80 @@
 
       db.ref('store_settings/coupons/' + codeInput).once('value').then(snap => {
         const coupon = snap.val();
-        if (coupon && coupon.active) {
-          appliedCoupon = {
-            code: codeInput,
-            type: coupon.type,
-            value: coupon.value
-          };
-          msgEl.style.color = '#2ecc71'; // var(--success-green)
-          msgEl.textContent = '¡Cupón Aplicado! 🍕';
-          updateCartUI();
-        } else {
+        if (!coupon) {
           appliedCoupon = null;
           msgEl.style.color = 'var(--pepper-red)';
-          msgEl.textContent = 'Cupón inválido o expirado';
+          msgEl.textContent = 'Cupón inválido';
           updateCartUI();
+          return;
         }
+        if (coupon.active === false) {
+          appliedCoupon = null;
+          msgEl.style.color = 'var(--pepper-red)';
+          msgEl.textContent = 'Cupón desactivado';
+          updateCartUI();
+          return;
+        }
+        // Validate expiration
+        if (coupon.expiresAt) {
+          const exp = new Date(coupon.expiresAt);
+          if (!isNaN(exp.getTime()) && new Date() > exp) {
+            appliedCoupon = null;
+            msgEl.style.color = 'var(--pepper-red)';
+            msgEl.textContent = 'Cupón expirado';
+            updateCartUI();
+            return;
+          }
+        }
+        // Validate max uses
+        if (coupon.maxUses !== undefined && coupon.maxUses !== null) {
+          const used = coupon.usedCount || 0;
+          if (used >= coupon.maxUses) {
+            appliedCoupon = null;
+            msgEl.style.color = 'var(--pepper-red)';
+            msgEl.textContent = 'Cupón agotado (sin usos disponibles)';
+            updateCartUI();
+            return;
+          }
+        }
+        // Validate one use per phone
+        if (coupon.oneUsePerPhone === true) {
+          const phoneRaw = (document.getElementById("custPhone")?.value || "").trim();
+          const phoneDigits = phoneRaw.replace(/\D/g, '');
+          const phoneNorm = phoneDigits.startsWith('56') ? phoneDigits : (phoneDigits.startsWith('9') && phoneDigits.length === 9 ? '56' + phoneDigits : phoneDigits);
+          if (phoneNorm && coupon.usedByPhones && coupon.usedByPhones[phoneNorm]) {
+            appliedCoupon = null;
+            msgEl.style.color = 'var(--pepper-red)';
+            msgEl.textContent = 'Este teléfono ya usó este cupón';
+            updateCartUI();
+            return;
+          }
+        }
+        // Validate minimum subtotal
+        if (coupon.minSubtotal && coupon.minSubtotal > 0) {
+          if (subtotal < coupon.minSubtotal) {
+            appliedCoupon = null;
+            msgEl.style.color = 'var(--pepper-red)';
+            msgEl.textContent = 'Monto mínimo no alcanzado (mín: $' + Math.round(coupon.minSubtotal).toLocaleString('es-CL') + ')';
+            updateCartUI();
+            return;
+          }
+        }
+        // Normalize type: "percent" -> "percentage"
+        const couponType = coupon.type === 'percent' ? 'percentage' : coupon.type;
+        appliedCoupon = {
+          code: codeInput,
+          type: couponType,
+          value: coupon.value
+        };
+        msgEl.style.color = '#2ecc71';
+        msgEl.textContent = '¡Cupón Aplicado! 🍕';
+        updateCartUI();
       }).catch(err => {
+        appliedCoupon = null;
         msgEl.style.color = 'var(--pepper-red)';
         msgEl.textContent = 'Cupón inválido o expirado';
+        updateCartUI();
       });
     }
 
@@ -3219,7 +3275,10 @@
           descuento: appliedCoupon ? { code: appliedCoupon.code, amount: appliedCoupon.amountCalculated } : null,
           incluyeCubiertos: includeCutlery,
           auth_token: authToken,
-          estado: "pago_pendiente", timestamp: Date.now(), fecha: new Date().toLocaleString()
+          estado: "pago_pendiente",
+          paymentStatus: "pending",
+          orderStatus: "recibido",
+          timestamp: Date.now(), fecha: new Date().toLocaleString()
         };
 
         // 1. Guardar pedido en Firebase en colección PENDIENTE

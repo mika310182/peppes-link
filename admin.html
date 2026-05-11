@@ -565,6 +565,13 @@
             font-family: inherit;
         }
 
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+        }
+
         /* Responsive */
         @media (max-width: 900px) {
             .sidebar {
@@ -915,21 +922,19 @@
     <div id="modal-order" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <h2 id="order-modal-title">Gestión de Pedido</h2>
+            <div id="payment-status-badge" style="margin-bottom: 15px; display: none;"></div>
             <div id="order-details-area" style="margin: 20px 0; font-size: 14px; line-height: 1.6;">
                 <!-- Se llena dinámicamente -->
             </div>
 
             <div class="form-group">
-                <label>Actualizar Estado</label>
+                <label>Estado Operativo</label>
                 <select id="order-status-select">
-                    <option value="pago_pendiente">Pago Pendiente ⏳</option>
-                    <option value="pago_fallido">Pago Fallido ❌</option>
-                    <option value="pendiente">Aprobado / Pendiente</option>
-                    <option value="cocinando">En Horno 🍕</option>
-                    <option value="listo">Pedido Listo</option>
-                    <option value="en camino">En Camino 🛵</option>
-                    <option value="entregado">Entregado ✅</option>
-                    <option value="cancelado">Cancelado ❌</option>
+                    <option value="recibido">📥 Recibido</option>
+                    <option value="en_horno">🔥 En horno</option>
+                    <option value="listo">✅ Listo</option>
+                    <option value="entregado">🏁 Entregado</option>
+                    <option value="cancelado">❌ Cancelado</option>
                 </select>
             </div>
 
@@ -940,7 +945,9 @@
                 <button type="button" class="btn btn-secondary" style="flex: 1;"
                     onclick="closeModal('order')">Cerrar</button>
             </div>
-            <div style="margin-top: 10px;">
+            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                <button type="button" id="btn-mark-paid" class="btn" style="width:100%; background: var(--green); color: white; border: none; display: none;"
+                    onclick="markAsPaid()">💰 Marcar como Pagado</button>
                 <button type="button" class="btn" style="width:100%; background:#441111; color:#ff6b6b; border:1px solid #662222;"
                     onclick="archiveOrder()">🗂️ Archivar Pedido</button>
                 <p style="color: var(--text-dim); font-size: 11px; margin-top: 6px; text-align: center;">
@@ -976,7 +983,7 @@
 
     <!-- MODAL CUPONES -->
     <div id="modal-coupon" class="modal">
-        <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-content" style="max-width: 460px;">
             <h2>Gestionar Cupón</h2>
             <div class="form-group" style="margin-top: 20px;">
                 <label>Código (Sin espacios)</label>
@@ -994,6 +1001,31 @@
                     <label>Valor</label>
                     <input type="number" id="c-value" placeholder="Ej: 10 o 2000" required>
                 </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Expira (opcional)</label>
+                    <input type="datetime-local" id="c-expires">
+                </div>
+                <div class="form-group">
+                    <label>Usos máximos (0 = ilimitado)</label>
+                    <input type="number" id="c-max-uses" placeholder="0" min="0">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Monto mínimo subtotal</label>
+                    <input type="number" id="c-min-subtotal" placeholder="0" min="0">
+                </div>
+                <div class="form-group" style="display: flex; align-items: flex-end; padding-bottom: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="c-one-use-per-phone" style="width: auto;">
+                        <span style="font-size: 12px; font-weight: 600; text-transform: uppercase;">1 uso por teléfono</span>
+                    </label>
+                </div>
+            </div>
+            <div id="coupon-stats" style="display: none; margin-bottom: 15px; padding: 10px; background: #1a1a1a; border-radius: 8px; font-size: 12px; color: var(--text-dim);">
+                <span id="coupon-used-count"></span>
             </div>
             <div class="form-group">
                 <label>Estado</label>
@@ -1211,18 +1243,32 @@
         }
 
         function fetchOrders() {
-            // Fase 1: Carga inicial de orders/ (pedidos procesados por el webhook)
-            db.ref('orders').limitToLast(50).once('value', snapshot => {
-                const data = snapshot.val();
-                if (data) {
-                    allOrders = Object.keys(data)
-                        .map(id => ({ id, ...data[id] }))
-                        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            // Fase 1: Carga inicial de orders/ y pending_orders/
+            const loadAll = async () => {
+                const [ordersSnap, pendingSnap] = await Promise.all([
+                    db.ref('orders').limitToLast(50).once('value'),
+                    db.ref('pending_orders').limitToLast(50).once('value')
+                ]);
+
+                let merged = [];
+                const ordersData = ordersSnap.val();
+                if (ordersData) {
+                    merged = Object.keys(ordersData).map(id => ({ id, ...ordersData[id] }));
                 }
+                const pendingData = pendingSnap.val();
+                if (pendingData) {
+                    Object.keys(pendingData).forEach(id => {
+                        if (!merged.find(o => o.id === id)) {
+                            merged.push({ id, ...pendingData[id] });
+                        }
+                    });
+                }
+                allOrders = merged.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                 isFirstLoad = false;
                 renderOrders(allOrders);
                 updateDashboardStats();
-            });
+            };
+            loadAll();
 
             // Fase 2: Pedidos nuevos en orders/ en tiempo real
             db.ref('orders').on('child_added', snap => {
@@ -1239,7 +1285,22 @@
                 }
             });
 
-            // Fase 3: Actualizacion de estados en orders/ en tiempo real
+            // Fase 3: Pedidos nuevos en pending_orders/ en tiempo real
+            db.ref('pending_orders').on('child_added', snap => {
+                if (isFirstLoad) return;
+                const newOrder = { id: snap.key, ...snap.val() };
+                const alreadyExists = allOrders.some(o => o.id === snap.key);
+                if (!alreadyExists) {
+                    console.log("🔔 ¡Nuevo pedido en pending_orders/!", newOrder.id);
+                    allOrders.unshift(newOrder);
+                    if (allOrders.length > 50) allOrders.pop();
+                    playNotificationSound();
+                    renderOrders(allOrders);
+                    updateDashboardStats();
+                }
+            });
+
+            // Fase 4: Actualizacion de estados en orders/ en tiempo real
             db.ref('orders').on('child_changed', snap => {
                 const updatedOrder = { id: snap.key, ...snap.val() };
                 const idx = allOrders.findIndex(o => o.id === snap.key);
@@ -1248,6 +1309,13 @@
                 } else {
                     allOrders.unshift(updatedOrder);
                 }
+                renderOrders(allOrders);
+                updateDashboardStats();
+            });
+
+            // Fase 5: Cuando pending_orders se elimina (promovido), quitarlo del feed
+            db.ref('pending_orders').on('child_removed', snap => {
+                allOrders = allOrders.filter(o => o.id !== snap.key);
                 renderOrders(allOrders);
                 updateDashboardStats();
             });
@@ -1296,7 +1364,7 @@
                             ${p.available ? 'DISPONIBLE' : 'AGOTADO'}
                            </span>`
                     }
-                    <img src="${p.img || 'https://via.placeholder.com/300x180?text=Peppes+Pizza'}" class="prod-img" onerror="this.src='https://via.placeholder.com/300x180?text=Error+Imagen'">
+                    <img src="${p.img || 'assets/placeholder.png'}" class="prod-img" onerror="this.src='assets/placeholder.png'">
                     <div class="prod-content">
                         <div class="prod-cat">${p.category || 'Sin categoría'}</div>
                         <div class="prod-name">${p.name || 'Sin nombre'}</div>
@@ -1326,19 +1394,55 @@
             `).join('');
         }
 
+        // --- Helpers para paymentStatus / orderStatus ---
+        function derivePaymentStatus(order) {
+            if (order.paymentStatus) return order.paymentStatus;
+            const e = (order.estado || '').toLowerCase();
+            if (e === 'pago_pendiente') return 'pending';
+            if (e === 'pago_fallido') return 'failed';
+            return 'paid';
+        }
+
+        function deriveOrderStatus(order) {
+            if (order.orderStatus) return order.orderStatus;
+            const e = (order.estado || '').toLowerCase();
+            if (e === 'pago_pendiente' || e === 'pendiente') return 'recibido';
+            if (e === 'cocinando') return 'en_horno';
+            if (e === 'listo') return 'listo';
+            if (e === 'en camino') return 'en_camino';
+            if (e === 'entregado') return 'entregado';
+            if (e === 'cancelado' || e === 'pago_fallido') return 'cancelado';
+            return 'recibido';
+        }
+
+        function getPaymentStatusLabel(s) {
+            if (s === 'pending') return '⏳ Pendiente de pago';
+            if (s === 'paid') return '✅ Pagado';
+            if (s === 'failed') return '❌ Pago Fallido';
+            return s || 'Desconocido';
+        }
+
+        function getOrderStatusLabel(s) {
+            if (s === 'recibido') return 'Recibido';
+            if (s === 'en_horno') return '🔥 En horno';
+            if (s === 'listo') return '✅ Listo';
+            if (s === 'en_camino') return '🛵 En camino';
+            if (s === 'entregado') return '🏁 Entregado';
+            if (s === 'cancelado') return '❌ Cancelado';
+            return s || 'Recibido';
+        }
+
         function getStatusClass(status) {
             const s = String(status || "").toLowerCase();
-            if (s === "pagado") return "status-paid";
-            if (s === "cocinando") return "status-cooking";
+            if (s === "pagado" || s === "paid" || s === "recibido") return "status-paid";
+            if (s === "cocinando" || s === "en_horno") return "status-cooking";
             if (s === "listo") return "status-ready";
-            if (s === "en camino") return "status-shipped";
+            if (s === "en camino" || s === "en_camino") return "status-shipped";
             if (s === "entregado") return "status-delivered";
             if (s === "cancelado") return "status-cancelled";
-
-            // Compatibilidad y fallbacks
-            if (s === "pago_pendiente") return "status-warning";
-            if (s === "pago_fallido") return "status-error";
-            if (s.includes("pendiente")) return "status-paid"; // Si ya pasó el filtro de pago, es un pedido nuevo
+            if (s === "pago_pendiente" || s === "pending") return "status-warning";
+            if (s === "pago_fallido" || s === "failed") return "status-error";
+            if (s.includes("pendiente")) return "status-paid";
             return "status-paid";
         }
 
@@ -1353,11 +1457,17 @@
                 return;
             }
 
-            const html = orders.map(o => `
+            const html = orders.map(o => {
+                const ps = derivePaymentStatus(o);
+                const os = deriveOrderStatus(o);
+                const isNewOrder = ps === 'paid' && os === 'recibido';
+                const badgeClass = ps === 'paid' ? getStatusClass(os) : getStatusClass(ps);
+                const badgeLabel = ps !== 'paid' ? getPaymentStatusLabel(ps) : getOrderStatusLabel(os);
+                return `
                 <div class="order-card" onclick="manageOrder('${o.id}')" style="cursor: pointer;">
                     <div class="order-info">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                           <div style="width: 8px; height: 8px; border-radius: 50%; background: ${o.estado === 'pendiente' ? 'var(--blue)' : 'transparent'}"></div>
+                           <div style="width: 8px; height: 8px; border-radius: 50%; background: ${isNewOrder ? 'var(--blue)' : 'transparent'}"></div>
                            <h3>#${o.id ? o.id.slice(-5) : '?????'} - ${o.cliente || 'Cliente'} ${o.incluyeCubiertos ? '🍴' : ''}</h3>
                         </div>
                         <div class="order-meta">${o.timestamp ? new Date(o.timestamp).toLocaleString() : 'Fecha desconocida'} | ${o.metodo || 'Pedido'}</div>
@@ -1365,17 +1475,22 @@
             </div>
                     <div style="text-align: right;">
                         <div style="font-weight: 800; margin-bottom: 5px;">$${(o.total || 0).toLocaleString()}</div>
-                        <span class="order-status ${getStatusClass(o.estado)}">
-                            ${(o.estado || 'Recibido').toUpperCase()}
+                        <span class="order-status ${badgeClass}">
+                            ${badgeLabel}
                         </span>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
 
             feed.innerHTML = html;
             if (recent) {
                 // Para el dashboard solo mostramos los últimos 5
-                recent.innerHTML = orders.slice(0, 5).map(o => `
+                recent.innerHTML = orders.slice(0, 5).map(o => {
+                    const ps = derivePaymentStatus(o);
+                    const os = deriveOrderStatus(o);
+                    const badgeClass = ps === 'paid' ? getStatusClass(os) : getStatusClass(ps);
+                    const badgeLabel = ps !== 'paid' ? getPaymentStatusLabel(ps).replace(/^.{2}/, '') : getOrderStatusLabel(os);
+                    return `
                     <div style="padding: 12px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; flex-direction: column;">
                             <span style="font-weight: 600; font-size: 14px;">#${o.id ? o.id.slice(-5) : '???'} ${o.cliente || 'Cliente'}</span>
@@ -1383,12 +1498,12 @@
                         </div>
                         <div style="text-align: right;">
                             <div style="font-weight: 700; color: var(--green); font-size: 14px; margin-bottom: 4px;">$${(o.total || 0).toLocaleString()}</div>
-                            <span class="order-status ${getStatusClass(o.estado)}" style="font-size: 9px; padding: 2px 8px;">
-                                ${(o.estado || 'Recibido').toUpperCase()}
+                            <span class="order-status ${badgeClass}" style="font-size: 9px; padding: 2px 8px;">
+                                ${badgeLabel}
                             </span>
                         </div>
-                    </div>
-                `).join('');
+                    </div>`;
+                }).join('');
             }
         }
 
@@ -1778,32 +1893,34 @@
             document.getElementById('manage-order-id').value = id;
             document.getElementById('order-modal-title').innerText = `Pedido #${id.slice(-5)}`;
 
+            const ps = derivePaymentStatus(order);
+            const os = deriveOrderStatus(order);
             const statusSelect = document.getElementById('order-status-select');
-            statusSelect.value = order.estado || 'pendiente';
 
-            // Filtrar opciones según método (Retiro vs Delivery)
-            const isRetiro = order.metodo === "Retiro";
-            const optEnCamino = statusSelect.querySelector('option[value="en camino"]');
-            const optListo = statusSelect.querySelector('option[value="listo"]');
-
-            if (isRetiro) {
-                if (optEnCamino) optEnCamino.style.display = "none";
-                if (optListo) optListo.innerText = "¡Listo para Retirar!";
-            } else {
-                if (optEnCamino) optEnCamino.style.display = "block";
-                if (optListo) optListo.innerText = "Empacado / Listo";
+            // Mostrar badge de pago arriba del modal
+            const paymentBadge = document.getElementById('payment-status-badge');
+            if (paymentBadge) {
+                paymentBadge.innerHTML = `<span class="order-status ${getStatusClass(ps)}" style="font-size:14px;padding:8px 16px;display:inline-block;">${getPaymentStatusLabel(ps)}</span>`;
+                paymentBadge.style.display = 'block';
             }
 
-            // Actualizar opciones del select para reflejar los estados operativos reales
+            // Mostrar/ocultar botón "Marcar como pagado"
+            const markPaidBtn = document.getElementById('btn-mark-paid');
+            if (markPaidBtn) {
+                markPaidBtn.style.display = (ps === 'pending') ? 'block' : 'none';
+            }
+
+            // Actualizar opciones del select para orderStatus
+            const isRetiro = order.metodo === "Retiro";
             statusSelect.innerHTML = `
-                <option value="Pagado">💰 Pagado / Nuevo</option>
-                <option value="cocinando">🔥 En horno</option>
+                <option value="recibido">📥 Recibido</option>
+                <option value="en_horno">🔥 En horno</option>
                 <option value="listo">${isRetiro ? '✅ Listo para Retirar' : '📦 Empacado / Listo'}</option>
-                ${!isRetiro ? '<option value="en camino">🛵 En camino</option>' : ''}
+                ${!isRetiro ? '<option value="en_camino">🛵 En camino</option>' : ''}
                 <option value="entregado">🏁 Entregado</option>
                 <option value="cancelado">❌ Cancelado</option>
             `;
-            statusSelect.value = order.estado || 'Pagado';
+            statusSelect.value = os;
 
             const itemsHtml = (order.items || []).map(item => {
                 let extrasStr = "";
@@ -1883,13 +2000,127 @@
 
         async function updateOrderStatus() {
             const id = document.getElementById('manage-order-id').value;
-            const newStatus = document.getElementById('order-status-select').value;
+            const newOs = document.getElementById('order-status-select').value;
 
             try {
-                await db.ref(`orders/${id}`).update({ estado: newStatus });
+                let ref = `orders/${id}`;
+                let snap = await db.ref(ref).once('value');
+                if (!snap.val()) {
+                    ref = `pending_orders/${id}`;
+                    snap = await db.ref(ref).once('value');
+                }
+                const order = snap.val();
+                if (order) {
+                    const updateData = { orderStatus: newOs };
+                    if (newOs === 'en_horno') updateData.estado = 'cocinando';
+                    else if (newOs === 'en_camino') updateData.estado = 'en camino';
+                    else updateData.estado = newOs;
+                    await db.ref(ref).update(updateData);
+                }
                 closeModal('order');
             } catch (e) {
                 alert("❌ Error: " + e.message);
+            }
+        }
+
+        // --- Coupon helpers (browser-side) ---
+        function normalizePhoneLocal(phone) {
+            if (!phone) return '';
+            const digits = phone.replace(/\D/g, '');
+            if (digits.startsWith('56') && digits.length >= 11) return digits;
+            if (digits.startsWith('9') && digits.length === 9) return '56' + digits;
+            return digits;
+        }
+
+        async function consumeCouponLocal(code, phone, orderId) {
+            if (!code) return;
+            const normCode = code.trim().toUpperCase();
+            console.log(`[consumeCoupon] Consumiendo cupon ${normCode} para order ${orderId}`);
+
+            try {
+                const snap = await db.ref(`store_settings/coupons/${normCode}`).once('value');
+                const coupon = snap.val();
+                if (!coupon) {
+                    console.log(`[consumeCoupon] Cupon ${normCode} no encontrado`);
+                    return;
+                }
+
+                // Evitar doble consumo para la misma orden
+                if (coupon.consumedByOrders && coupon.consumedByOrders[orderId]) {
+                    console.log(`[consumeCoupon] Cupon ${normCode} ya consumido por order ${orderId}`);
+                    return;
+                }
+
+                const usedByPhones = coupon.usedByPhones || {};
+                const phoneNorm = normalizePhoneLocal(phone);
+                if (phoneNorm) usedByPhones[phoneNorm] = true;
+                const consumedByOrders = coupon.consumedByOrders || {};
+                consumedByOrders[orderId] = true;
+
+                await db.ref(`store_settings/coupons/${normCode}`).update({
+                    usedCount: (coupon.usedCount || 0) + 1,
+                    usedByPhones,
+                    consumedByOrders,
+                    lastConsumedAt: firebase.database.ServerValue.TIMESTAMP,
+                    lastConsumedByOrder: orderId
+                });
+
+                // Marcar en la orden que el cupón fue consumido
+                await db.ref(`orders/${orderId}`).update({ couponConsumedAt: Date.now() });
+
+                console.log(`[consumeCoupon] Cupon ${normCode} consumido exitosamente`);
+            } catch (e) {
+                console.error(`[consumeCoupon] Error al consumir cupon ${normCode}:`, e.message);
+            }
+        }
+
+        async function markAsPaid() {
+            const id = document.getElementById('manage-order-id').value;
+            if (!id) return;
+            if (!confirm(`💰 ¿Marcar pedido #${id.slice(-5)} como PAGADO?`)) return;
+
+            try {
+                // Buscar en orders primero, luego en pending_orders
+                let ref = `orders/${id}`;
+                let snap = await db.ref(ref).once('value');
+                if (!snap.val()) {
+                    ref = `pending_orders/${id}`;
+                    snap = await db.ref(ref).once('value');
+                }
+                const order = snap.val();
+                if (!order) {
+                    alert("❌ Pedido no encontrado.");
+                    return;
+                }
+
+                const paidData = {
+                    paymentStatus: "paid",
+                    paidAt: Date.now(),
+                    orderStatus: "recibido",
+                    estado: "pendiente"
+                };
+
+                // Si está en pending_orders, promover a orders y eliminar de pending
+                if (ref.startsWith('pending_orders')) {
+                    const promotedOrder = { ...order, ...paidData };
+                    await db.ref(`orders/${id}`).set(promotedOrder);
+                    await db.ref(`pending_orders/${id}`).remove();
+                    console.log(`[markAsPaid] Pedido ${id} promovido de pending_orders a orders como pagado`);
+                } else {
+                    await db.ref(`orders/${id}`).update(paidData);
+                    console.log(`[markAsPaid] Pedido ${id} actualizado como pagado en orders`);
+                }
+
+                // Consumir cupón si existe
+                const couponInfo = order.descuento || order.coupon;
+                if (couponInfo && couponInfo.code) {
+                    await consumeCouponLocal(couponInfo.code, order.telefono || '', id);
+                }
+
+                closeModal('order');
+                alert(`✅ Pedido #${id.slice(-5)} marcado como pagado.`);
+            } catch (e) {
+                alert("❌ Error al marcar como pagado: " + e.message);
             }
         }
 
@@ -2043,18 +2274,33 @@
 
                 Object.keys(data).forEach(code => {
                     const c = data[code];
-                    const valText = c.type === 'percentage' ? `${c.value}%` : `$${parseInt(c.value).toLocaleString('es-CL')}`;
+                    const valText = c.type === 'percentage' || c.type === 'percent' ? `${c.value}%` : `$${parseInt(c.value).toLocaleString('es-CL')}`;
                     const statusText = c.active ? '<span style="color:var(--green)">Activo</span>' : '<span style="color:var(--red)">Apagado</span>';
+
+                    // Indicadores de restricciones
+                    let extraInfo = '';
+                    if (c.expiresAt) {
+                        const exp = new Date(c.expiresAt);
+                        if (!isNaN(exp.getTime())) {
+                            const expired = exp < new Date();
+                            extraInfo += ` ${expired ? '❌' : '📅'} `;
+                        }
+                    }
+                    if (c.maxUses && c.maxUses > 0) {
+                        const used = c.usedCount || 0;
+                        extraInfo += ` (${used}/${c.maxUses})`;
+                    }
+                    if (c.oneUsePerPhone) extraInfo += ' 📱1x';
 
                     const tr = document.createElement('tr');
                     tr.style.borderBottom = "1px solid #222";
                     tr.innerHTML = `
-                        <td style="padding:15px; font-weight:bold; color:var(--blue);">${code}</td>
-                        <td style="padding:15px;">${c.type === 'percentage' ? 'Porcentaje' : 'Monto Fijo'}</td>
+                        <td style="padding:15px; font-weight:bold; color:var(--blue);">${code}${extraInfo}</td>
+                        <td style="padding:15px;">${c.type === 'percentage' || c.type === 'percent' ? 'Porcentaje' : 'Monto Fijo'}</td>
                         <td style="padding:15px;">${valText}</td>
                         <td style="padding:15px;">${statusText}</td>
                         <td style="padding:15px; text-align:right;">
-                            <button class="btn btn-secondary" onclick="editCoupon('${code}', '${c.type}', ${c.value}, ${c.active})" style="padding:6px 12px; display:inline-flex;">Editar</button>
+                            <button class="btn btn-secondary" onclick="editCoupon('${code}')" style="padding:6px 12px; display:inline-flex;">Editar</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -2066,25 +2312,64 @@
             document.getElementById('c-code').value = '';
             document.getElementById('c-code').disabled = false;
             document.getElementById('c-value').value = '';
+            document.getElementById('c-type').value = 'percentage';
             document.getElementById('c-active').value = 'true';
+            document.getElementById('c-expires').value = '';
+            document.getElementById('c-max-uses').value = '';
+            document.getElementById('c-min-subtotal').value = '';
+            document.getElementById('c-one-use-per-phone').checked = false;
+            document.getElementById('coupon-stats').style.display = 'none';
             document.getElementById('btn-delete-coupon').style.display = 'none';
             document.getElementById('modal-coupon').style.display = 'flex';
         }
 
-        function editCoupon(code, type, value, active) {
-            document.getElementById('c-code').value = code;
-            document.getElementById('c-code').disabled = true; // Cant change code after creation
-            document.getElementById('c-type').value = type;
-            document.getElementById('c-value').value = value;
-            document.getElementById('c-active').value = active.toString();
-            document.getElementById('btn-delete-coupon').style.display = 'block';
-            document.getElementById('btn-delete-coupon').onclick = () => deleteCoupon(code);
-            document.getElementById('modal-coupon').style.display = 'flex';
+        function editCoupon(code) {
+            db.ref('store_settings/coupons/' + code).once('value').then(snap => {
+                const c = snap.val();
+                if (!c) return alert("Cupón no encontrado");
+
+                document.getElementById('c-code').value = code;
+                document.getElementById('c-code').disabled = true;
+                document.getElementById('c-type').value = c.type || 'percentage';
+                document.getElementById('c-value').value = c.value || '';
+                document.getElementById('c-active').value = (c.active !== false).toString();
+                document.getElementById('c-expires').value = c.expiresAt ? c.expiresAt.slice(0, 16) : '';
+                document.getElementById('c-max-uses').value = c.maxUses || '';
+                document.getElementById('c-min-subtotal').value = c.minSubtotal || '';
+                document.getElementById('c-one-use-per-phone').checked = c.oneUsePerPhone === true;
+                document.getElementById('btn-delete-coupon').style.display = 'block';
+                document.getElementById('btn-delete-coupon').onclick = () => deleteCoupon(code);
+
+                // Mostrar estadísticas de uso
+                const statsDiv = document.getElementById('coupon-stats');
+                const usedCount = c.usedCount || 0;
+                const maxUses = c.maxUses || 0;
+                const usedPhones = c.usedByPhones ? Object.keys(c.usedByPhones).length : 0;
+                const usedOrders = c.consumedByOrders ? Object.keys(c.consumedByOrders).length : 0;
+                statsDiv.innerHTML = `<span id="coupon-used-count">Usos: ${usedCount}${maxUses > 0 ? '/' + maxUses : ''} | Teléfonos: ${usedPhones} | Órdenes: ${usedOrders}</span>`;
+                statsDiv.style.display = 'block';
+
+                document.getElementById('modal-coupon').style.display = 'flex';
+            });
         }
 
         function saveCoupon() {
             const code = document.getElementById('c-code').value.trim().toUpperCase();
             if (!code) return alert("Ingresa un código");
+
+            const expiresVal = document.getElementById('c-expires').value;
+            let expiresAt = null;
+            if (expiresVal) {
+                const d = new Date(expiresVal);
+                if (!isNaN(d.getTime())) {
+                    expiresAt = d.toISOString();
+                }
+            }
+
+            const maxUses = parseInt(document.getElementById('c-max-uses').value) || 0;
+            const minSubtotal = parseInt(document.getElementById('c-min-subtotal').value) || 0;
+            const oneUsePerPhone = document.getElementById('c-one-use-per-phone').checked;
+
             const data = {
                 type: document.getElementById('c-type').value,
                 value: parseFloat(document.getElementById('c-value').value),
@@ -2092,8 +2377,21 @@
             };
             if (isNaN(data.value) || data.value <= 0) return alert("Ingresa un valor válido");
 
-            db.ref('store_settings/coupons/' + code).set(data).then(() => {
-                document.getElementById('modal-coupon').style.display = 'none';
+            if (expiresAt) data.expiresAt = expiresAt;
+            if (maxUses > 0) data.maxUses = maxUses;
+            if (minSubtotal > 0) data.minSubtotal = minSubtotal;
+            if (oneUsePerPhone) data.oneUsePerPhone = true;
+
+            // Preservar usedCount, usedByPhones, consumedByOrders si ya existen
+            db.ref('store_settings/coupons/' + code).once('value').then(existing => {
+                const existingData = existing.val() || {};
+                if (existingData.usedCount) data.usedCount = existingData.usedCount;
+                if (existingData.usedByPhones) data.usedByPhones = existingData.usedByPhones;
+                if (existingData.consumedByOrders) data.consumedByOrders = existingData.consumedByOrders;
+
+                db.ref('store_settings/coupons/' + code).set(data).then(() => {
+                    document.getElementById('modal-coupon').style.display = 'none';
+                });
             });
         }
 
