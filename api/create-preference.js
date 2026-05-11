@@ -42,9 +42,9 @@ module.exports = async (req, res) => {
       }
     }
 
-    const host = req.headers['x-forwarded-host'] || req.headers.host || 'peppes.cl';
-    const baseUrl = process.env.FRONTEND_URL || `https://${host}`;
-    console.log(`[create-preference] Creando preferencia orderId=${orderId} baseUrl=${baseUrl} metodo=${metodo}`);
+    const rawUrl = process.env.FRONTEND_URL || 'https://www.peppes.cl';
+    const baseUrl = rawUrl.replace(/\/+$/, '');
+    console.log(`[create-preference] baseUrl calculado: ${baseUrl} (rawUrl=${rawUrl}, FRONTEND_URL=${process.env.FRONTEND_URL || 'unset'})`);
 
     const mpItems = items.map(item => ({
       id: item.id || 'producto',
@@ -79,18 +79,20 @@ module.exports = async (req, res) => {
       external_reference: orderId,
       notification_url: `${baseUrl}/api/mp-webhook`,
       back_urls: {
-        success: `${baseUrl}/?payment=success&order=${orderId}&auth=${authToken}`,
-        pending: `${baseUrl}/?payment=pending&order=${orderId}&auth=${authToken}`,
-        failure: `${baseUrl}/?payment=failure&order=${orderId}&auth=${authToken}`
+        success: `${baseUrl}/?payment=success&order=${encodeURIComponent(orderId)}&auth=${encodeURIComponent(authToken)}`,
+        pending: `${baseUrl}/?payment=pending&order=${encodeURIComponent(orderId)}&auth=${encodeURIComponent(authToken)}`,
+        failure: `${baseUrl}/?payment=failure&order=${encodeURIComponent(orderId)}&auth=${encodeURIComponent(authToken)}`
       },
       auto_return: 'approved',
       statement_descriptor: 'PEPPES PIZZAS'
     };
 
-    console.log("[create-preference] Enviando a MP:", JSON.stringify(preference, null, 2));
+    console.log("[create-preference] notification_url:", preference.notification_url);
+    console.log("[create-preference] back_urls:", JSON.stringify(preference.back_urls));
+    console.log("[create-preference] Enviando a MP, orderId:", orderId);
     const mpResponse = await postToMP('/checkout/preferences', ACCESS_TOKEN, preference);
-    console.log("[create-preference] RESPUESTA MP:", JSON.stringify(mpResponse, null, 2));
-    console.log("[create-preference] init_point:", mpResponse.init_point);
+    console.log("[create-preference] init_point recibido:", mpResponse.init_point);
+    console.log("[create-preference] preference_id:", mpResponse.id);
     const pmList = Array.isArray(mpResponse.payment_methods) ? mpResponse.payment_methods : [];
     console.log("[create-preference] payment_methods permitidos:", JSON.stringify(pmList.map(pm => pm.id || pm.type || pm)));
 
