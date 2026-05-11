@@ -1942,8 +1942,10 @@
       if (!path) return "assets/placeholder.png";
       const p = String(path).trim();
       if (p.startsWith('http') || p.startsWith('https://') || p.startsWith('assets/') || p.startsWith('data:')) {
+        console.log("[resolveImgPath] passed through:", p);
         return p;
       }
+      console.warn("[resolveImgPath] added assets/ prefix to:", p);
       return IMG_PATH + p;
     }
 
