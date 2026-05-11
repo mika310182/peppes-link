@@ -3093,7 +3093,11 @@
             const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - 7); weekStart.setHours(0,0,0,0);
             const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
 
-            const paid = orders.filter(o => derivePaymentStatus(o) === 'paid');
+            const paid = orders.filter(o => {
+                if (derivePaymentStatus(o) !== 'paid') return false;
+                if (deriveOrderStatus(o) === 'cancelado') return false;
+                return true;
+            });
             const todayOrders = paid.filter(o => (o.timestamp || 0) >= todayStart.getTime());
             const weekOrders = paid.filter(o => (o.timestamp || 0) >= weekStart.getTime());
             const monthOrders = paid.filter(o => (o.timestamp || 0) >= monthStart.getTime());
