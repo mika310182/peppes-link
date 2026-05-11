@@ -582,6 +582,217 @@
             }
         }
 
+        /* ── Inventory premium ── */
+        #inventory .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 16px 20px;
+            align-items: center;
+        }
+
+        #inventory .search {
+            flex: 1;
+            min-width: 180px;
+            height: 44px;
+            padding: 0 14px;
+            font-size: 13px;
+            font-family: inherit;
+            color: #fff;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+        }
+
+        #inventory .search:focus {
+            border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.06);
+        }
+
+        #inventory .search:hover {
+            background: rgba(255,255,255,0.07);
+            border-color: rgba(255,255,255,0.12);
+        }
+
+        #inventory select.search {
+            flex: 0 0 200px;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+            cursor: pointer;
+        }
+
+        #inventory .controls .btn {
+            height: 44px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 0 16px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.2s;
+        }
+
+        #inventory .controls .btn-secondary {
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.7);
+        }
+
+        #inventory .controls .btn-secondary:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        #inventory .controls .btn-success {
+            background: rgba(46,204,113,0.15);
+            color: #2ecc71;
+        }
+
+        #inventory .controls .btn-success:hover {
+            background: rgba(46,204,113,0.25);
+        }
+
+        #inventory .controls .btn-danger {
+            background: rgba(255,70,70,0.15);
+            color: #ff6b6b;
+        }
+
+        #inventory .controls .btn-danger:hover {
+            background: rgba(255,70,70,0.25);
+        }
+
+        #inventory .grid-products {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        #inventory .prod-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: border-color 0.2s, transform 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        #inventory .prod-card:hover {
+            border-color: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+        }
+
+        #inventory .prod-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            background: rgba(255,255,255,0.03);
+            display: block;
+        }
+
+        #inventory .prod-content {
+            padding: 14px 16px 16px;
+        }
+
+        #inventory .prod-cat {
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(255,255,255,0.3);
+            margin-bottom: 4px;
+        }
+
+        #inventory .prod-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.3;
+            margin-bottom: 6px;
+        }
+
+        #inventory .prod-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2ecc71;
+        }
+
+        #inventory .badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            z-index: 2;
+        }
+
+        #inventory .badge-on {
+            background: rgba(46,204,113,0.15);
+            color: #2ecc71;
+        }
+
+        #inventory .badge-off {
+            background: rgba(255,70,70,0.15);
+            color: #ff6b6b;
+        }
+
+        #inventory .size-badges {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 4px;
+            z-index: 2;
+        }
+
+        #inventory .size-badge {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.6;
+            min-width: 20px;
+        }
+
+        #inventory .size-badge.on {
+            background: rgba(46,204,113,0.15);
+            color: #2ecc71;
+        }
+
+        #inventory .size-badge.off {
+            background: rgba(255,70,70,0.15);
+            color: #ff6b6b;
+        }
+
+        @media (max-width: 600px) {
+            #inventory .controls {
+                padding: 12px 14px;
+                gap: 8px;
+            }
+            #inventory select.search {
+                flex: 1 1 100%;
+            }
+            #inventory .grid-products {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* ── Analytics Dashboard ── */
         #analytics .header {
             margin-bottom: 24px;
@@ -1248,7 +1459,7 @@
             <div class="controls">
                 <input type="text" class="search" placeholder="Buscar por nombre o categoría..."
                     oninput="filterInventory(this.value)">
-                <select id="filter-cat" class="search" style="flex: 0 0 200px;" onchange="filterByCategory(this.value)">
+                <select id="filter-cat" class="search" onchange="filterByCategory(this.value)">
                     <option value="all">Todas las categorías</option>
                     <option value="pizzas">Pizzas</option>
                     <option value="lasanas">Lasañas</option>
@@ -1259,10 +1470,9 @@
                     <option value="bebidas">Bebidas</option>
                     <option value="promo">Promociones</option>
                 </select>
-                <button class="btn btn-success" id="btn-enable-cat" style="display:none; margin-left:10px;" onclick="bulkToggleCategory(true)">✓ Activar Todo</button>
-                <button class="btn btn-danger" id="btn-disable-cat" style="display:none; margin-left:10px;" onclick="bulkToggleCategory(false)">✗ Desactivar Todo</button>
-                <button class="btn btn-danger" id="btn-delete-cat" style="display:none; margin-left: 10px;"
-                    onclick="deleteCategory()">🗑️ Borrar Categoría</button>
+                <button class="btn btn-success" id="btn-enable-cat" style="display:none;" onclick="bulkToggleCategory(true)">✓ Activar</button>
+                <button class="btn btn-danger" id="btn-disable-cat" style="display:none;" onclick="bulkToggleCategory(false)">✗ Desactivar</button>
+                <button class="btn btn-danger" id="btn-delete-cat" style="display:none;" onclick="deleteCategory()">🗑️ Borrar</button>
             </div>
 
             <div class="grid-products" id="inventory-list">
