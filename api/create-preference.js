@@ -42,6 +42,9 @@ module.exports = async (req, res) => {
       }
     }
 
+    const isSandbox = ACCESS_TOKEN.startsWith('TEST-');
+    console.log(`[create-preference] Modo: ${isSandbox ? 'SANDBOX (TEST-)' : 'PRODUCCION'}, token prefix: ${ACCESS_TOKEN.substring(0, 8)}...`);
+
     const rawUrl = process.env.FRONTEND_URL || 'https://www.peppes.cl';
     const baseUrl = rawUrl.replace(/\/+$/, '');
     console.log(`[create-preference] baseUrl calculado: ${baseUrl} (rawUrl=${rawUrl}, FRONTEND_URL=${process.env.FRONTEND_URL || 'unset'})`);
@@ -84,20 +87,29 @@ module.exports = async (req, res) => {
         failure: `${baseUrl}/?payment=failure&order=${encodeURIComponent(orderId)}&auth=${encodeURIComponent(authToken)}`
       },
       auto_return: 'approved',
-      statement_descriptor: 'PEPPES PIZZAS'
+      statement_descriptor: 'PEPPES PIZZAS',
+      binary_mode: true
     };
 
     console.log("[create-preference] notification_url:", preference.notification_url);
     console.log("[create-preference] back_urls:", JSON.stringify(preference.back_urls));
     console.log("[create-preference] Enviando a MP, orderId:", orderId);
     const mpResponse = await postToMP('/checkout/preferences', ACCESS_TOKEN, preference);
-    console.log("[create-preference] init_point recibido:", mpResponse.init_point);
+    console.log("[create-preference] init_point:", mpResponse.init_point);
+    console.log("[create-preference] sandbox_init_point:", mpResponse.sandbox_init_point);
     console.log("[create-preference] preference_id:", mpResponse.id);
-    const pmList = Array.isArray(mpResponse.payment_methods) ? mpResponse.payment_methods : [];
-    console.log("[create-preference] payment_methods permitidos:", JSON.stringify(pmList.map(pm => pm.id || pm.type || pm)));
+
+    const finalInitPoint = mpResponse.init_point || mpResponse.sandbox_init_point;
+    console.log("[create-preference] finalInitPoint usado:", finalInitPoint);
+    console.log("[create-preference] Es HTTPS:", finalInitPoint ? finalInitPoint.startsWith('https://') : 'NO (undefined!)');
+
+    if (!finalInitPoint) {
+      console.error("[create-preference] CRITICO: init_point es undefined - posiblemente token TEST sin sandbox_init_point");
+      return res.status(500).json({ error: 'Mercado Pago no devolvió URL de checkout' });
+    }
 
     return res.status(200).json({
-      init_point: mpResponse.init_point,
+      init_point: finalInitPoint,
       preference_id: mpResponse.id
     });
 

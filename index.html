@@ -3349,14 +3349,22 @@
           throw new Error(err.error || 'Error al conectar con Mercado Pago.');
         }
 
-        const { init_point } = await res.json();
+        const data = await res.json();
+        const initPoint = data.init_point;
+
+        // Validar que initPoint sea una URL HTTPS válida antes de redirigir
+        if (!initPoint || !initPoint.startsWith('https://')) {
+          console.error("[checkout] init_point inválido:", initPoint);
+          throw new Error('URL de pago inválida. Intenta de nuevo.');
+        }
 
         // 3. Guardar ID de pedido para mostrar pantalla de seguimiento al regresar
         localStorage.setItem('peppes_order_key', orderId);
         if (authToken) localStorage.setItem('peppes_order_auth', authToken);
 
-        // 4. Redirigir al checkout de Mercado Pago (NO activamos seguimiento local aún)
-        window.location.href = init_point;
+        // 4. Redirigir al checkout de Mercado Pago
+        console.log("[checkout] Redirigiendo a MP:", initPoint);
+        window.location.href = initPoint;
 
       } catch (e) {
         alert("Error: " + e.message);
