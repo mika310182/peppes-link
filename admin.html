@@ -793,6 +793,220 @@
             }
         }
 
+        /* ── Extras premium ── */
+        #extras .glass-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 6px;
+        }
+
+        #extras .grid-products {
+            display: grid;
+            gap: 6px;
+        }
+
+        #extras .order-card {
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+
+        #extras .order-card:hover {
+            background: rgba(255,255,255,0.04);
+        }
+
+        #extras .order-info h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0 0 3px;
+            color: #fff;
+        }
+
+        #extras .order-meta {
+            font-size: 11px;
+            color: rgba(255,255,255,0.35);
+        }
+
+        #extras .order-status {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        #extras .order-status.status-paid {
+            background: rgba(46,204,113,0.12);
+            color: #2ecc71;
+        }
+
+        #extras .order-status.status-pending {
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* ── Orders premium ── */
+        #orders .glass-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 6px;
+        }
+
+        #orders .order-card {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            border-radius: 0;
+            padding: 16px 18px;
+            margin-bottom: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+
+        #orders .order-card:last-child {
+            border-bottom: none;
+        }
+
+        #orders .order-card:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        #orders .order-info h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0 0 3px;
+            color: #fff;
+        }
+
+        #orders .order-meta {
+            font-size: 11px;
+            color: rgba(255,255,255,0.35);
+        }
+
+        #orders .order-status {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        #orders .status-paid { background: rgba(46,204,113,0.12); color: #2ecc71; }
+        #orders .status-pending { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); }
+        #orders .status-cooking { background: rgba(230,126,34,0.12); color: #e67e22; }
+        #orders .status-ready { background: rgba(46,204,113,0.18); color: #27ae60; }
+        #orders .status-shipped { background: rgba(52,152,219,0.15); color: #5dade2; }
+        #orders .status-delivered { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); }
+        #orders .status-cancelled { background: rgba(255,70,70,0.12); color: #ff6b6b; }
+        #orders .status-warning { background: rgba(241,196,15,0.12); color: #f1c40f; }
+        #orders .status-error { background: rgba(231,76,60,0.12); color: #e74c3c; }
+
+        /* ── Coupons table premium ── */
+        #coupons .glass-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #coupons table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #fff;
+        }
+
+        #coupons thead tr {
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        #coupons th {
+            padding: 14px 18px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(255,255,255,0.35);
+            text-align: left;
+        }
+
+        #coupons th:last-child {
+            text-align: right;
+        }
+
+        #coupons td {
+            padding: 12px 18px;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        #coupons tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        #coupons tbody tr {
+            transition: background 0.15s;
+        }
+
+        #coupons tbody tr:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        #coupons .coupon-badge {
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        #coupons .coupon-badge.active {
+            background: rgba(46,204,113,0.12);
+            color: #2ecc71;
+        }
+
+        #coupons .coupon-badge.inactive {
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.35);
+        }
+
+        #coupons .coupon-btn {
+            padding: 5px 12px;
+            border-radius: 6px;
+            border: none;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            font-family: inherit;
+        }
+
+        #coupons .coupon-btn.edit {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+        }
+
+        #coupons .coupon-btn.edit:hover {
+            background: rgba(255,255,255,0.12);
+        }
+
+        @media (max-width: 600px) {
+            #coupons th, #coupons td {
+                padding: 10px 12px;
+            }
+            #coupons td {
+                font-size: 12px;
+            }
+        }
+
         /* ── Analytics Dashboard ── */
         #analytics .header {
             margin-bottom: 24px;
@@ -1500,7 +1714,7 @@
                     <h1>Pedidos</h1>
                     <p class="subtitle">Gestión de flujo de pedidos y stock.</p>
                 </div>
-                <button class="btn btn-secondary" onclick="playNotificationSound()">🔔 Probar Sonido</button>
+                <button class="btn btn-secondary" onclick="playNotificationSound()">🔔 Sonido</button>
             </header>
 
             <div class="glass-card">
@@ -1519,18 +1733,17 @@
             </header>
 
             <div class="glass-card">
-                <table style="width: 100%; border-collapse: collapse; color: white; text-align: left;">
+                <table>
                     <thead>
-                        <tr style="border-bottom: 1px solid var(--border); color: var(--text-dim);">
-                            <th style="padding: 15px;">Código</th>
-                            <th style="padding: 15px;">Tipo</th>
-                            <th style="padding: 15px;">Valor</th>
-                            <th style="padding: 15px;">Estado</th>
-                            <th style="padding: 15px; text-align: right;">Acciones</th>
+                        <tr>
+                            <th>Código</th>
+                            <th>Tipo</th>
+                            <th>Valor</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="coupons-list">
-                        <!-- Filled by JS -->
                     </tbody>
                 </table>
             </div>
@@ -3154,34 +3367,30 @@
 
                 Object.keys(data).forEach(code => {
                     const c = data[code];
-                    const valText = c.type === 'percentage' || c.type === 'percent' ? `${c.value}%` : `$${parseInt(c.value).toLocaleString('es-CL')}`;
-                    const statusText = c.active ? '<span style="color:var(--green)">Activo</span>' : '<span style="color:var(--red)">Apagado</span>';
+                    const isPct = c.type === 'percentage' || c.type === 'percent';
+                    const valText = isPct ? `${c.value}%` : `$${parseInt(c.value).toLocaleString('es-CL')}`;
+                    const badgeClass = c.active ? 'active' : 'inactive';
+                    const badgeText = c.active ? 'Activo' : 'Apagado';
 
-                    // Indicadores de restricciones
                     let extraInfo = '';
                     if (c.expiresAt) {
                         const exp = new Date(c.expiresAt);
                         if (!isNaN(exp.getTime())) {
-                            const expired = exp < new Date();
-                            extraInfo += ` ${expired ? '❌' : '📅'} `;
+                            extraInfo += exp < new Date() ? ' ❌' : ' 📅';
                         }
                     }
                     if (c.maxUses && c.maxUses > 0) {
-                        const used = c.usedCount || 0;
-                        extraInfo += ` (${used}/${c.maxUses})`;
+                        extraInfo += ` ${c.usedCount || 0}/${c.maxUses}`;
                     }
                     if (c.oneUsePerPhone) extraInfo += ' 📱1x';
 
                     const tr = document.createElement('tr');
-                    tr.style.borderBottom = "1px solid #222";
                     tr.innerHTML = `
-                        <td style="padding:15px; font-weight:bold; color:var(--blue);">${code}${extraInfo}</td>
-                        <td style="padding:15px;">${c.type === 'percentage' || c.type === 'percent' ? 'Porcentaje' : 'Monto Fijo'}</td>
-                        <td style="padding:15px;">${valText}</td>
-                        <td style="padding:15px;">${statusText}</td>
-                        <td style="padding:15px; text-align:right;">
-                            <button class="btn btn-secondary" onclick="editCoupon('${code}')" style="padding:6px 12px; display:inline-flex;">Editar</button>
-                        </td>
+                        <td><span style="font-weight:600;color:#fff;">${code}</span>${extraInfo ? `<span style="color:rgba(255,255,255,0.3);font-size:11px;margin-left:8px;">${extraInfo}</span>` : ''}</td>
+                        <td>${isPct ? 'Porcentaje' : 'Monto Fijo'}</td>
+                        <td>${valText}</td>
+                        <td><span class="coupon-badge ${badgeClass}">${badgeText}</span></td>
+                        <td style="text-align:right;"><button class="coupon-btn edit" onclick="editCoupon('${code}')">Editar</button></td>
                     `;
                     tbody.appendChild(tr);
                 });
