@@ -565,6 +565,193 @@
             font-family: inherit;
         }
 
+        /* ── Analytics Dashboard ── */
+        #analytics .header {
+            margin-bottom: 24px;
+        }
+
+        #analytics .ana-grid {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        #analytics .ana-kpi {
+            grid-template-columns: repeat(5, 1fr);
+        }
+
+        #analytics .ana-charts-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        #analytics .ana-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 18px 20px;
+        }
+
+        #analytics .ana-card-header {
+            margin-bottom: 14px;
+        }
+
+        #analytics .ana-label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* KPI cards */
+        #analytics .ana-kpi-top {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        #analytics .ana-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        #analytics .ana-number {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #fff;
+            line-height: 1.1;
+        }
+
+        /* Charts */
+        #analytics .ana-chart-wrap {
+            position: relative;
+            min-height: 140px;
+        }
+
+        #analytics .ana-chart-wrap canvas {
+            width: 100% !important;
+            height: 140px !important;
+        }
+
+        /* Skeleton loader */
+        #analytics .ana-skeleton {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%);
+            background-size: 200% 100%;
+            animation: ana-shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes ana-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Payment methods */
+        #analytics .ana-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 140px;
+            justify-content: center;
+        }
+
+        #analytics .ana-method-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 4px;
+        }
+
+        #analytics .ana-method-row .ana-method-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #analytics .ana-method-row .ana-method-pct {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.5);
+            min-width: 36px;
+            text-align: right;
+        }
+
+        #analytics .ana-method-bar-wrap {
+            flex: 1;
+            height: 4px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 2px;
+            margin: 0 12px;
+            overflow: hidden;
+        }
+
+        #analytics .ana-method-bar {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.6s ease;
+        }
+
+        /* Coupon list */
+        #analytics .ana-coupon-list {
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        #analytics .ana-coupon-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 4px;
+        }
+
+        #analytics .ana-coupon-row .ana-coupon-code {
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+            font-family: monospace;
+            letter-spacing: 0.5px;
+        }
+
+        #analytics .ana-coupon-row .ana-coupon-count {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            #analytics .ana-kpi {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            #analytics .ana-charts-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            #analytics .ana-kpi {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            #analytics .ana-card {
+                padding: 14px 16px;
+            }
+            #analytics .ana-number {
+                font-size: 22px;
+            }
+        }
+
         /* ── Premium Coupon Modal ── */
         #modal-coupon .modal-content {
             max-width: 520px;
@@ -949,6 +1136,7 @@
 
   gtag('config', 'AW-16493571935');
 </script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
@@ -983,6 +1171,9 @@
             </div>
             <div class="nav-link" onclick="showSection('coupons', this)">
                 🏷️ <span>Cupones</span>
+            </div>
+            <div class="nav-link" onclick="showSection('analytics', this); loadAnalytics();">
+                📈 <span>Analytics</span>
             </div>
         </nav>
     </aside>
@@ -1120,6 +1311,77 @@
             </div>
         </section>
     </main>
+
+    <!-- ANALYTICS SECTION -->
+    <section id="analytics" class="section">
+        <header class="header">
+            <div>
+                <h1>Analytics</h1>
+                <p class="subtitle">Métricas operativas en tiempo real</p>
+            </div>
+            <button class="btn btn-secondary" onclick="loadAnalytics()" style="gap: 6px;">🔄 Actualizar</button>
+        </header>
+
+        <!-- KPI row -->
+        <div class="ana-grid ana-kpi">
+            <div class="ana-card" id="ana-sales-today">
+                <div class="ana-kpi-top"><span class="ana-label">Ventas Hoy</span><span class="ana-dot" style="background:#4f9cf7;"></span></div>
+                <div class="ana-number">$0</div>
+            </div>
+            <div class="ana-card" id="ana-sales-week">
+                <div class="ana-kpi-top"><span class="ana-label">Ventas Semana</span><span class="ana-dot" style="background:#7c5cfc;"></span></div>
+                <div class="ana-number">$0</div>
+            </div>
+            <div class="ana-card" id="ana-sales-month">
+                <div class="ana-kpi-top"><span class="ana-label">Ventas Mes</span><span class="ana-dot" style="background:#2ecc71;"></span></div>
+                <div class="ana-number">$0</div>
+            </div>
+            <div class="ana-card" id="ana-orders-total">
+                <div class="ana-kpi-top"><span class="ana-label">Pedidos</span><span class="ana-dot" style="background:#f39c12;"></span></div>
+                <div class="ana-number">0</div>
+            </div>
+            <div class="ana-card" id="ana-avg-ticket">
+                <div class="ana-kpi-top"><span class="ana-label">Ticket Prom.</span><span class="ana-dot" style="background:#e74c3c;"></span></div>
+                <div class="ana-number">$0</div>
+            </div>
+        </div>
+
+        <!-- Charts row 1 -->
+        <div class="ana-grid ana-charts-2">
+            <div class="ana-card">
+                <div class="ana-card-header"><span class="ana-label">Ventas (7 días)</span></div>
+                <div class="ana-chart-wrap"><canvas id="chart-sales-line"></canvas><div class="ana-skeleton" id="sk-line"></div></div>
+            </div>
+            <div class="ana-card">
+                <div class="ana-card-header"><span class="ana-label">Delivery vs Retiro</span></div>
+                <div class="ana-chart-wrap"><canvas id="chart-delivery-donut"></canvas><div class="ana-skeleton" id="sk-donut"></div></div>
+            </div>
+        </div>
+
+        <!-- Charts row 2 + methods -->
+        <div class="ana-grid ana-charts-2">
+            <div class="ana-card">
+                <div class="ana-card-header"><span class="ana-label">Productos más vendidos</span></div>
+                <div class="ana-chart-wrap"><canvas id="chart-top-products"></canvas><div class="ana-skeleton" id="sk-products"></div></div>
+            </div>
+            <div class="ana-card">
+                <div class="ana-card-header"><span class="ana-label">Pagos</span></div>
+                <div id="ana-payment-methods" class="ana-methods"><div class="ana-skeleton" id="sk-methods"></div></div>
+            </div>
+        </div>
+
+        <!-- Row 3: hours + coupons -->
+        <div class="ana-grid ana-charts-2">
+            <div class="ana-card">
+                <div class="ana-card-header"><span class="ana-label">Horas pico</span></div>
+                <div class="ana-chart-wrap"><canvas id="chart-hours"></canvas><div class="ana-skeleton" id="sk-hours"></div></div>
+            </div>
+            <div class="ana-card">
+                <div class="ana-card-header"><span class="ana-label">Cupones más usados</span></div>
+                <div id="ana-top-coupons" class="ana-coupon-list"><div class="ana-skeleton" id="sk-coupons"></div></div>
+            </div>
+        </div>
+    </section>
 
     <div id="modal-product" class="modal">
         <div class="modal-content">
@@ -2796,6 +3058,263 @@
                     document.getElementById('modal-coupon').style.display = 'none';
                 });
             }
+        }
+
+        // ── Analytics ──
+        let anaCharts = {};
+
+        function loadAnalytics() {
+            const ordersRef = db.ref('orders');
+            const pendingRef = db.ref('pending_orders');
+            const couponsRef = db.ref('store_settings/coupons');
+
+            Promise.all([
+                ordersRef.once('value'),
+                pendingRef.once('value'),
+                couponsRef.once('value')
+            ]).then(([ordersSnap, pendingSnap, couponsSnap]) => {
+                let all = [];
+                const oData = ordersSnap.val();
+                if (oData) all = Object.keys(oData).map(id => ({ id, ...oData[id] }));
+                const pData = pendingSnap.val();
+                if (pData) {
+                    Object.keys(pData).forEach(id => {
+                        if (!all.find(o => o.id === id)) all.push({ id, ...pData[id] });
+                    });
+                }
+                const coupons = couponsSnap.val() || {};
+                renderAnalytics(all, coupons);
+            });
+        }
+
+        function renderAnalytics(orders, coupons) {
+            const now = Date.now();
+            const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+            const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - 7); weekStart.setHours(0,0,0,0);
+            const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+
+            const paid = orders.filter(o => derivePaymentStatus(o) === 'paid');
+            const todayOrders = paid.filter(o => (o.timestamp || 0) >= todayStart.getTime());
+            const weekOrders = paid.filter(o => (o.timestamp || 0) >= weekStart.getTime());
+            const monthOrders = paid.filter(o => (o.timestamp || 0) >= monthStart.getTime());
+
+            // KPI
+            const salesToday = todayOrders.reduce((s,o) => s + (o.total || 0), 0);
+            const salesWeek = weekOrders.reduce((s,o) => s + (o.total || 0), 0);
+            const salesMonth = monthOrders.reduce((s,o) => s + (o.total || 0), 0);
+            const completed = paid.filter(o => deriveOrderStatus(o) === 'entregado').length;
+            const avgTicket = monthOrders.length ? Math.round(salesMonth / monthOrders.length) : 0;
+
+            document.getElementById('ana-sales-today').querySelector('.ana-number').textContent = '$' + salesToday.toLocaleString('es-CL');
+            document.getElementById('ana-sales-week').querySelector('.ana-number').textContent = '$' + salesWeek.toLocaleString('es-CL');
+            document.getElementById('ana-sales-month').querySelector('.ana-number').textContent = '$' + salesMonth.toLocaleString('es-CL');
+            document.getElementById('ana-orders-total').querySelector('.ana-number').textContent = completed;
+            document.getElementById('ana-avg-ticket').querySelector('.ana-number').textContent = '$' + avgTicket.toLocaleString('es-CL');
+
+            // Daily sales for chart (7 days)
+            const dailyLabels = [];
+            const dailyData = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(); d.setDate(d.getDate() - i); d.setHours(0,0,0,0);
+                const dEnd = new Date(d.getTime() + 86400000);
+                const dayTotal = paid
+                    .filter(o => (o.timestamp || 0) >= d.getTime() && (o.timestamp || 0) < dEnd.getTime())
+                    .reduce((s,o) => s + (o.total || 0), 0);
+                dailyLabels.push(d.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric' }));
+                dailyData.push(dayTotal);
+            }
+
+            // Delivery vs Retiro
+            const delivery = paid.filter(o => (o.metodo || '').toLowerCase() === 'delivery').length;
+            const retiro = paid.filter(o => (o.metodo || '').toLowerCase() !== 'delivery').length;
+
+            // Top products
+            const productCount = {};
+            paid.forEach(o => {
+                if (o.items) o.items.forEach(item => {
+                    const name = item.name || 'Producto';
+                    productCount[name] = (productCount[name] || 0) + (item.qty || 1);
+                });
+            });
+            const topProducts = Object.entries(productCount).sort((a,b) => b[1] - a[1]).slice(0, 8);
+
+            // Peak hours
+            const hourCount = {};
+            paid.forEach(o => {
+                if (o.timestamp) {
+                    const h = new Date(o.timestamp).getHours();
+                    hourCount[h] = (hourCount[h] || 0) + 1;
+                }
+            });
+            const hourLabels = [];
+            const hourData = [];
+            for (let h = 10; h <= 23; h++) {
+                hourLabels.push(h + ':00');
+                hourData.push(hourCount[h] || 0);
+            }
+
+            // Payment methods
+            const mp = paid.filter(o => {
+                const m = (o.metodo || '').toLowerCase();
+                return m === 'mercadopago' || m === 'mp' || m === 'tarjeta';
+            }).length;
+            const transfer = paid.filter(o => {
+                const m = (o.metodo || '').toLowerCase();
+                return m === 'transferencia' || m === 'transfer' || m === 'efectivo';
+            }).length;
+            const unknownPay = paid.length - mp - transfer;
+
+            // Top coupons
+            const couponUse = {};
+            paid.forEach(o => {
+                if (o.descuento && o.descuento.code) {
+                    const c = o.descuento.code;
+                    couponUse[c] = (couponUse[c] || 0) + 1;
+                }
+            });
+            const topCoupons = Object.entries(couponUse).sort((a,b) => b[1] - a[1]).slice(0, 5);
+
+            // Destroy previous charts
+            Object.values(anaCharts).forEach(c => { try { c.destroy(); } catch(e) {} });
+            anaCharts = {};
+
+            // Hide skeletons
+            document.querySelectorAll('#analytics .ana-skeleton').forEach(el => el.remove());
+
+            // Chart defaults
+            Chart.defaults.color = 'rgba(255,255,255,0.4)';
+            Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+            Chart.defaults.font.family = "'Poppins', sans-serif";
+
+            // Line chart
+            const ctxLine = document.getElementById('chart-sales-line').getContext('2d');
+            anaCharts.line = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: dailyLabels,
+                    datasets: [{
+                        data: dailyData,
+                        borderColor: '#4f9cf7',
+                        backgroundColor: 'rgba(79,156,247,0.08)',
+                        borderWidth: 2,
+                        fill: true,
+                        pointRadius: 2,
+                        pointHoverRadius: 4,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 9 } } },
+                        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 9 }, callback: v => '$' + (v/1000).toFixed(0) + 'k' } }
+                    }
+                }
+            });
+
+            // Donut
+            const ctxDonut = document.getElementById('chart-delivery-donut').getContext('2d');
+            anaCharts.donut = new Chart(ctxDonut, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Delivery', 'Retiro'],
+                    datasets: [{
+                        data: [delivery, retiro],
+                        backgroundColor: ['#7c5cfc', 'rgba(255,255,255,0.1)'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 8, padding: 12, font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+
+            // Top products horizontal bar
+            const ctxProd = document.getElementById('chart-top-products').getContext('2d');
+            anaCharts.products = new Chart(ctxProd, {
+                type: 'bar',
+                data: {
+                    labels: topProducts.map(p => p[0].length > 18 ? p[0].slice(0,16) + '…' : p[0]),
+                    datasets: [{
+                        data: topProducts.map(p => p[1]),
+                        backgroundColor: 'rgba(46,204,113,0.6)',
+                        borderRadius: 3,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 9 } } },
+                        y: { grid: { display: false }, ticks: { font: { size: 9 } } }
+                    }
+                }
+            });
+
+            // Hours bar
+            const ctxHours = document.getElementById('chart-hours').getContext('2d');
+            anaCharts.hours = new Chart(ctxHours, {
+                type: 'bar',
+                data: {
+                    labels: hourLabels,
+                    datasets: [{
+                        data: hourData,
+                        backgroundColor: 'rgba(124,92,252,0.5)',
+                        borderRadius: 3,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 8 } } },
+                        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 9 }, stepSize: 1 } }
+                    }
+                }
+            });
+
+            // Payment methods
+            const methodsHtml = [
+                { label: 'Mercado Pago', value: mp, color: '#4f9cf7' },
+                { label: 'Transferencia', value: transfer, color: '#2ecc71' },
+                ...(unknownPay > 0 ? [{ label: 'Otro', value: unknownPay, color: 'rgba(255,255,255,0.2)' }] : [])
+            ].map(m => {
+                const pct = paid.length ? Math.round(m.value / paid.length * 100) : 0;
+                return `
+                    <div class="ana-method-row">
+                        <span class="ana-method-label">${m.label}</span>
+                        <div class="ana-method-bar-wrap">
+                            <div class="ana-method-bar" style="width:${pct}%;background:${m.color};"></div>
+                        </div>
+                        <span class="ana-method-pct">${pct}%</span>
+                    </div>`;
+            }).join('');
+            document.getElementById('ana-payment-methods').innerHTML = methodsHtml || '<div style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;">Sin datos</div>';
+
+            // Top coupons
+            const couponHtml = topCoupons.length
+                ? topCoupons.map(([code, count]) => `
+                    <div class="ana-coupon-row">
+                        <span class="ana-coupon-code">${code}</span>
+                        <span class="ana-coupon-count">${count} uso${count !== 1 ? 's' : ''}</span>
+                    </div>`).join('')
+                : '<div style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;">Sin cupones usados</div>';
+            document.getElementById('ana-top-coupons').innerHTML = couponHtml;
         }
 
         initApp();
