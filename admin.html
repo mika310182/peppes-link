@@ -565,6 +565,23 @@
             font-family: inherit;
         }
 
+        /* ── Dashboard KPI (refactored) ── */
+        #dashboard .dash-kpi {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        #dashboard .dash-kpi .ana-number {
+            font-size: 28px;
+        }
+
+        @media (max-width: 600px) {
+            #dashboard .dash-kpi {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* ── Analytics Dashboard ── */
         #analytics .header {
             margin-bottom: 24px;
@@ -1181,42 +1198,40 @@
     <main class="main">
         <section id="dashboard" class="section active">
             <header class="header">
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-secondary" onclick="playNotificationSound()">🔔 Probar Sonido</button>
-                    <button class="btn btn-secondary btn-seed" onclick="seedInventory()">🔄 Sincronizar
-                        Catálogo</button>
-                    <button class="btn btn-primary" style="background: var(--blue);" onclick="openHoursModal()">⏱️
-                        Horarios</button>
-                    <button class="btn btn-danger" onclick="resetForLaunch()"
-                        style="background: var(--red); color: white; border: none;">🚀 Modo Lanzamiento</button>
+                <div>
+                    <h1>Dashboard</h1>
+                    <p class="subtitle">Resumen operativo de la tienda</p>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" onclick="playNotificationSound()">🔔 Sonido</button>
+                    <button class="btn btn-secondary" onclick="seedInventory()">🔄 Catálogo</button>
+                    <button class="btn btn-secondary" onclick="openHoursModal()">⏱️ Horarios</button>
+                    <button class="btn btn-secondary" onclick="resetForLaunch()"
+                        style="color: #ff6b6b;">🚀 Lanzamiento</button>
                     <button class="btn btn-secondary"
-                        onclick="firebase.auth().signOut().then(() => location.reload());">🚪
-                        Salir</button>
+                        onclick="firebase.auth().signOut().then(() => location.reload());">🚪 Salir</button>
                 </div>
             </header>
 
-            <div class="stats-grid">
-                <div class="stat-card sales">
-                    <div class="stat-label">Ventas Totales</div>
-                    <div class="stat-value" id="dash-sales">$0</div>
-                    <div class="stat-info">Sincronizado</div>
+            <div class="dash-kpi">
+                <div class="ana-card">
+                    <div class="ana-kpi-top"><span class="ana-label">Ventas Totales</span><span class="ana-dot" style="background:#4f9cf7;"></span></div>
+                    <div class="ana-number" id="dash-sales">$0</div>
                 </div>
-                <div class="stat-card new-orders">
-                    <div class="stat-label">Pedidos Nuevos</div>
-                    <div class="stat-value" id="dash-orders">0</div>
-                    <div class="stat-info">Recibidos hoy</div>
+                <div class="ana-card">
+                    <div class="ana-kpi-top"><span class="ana-label">Pedidos Hoy</span><span class="ana-dot" style="background:#2ecc71;"></span></div>
+                    <div class="ana-number" id="dash-orders">0</div>
                 </div>
-                <div class="stat-card stock">
-                    <div class="stat-label">Agotados</div>
-                    <div class="stat-value" id="dash-stock">0</div>
-                    <div class="stat-info">Requieren atención</div>
+                <div class="ana-card">
+                    <div class="ana-kpi-top"><span class="ana-label">Agotados</span><span class="ana-dot" style="background:#e74c3c;"></span></div>
+                    <div class="ana-number" id="dash-stock">0</div>
                 </div>
             </div>
 
-            <div class="glass-card">
-                <h2 style="margin-bottom: 20px;">Actividad Reciente</h2>
+            <div class="ana-card" style="margin-top: 16px;">
+                <div class="ana-card-header"><span class="ana-label">Actividad Reciente</span></div>
                 <div id="recent-activity">
-                    <p style="color: var(--text-dim);">Cargando datos...</p>
+                    <p style="color: rgba(255,255,255,0.3); font-size: 13px;">Cargando datos...</p>
                 </div>
             </div>
         </section>
