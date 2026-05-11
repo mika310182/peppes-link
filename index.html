@@ -1942,10 +1942,8 @@
       if (!path) return "assets/placeholder.png";
       const p = String(path).trim();
       if (p.startsWith('http') || p.startsWith('https://') || p.startsWith('assets/') || p.startsWith('data:')) {
-        console.log("[resolveImgPath] passed through:", p);
         return p;
       }
-      console.warn("[resolveImgPath] added assets/ prefix to:", p);
       return IMG_PATH + p;
     }
 
@@ -2009,7 +2007,7 @@
           { id: "cesar", type: "Fresh", name: "César", desc: "Lechuga, pollo, tocino y aderezo.", img: IMG_PATH + "césar.png", prices: { U: 5990 } }
         ],
         postres: [
-          { id: "Brownie", type: "Dulce", name: "Brownie", desc: "Chocolate belga premium.", img: IMG_PATH + "brownie.png", prices: { U: 3990 } }
+          { id: "Brownie", type: "Dulce", name: "Brownie", desc: "Chocolate belga premium.", img: IMG_PATH + "brownie-v2.png", prices: { U: 3990 } }
         ],
         bebidas: [
           { id: "cocacola_original", type: "Bebida", name: "Coca Cola 220ml", desc: "Formato personal.", img: IMG_PATH + "coca-cola-original-220ml.png", prices: { U: 1000 } },
