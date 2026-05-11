@@ -6,7 +6,7 @@
 const RESTAURANT_LAT = [-23.59636];
 const RESTAURANT_LNG = [-70.39323];
 
-console.log("distanceUtils cargado correctamente");
+
 
 window.calculateDistanceKm = function(lat1, lon1, lat2, lon2) {
     const R = 6371; // Earth's radius in km

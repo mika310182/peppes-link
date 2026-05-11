@@ -51,64 +51,32 @@
   <link href="https://fonts.googleapis.com/css2?family=Titan+One&family=Poppins:wght@400;500;600;900&display=swap"
     rel="stylesheet">
 
-  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
-
-  <!-- No extra map libraries (Pure Text Logic) -->
-  <script src="js/distanceUtils.js"></script>
   <script>
-    // Google Places Autocomplete - inicialización diferida
     window.googleMapsReady = false;
     window.initGooglePlacesAutocomplete = function () {
-      console.log('[GooglePlaces] Callback recibido, esperando DOM...');
-
       function setupAutocomplete() {
         const input = document.getElementById('address_street');
-        console.log('[GooglePlaces] Buscando input address_street:', input);
-
         if (!input) {
-          console.log('[GooglePlaces] Input NO encontrado, reintentando en 500ms...');
           setTimeout(setupAutocomplete, 500);
           return;
         }
-
-        console.log('[GooglePlaces] Input encontrado, creando Autocomplete...');
-
         const autocomplete = new google.maps.places.Autocomplete(input, {
           types: ['address'],
           componentRestrictions: { country: 'cl' },
           bounds: new google.maps.LatLngBounds(
-            new google.maps.LatLng(-23.85, -70.60),  // SW corner (extremo SW de Antofagasta)
-            new google.maps.LatLng(-23.45, -70.20)    // NE corner (extremo NE de Antofagasta)
+            new google.maps.LatLng(-23.85, -70.60),
+            new google.maps.LatLng(-23.45, -70.20)
           ),
           strictBounds: false,
           fields: ['formatted_address', 'geometry', 'address_components']
         });
-
-        console.log('[GooglePlaces] Autocomplete creado:', autocomplete);
-
         autocomplete.addListener('place_changed', () => {
           const place = autocomplete.getPlace();
-          console.log('[GooglePlaces] place_changed disparado, place:', place);
-
-          if (!place.geometry || !place.address_components) {
-            console.warn('[GooglePlaces] Place ignorado (sin datos completos):', place);
-            return;
-          }
-
-          console.log('[GooglePlaces] Place válido procesado:', place);
-
+          if (!place.geometry || !place.address_components) return;
           const route = place.address_components.find(c => c.types.includes('route'));
           const streetNumber = place.address_components.find(c => c.types.includes('street_number'));
-          console.log('[GooglePlaces] streetNumber:', streetNumber);
-
-          // Extraer valores como strings
           const street = route?.long_name || '';
           const streetNumberVal = streetNumber?.long_name || '';
-          
-          console.log('[GooglePlaces] street:', street, 'streetNumber:', streetNumberVal);
-
-          // Usar window para asegurar acceso global
           window.customerLocation = {
             address: place.formatted_address,
             coords: { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() },
@@ -118,15 +86,9 @@
             streetNumber: streetNumberVal,
             rawAddressDetails: place.address_components
           };
-
-          console.log('[GooglePlaces] customerLocation actualizado:', window.customerLocation);
-
-          // Llamar updatePricingByCoords si existe (puede no estar definida aún si el script principal no ha parseado)
           if (typeof window.updatePricingByCoords === 'function') {
-            console.log('[GooglePlaces] Llamando updatePricingByCoords...');
             window.updatePricingByCoords(place.geometry.location.lat(), place.geometry.location.lng(), place.address_components);
           } else {
-            console.log('[GooglePlaces] updatePricingByCoords no disponible aún, reintentando...');
             setTimeout(() => {
               if (typeof window.updatePricingByCoords === 'function') {
                 window.updatePricingByCoords(place.geometry.location.lat(), place.geometry.location.lng(), place.address_components);
@@ -134,12 +96,8 @@
             }, 100);
           }
         });
-
         window.googleMapsReady = true;
-        console.log('[GooglePlaces] Autocomplete conectado exitosamente');
       }
-
-      // Intentar inmediatamente, si no funciona reintentar
       setupAutocomplete();
     };
   </script>
@@ -375,6 +333,46 @@
         0 1px 3px rgba(0, 0, 0, 0.8);
       /* ✅ FIX: borde de texto oscuro como fallback extra para colores intermedios */
       -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.15);
+    }
+
+    .hero-sub {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+      margin-top: -8px;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+    }
+
+    .trust-strip {
+      display: flex;
+      gap: 5px;
+      padding: 6px 14px 2px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      justify-content: center;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 6;
+    }
+    .trust-strip::-webkit-scrollbar { display: none; }
+    .trust-item {
+      flex-shrink: 0;
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      color: rgba(255,255,255,0.7);
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 3px 9px;
+      border-radius: 999px;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
     }
 
     .curve {
@@ -1623,9 +1621,18 @@
             <button class="nav-arrow right visible" onclick="scrollCarousel('catsSnap', 1)">›</button>
           </div>
         </div>
+        <div class="trust-strip">
+          <span class="trust-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>MP</span>
+          <span class="trust-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Transf.</span>
+          <span class="trust-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Delivery</span>
+          <span class="trust-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Retiro</span>
+          <span class="trust-item">Masa artesanal</span>
+          <span class="trust-item">Mozzarella real</span>
+        </div>
         <div class="productTitle" id="productTitleWrap">
           <span id="productType" class="productTag"></span>
           <div id="productName">---</div>
+          <div class="hero-sub">Pizza artesanal en Antofagasta — delivery y retiro</div>
         </div>
         <div class="curve"></div>
         <div class="hero" id="heroArea">
@@ -1793,6 +1800,9 @@
     </div>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
+  <script src="js/distanceUtils.js"></script>
   <script>
     const SUCCESS_SOUND = "https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3";
     const audioObj = new Audio(SUCCESS_SOUND);
@@ -2276,7 +2286,7 @@
               limpiarSeguimiento(true);
             }
           }
-        }).catch(err => console.log(err));
+        }).catch(() => {});
     }
 
     function limpiarSeguimiento(mostrarAntes = false) {
@@ -2308,7 +2318,7 @@
             if (order && !order.error) {
               renderSuccessScreen(savedOrderId, order);
             }
-          }).catch(err => console.log(err));
+          }).catch(() => {});
       }
     }
 
@@ -2566,7 +2576,7 @@
       const snap = document.getElementById("pizzasSnap");
       const list = getCleanProductList(id);
 
-      snap.innerHTML = list.map((p, idx) => `<div class="pizzaSlide" data-index="${idx}"><img class="prodSlideImg" src="${resolveImgPath(p.img)}" onerror="this.onerror=null;this.src='assets/placeholder.png'"></div>`).join("");
+      snap.innerHTML = list.map((p, idx) => `<div class="pizzaSlide" data-index="${idx}"><img class="prodSlideImg" src="${resolveImgPath(p.img)}" loading="lazy" onerror="this.onerror=null;this.src='assets/placeholder.png'"></div>`).join("");
 
       // ✅ FIX: Desconectar observer anterior antes de crear uno nuevo
       if (activeSlideObserver) { activeSlideObserver.disconnect(); activeSlideObserver = null; }
@@ -2957,8 +2967,6 @@
       window.customerLocation.street = addressDetails?.road || userStreetValue;
       window.customerLocation.streetNumber = addressDetails?.house_number || '';
 
-      console.log("VALIDACIÓN updatePricingByCoords:", window.customerLocation);
-
       if (deliveryRow) {
         deliveryRow.style.display = "flex";
         if (cost === null) {
@@ -3060,7 +3068,6 @@
         const osmLink = `https://www.openstreetmap.org/?mlat=${userLocation.lat}&mlon=${userLocation.lng}#map=18/${userLocation.lat}/${userLocation.lng}`;
 
         customerLocation = { address: "Ubicación GPS", coords: userLocation, glink: osmLink, hasHouseNumber: !!(addressAuth && addressAuth.house_number), street: addressAuth?.road || '', streetNumber: addressAuth?.house_number || '', rawAddressDetails: addressAuth };
-        console.log("VALIDACIÓN GPS:", customerLocation);
         btnGPS.innerHTML = "✅ Ubicación capturada";
         btnGPS.style.color = "var(--success-green)";
 
@@ -3271,7 +3278,6 @@
       let finalAddress = "";
       if (state.isDelivery) {
         const customerLoc = customerLocation || window.customerLocation || {};
-        console.log("VALIDACIÓN:", customerLoc);
         if (!street || !state.deliveryCost || state.deliveryCost <= 0) {
           e?.preventDefault?.();
           showError("address_street");

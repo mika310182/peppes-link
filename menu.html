@@ -46,9 +46,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Titan+One&family=Poppins:wght@400;500;600;900&display=swap" rel="stylesheet">
 
-  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
-
   <style>
     :root {
       --pepper-red: #ff3131;
@@ -495,6 +492,8 @@
     </div>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
   <script>
     // ── FIREBASE CONFIG ──
     const firebaseConfig = {
@@ -623,6 +622,7 @@
             class="prodSlideImg ${(p.stockBySize && typeof p.stockBySize === 'object' ? !Object.values(p.stockBySize).some(v => v === true) : p.available === false) ? 'agotado-overlay' : ''}"
             src="${resolveImg(p.img)}"
             alt="${p.name}"
+            loading="lazy"
             onerror="this.src='assets/placeholder.png'"
           />
         </div>
