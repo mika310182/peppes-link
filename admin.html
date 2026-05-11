@@ -565,6 +565,294 @@
             font-family: inherit;
         }
 
+        /* ── Premium Coupon Modal ── */
+        #modal-coupon .modal-content {
+            max-width: 520px;
+            padding: 32px 36px 28px;
+        }
+
+        #modal-coupon h2 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            margin: 0 0 24px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #modal-coupon h2::before {
+            content: "🏷️";
+            font-size: 20px;
+        }
+
+        #modal-coupon .field-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        #modal-coupon .field-grid.cols-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        #modal-coupon .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        #modal-coupon .field label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #modal-coupon .field label .tag {
+            font-size: 9px;
+            font-weight: 500;
+            text-transform: none;
+            letter-spacing: 0;
+            color: rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.06);
+            padding: 1px 7px;
+            border-radius: 4px;
+        }
+
+        #modal-coupon .field input,
+        #modal-coupon .field select {
+            width: 100%;
+            height: 44px;
+            padding: 0 14px;
+            font-size: 14px;
+            font-family: inherit;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            box-sizing: border-box;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        #modal-coupon .field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.7);
+            cursor: pointer;
+        }
+
+        #modal-coupon .field input:focus,
+        #modal-coupon .field select:focus {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+        }
+
+        #modal-coupon .field input:hover,
+        #modal-coupon .field select:hover {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        #modal-coupon .field select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+            cursor: pointer;
+        }
+
+        #modal-coupon .field input[type="number"]::-webkit-inner-spin-button {
+            opacity: 0.4;
+        }
+
+        /* Full-width row (code, estado) */
+        #modal-coupon .field.full {
+            grid-column: 1 / -1;
+        }
+
+        /* ── Premium Toggle ── */
+        #modal-coupon .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            grid-column: 1 / -1;
+        }
+
+        #modal-coupon .toggle-row .toggle-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        #modal-coupon .toggle-row .toggle-info .toggle-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            line-height: 1.3;
+        }
+
+        #modal-coupon .toggle-row .toggle-info .toggle-desc {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.35);
+            line-height: 1.3;
+        }
+
+        #modal-coupon .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+
+        #modal-coupon .toggle-switch input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        #modal-coupon .toggle-switch .slider {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.25s;
+        }
+
+        #modal-coupon .toggle-switch .slider::after {
+            content: "";
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        #modal-coupon .toggle-switch input:checked+.slider {
+            background: #2ecc71;
+        }
+
+        #modal-coupon .toggle-switch input:checked+.slider::after {
+            transform: translateX(18px);
+        }
+
+        #modal-coupon .toggle-switch input:focus-visible+.slider {
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2);
+        }
+
+        /* ── Stats Cards ── */
+        #modal-coupon .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            grid-column: 1 / -1;
+        }
+
+        #modal-coupon .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 14px 12px;
+            text-align: center;
+        }
+
+        #modal-coupon .stat-card .stat-icon {
+            font-size: 16px;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        #modal-coupon .stat-card .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #fff;
+            line-height: 1.2;
+        }
+
+        #modal-coupon .stat-card .stat-label {
+            font-size: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: rgba(255, 255, 255, 0.35);
+            margin-top: 3px;
+        }
+
+        /* ── Buttons ── */
+        #modal-coupon .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 24px;
+            grid-column: 1 / -1;
+        }
+
+        #modal-coupon .modal-actions .btn {
+            height: 44px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: inherit;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        #modal-coupon .modal-actions .btn:active {
+            transform: scale(0.97);
+        }
+
+        #modal-coupon .modal-actions .btn-primary {
+            flex: 2;
+            background: #fff;
+            color: #111;
+        }
+
+        #modal-coupon .modal-actions .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        #modal-coupon .modal-actions .btn-secondary {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        #modal-coupon .modal-actions .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        #modal-coupon .modal-actions .btn-delete {
+            flex: 0 0 44px;
+            background: rgba(255, 70, 70, 0.12);
+            color: #ff6b6b;
+            font-size: 16px;
+            padding: 0;
+        }
+
+        #modal-coupon .modal-actions .btn-delete:hover {
+            background: rgba(255, 70, 70, 0.2);
+        }
+
         @media (max-width: 600px) {
             .form-row {
                 grid-template-columns: 1fr;
@@ -572,7 +860,65 @@
             }
         }
 
-        /* Responsive */
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            #modal-coupon .modal-content {
+                padding: 24px 20px 20px;
+            }
+
+            #modal-coupon .field-grid.cols-2 {
+                grid-template-columns: 1fr;
+            }
+
+            #modal-coupon .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+
+            #modal-coupon .stat-card {
+                padding: 10px 8px;
+            }
+
+            #modal-coupon .stat-card .stat-value {
+                font-size: 18px;
+            }
+
+            #modal-coupon .modal-actions {
+                flex-wrap: wrap;
+            }
+
+            #modal-coupon .modal-actions .btn-primary {
+                flex: 1 1 100%;
+                order: -1;
+            }
+
+            #modal-coupon .modal-actions .btn-secondary {
+                flex: 1;
+            }
+
+            #modal-coupon .modal-actions .btn-delete {
+                flex: 0 0 44px;
+                order: 1;
+            }
+        }
+
+        @media (max-width: 400px) {
+            #modal-coupon .stats-grid {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 6px;
+            }
+
+            #modal-coupon .stat-card .stat-value {
+                font-size: 16px;
+            }
+
+            #modal-coupon .toggle-row {
+                padding: 12px 14px;
+                gap: 12px;
+            }
+        }
+
+        /* ── Responsive ── */
         @media (max-width: 900px) {
             .sidebar {
                 width: 70px;
@@ -983,64 +1329,95 @@
 
     <!-- MODAL CUPONES -->
     <div id="modal-coupon" class="modal">
-        <div class="modal-content" style="max-width: 460px;">
+        <div class="modal-content">
             <h2>Gestionar Cupón</h2>
-            <div class="form-group" style="margin-top: 20px;">
-                <label>Código (Sin espacios)</label>
-                <input type="text" id="c-code" placeholder="Ej: PEPPES10" style="text-transform: uppercase;" required>
+
+            <div class="field-grid">
+                <div class="field full">
+                    <label>Código</label>
+                    <input type="text" id="c-code" placeholder="Ej: PEPPES10" style="text-transform: uppercase;" required>
+                </div>
             </div>
-            <div class="form-row">
-                <div class="form-group">
+
+            <div class="field-grid cols-2" style="margin-top: 16px;">
+                <div class="field">
                     <label>Tipo</label>
                     <select id="c-type">
                         <option value="percentage">Porcentaje (%)</option>
                         <option value="fixed">Monto Fijo ($)</option>
                     </select>
                 </div>
-                <div class="form-group">
+                <div class="field">
                     <label>Valor</label>
                     <input type="number" id="c-value" placeholder="Ej: 10 o 2000" required>
                 </div>
             </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Expira (opcional)</label>
+
+            <div class="field-grid cols-2" style="margin-top: 16px;">
+                <div class="field">
+                    <label>Expira <span class="tag">opcional</span></label>
                     <input type="datetime-local" id="c-expires">
                 </div>
-                <div class="form-group">
-                    <label>Usos máximos (0 = ilimitado)</label>
+                <div class="field">
+                    <label>Usos máximos <span class="tag">0 = ilimitado</span></label>
                     <input type="number" id="c-max-uses" placeholder="0" min="0">
                 </div>
             </div>
-            <div class="form-row">
-                <div class="form-group">
+
+            <div class="field-grid" style="margin-top: 16px;">
+                <div class="field">
                     <label>Monto mínimo subtotal</label>
                     <input type="number" id="c-min-subtotal" placeholder="0" min="0">
                 </div>
-                <div class="form-group" style="display: flex; align-items: flex-end; padding-bottom: 12px;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="c-one-use-per-phone" style="width: auto;">
-                        <span style="font-size: 12px; font-weight: 600; text-transform: uppercase;">1 uso por teléfono</span>
+            </div>
+
+            <div class="field-grid" style="margin-top: 16px;">
+                <div class="toggle-row">
+                    <div class="toggle-info">
+                        <span class="toggle-label">1 uso por teléfono</span>
+                        <span class="toggle-desc">Cada número podrá usar este cupón solo una vez</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="c-one-use-per-phone">
+                        <span class="slider"></span>
                     </label>
                 </div>
             </div>
-            <div id="coupon-stats" style="display: none; margin-bottom: 15px; padding: 10px; background: #1a1a1a; border-radius: 8px; font-size: 12px; color: var(--text-dim);">
-                <span id="coupon-used-count"></span>
+
+            <div class="field-grid" style="margin-top: 16px;">
+                <div id="coupon-stats" class="stats-grid" style="display: none;">
+                    <div class="stat-card">
+                        <div class="stat-icon">🔄</div>
+                        <div class="stat-value" id="stat-used">0</div>
+                        <div class="stat-label">Usos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📱</div>
+                        <div class="stat-value" id="stat-phones">0</div>
+                        <div class="stat-label">Teléfonos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-value" id="stat-orders">0</div>
+                        <div class="stat-label">Órdenes</div>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Estado</label>
-                <select id="c-active">
-                    <option value="true">Activo</option>
-                    <option value="false">Apagado</option>
-                </select>
+
+            <div class="field-grid" style="margin-top: 16px;">
+                <div class="field full">
+                    <label>Estado</label>
+                    <select id="c-active">
+                        <option value="true">Activo</option>
+                        <option value="false">Apagado</option>
+                    </select>
+                </div>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button type="button" class="btn btn-primary" style="flex: 2;" onclick="saveCoupon()">Guardar
-                    Cupón</button>
-                <button type="button" class="btn btn-secondary" style="flex: 1;"
-                    onclick="document.getElementById('modal-coupon').style.display='none'">Cancelar</button>
-                <button type="button" class="btn" id="btn-delete-coupon"
-                    style="background:#441111; color:white; display:none;" onclick="deleteCoupon()">🗑️</button>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-primary" onclick="saveCoupon()">Guardar Cupón</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-coupon').style.display='none'">Cancelar</button>
+                <button type="button" class="btn btn-delete" id="btn-delete-coupon" style="display:none;" onclick="deleteCoupon()">🗑️</button>
             </div>
         </div>
     </div>
@@ -2341,13 +2718,14 @@
                 document.getElementById('btn-delete-coupon').onclick = () => deleteCoupon(code);
 
                 // Mostrar estadísticas de uso
-                const statsDiv = document.getElementById('coupon-stats');
                 const usedCount = c.usedCount || 0;
                 const maxUses = c.maxUses || 0;
                 const usedPhones = c.usedByPhones ? Object.keys(c.usedByPhones).length : 0;
                 const usedOrders = c.consumedByOrders ? Object.keys(c.consumedByOrders).length : 0;
-                statsDiv.innerHTML = `<span id="coupon-used-count">Usos: ${usedCount}${maxUses > 0 ? '/' + maxUses : ''} | Teléfonos: ${usedPhones} | Órdenes: ${usedOrders}</span>`;
-                statsDiv.style.display = 'block';
+                document.getElementById('stat-used').textContent = usedCount + (maxUses > 0 ? '/' + maxUses : '');
+                document.getElementById('stat-phones').textContent = usedPhones;
+                document.getElementById('stat-orders').textContent = usedOrders;
+                document.getElementById('coupon-stats').style.display = 'grid';
 
                 document.getElementById('modal-coupon').style.display = 'flex';
             });
