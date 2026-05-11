@@ -33,7 +33,8 @@ module.exports = async (req, res) => {
         const orderData = {
           ...pending,
           estado: "pendiente",
-          paymentStatus: "confirmed",
+          paymentStatus: "paid",
+          orderStatus: "recibido",
           confirmadoAt: Date.now()
         };
         console.log(`[confirm-payment] Promoviendo a orders/${orderId}...`);

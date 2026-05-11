@@ -42,13 +42,26 @@ module.exports = async (req, res) => {
 
     console.log(`[get-order] Pedido ${orderId} encontrado en ${source} con estado: ${order.estado} paymentStatus: ${order.paymentStatus || 'N/A'}`);
 
+    const paymentStatus = order.paymentStatus || null;
+    const orderStatus = order.orderStatus || (
+      order.estado === 'pago_pendiente' ? 'recibido' :
+      order.estado === 'pendiente' ? 'recibido' :
+      order.estado === 'cocinando' ? 'en_horno' :
+      order.estado === 'listo' ? 'listo' :
+      order.estado === 'en camino' ? 'en_camino' :
+      order.estado === 'entregado' ? 'entregado' :
+      order.estado === 'cancelado' || order.estado === 'pago_fallido' ? 'cancelado' :
+      order.estado || 'recibido'
+    );
+
     return res.status(200).json({
       id: orderId,
       estado: order.estado,
+      orderStatus,
+      paymentStatus,
       cliente: order.cliente,
       total: order.total,
       metodo: order.metodo,
-      paymentStatus: order.paymentStatus || order.estado || null,
       source: source,
     });
 

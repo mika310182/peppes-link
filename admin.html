@@ -101,9 +101,15 @@
         /* Main Content */
         .main {
             flex: 1;
+            min-height: 0;
             overflow-y: auto;
             padding: 40px;
             position: relative;
+        }
+
+        #analytics {
+            min-height: 0;
+            overflow-y: auto;
         }
 
         .header {
@@ -336,96 +342,7 @@
             gap: 20px;
         }
 
-        .prod-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            overflow: hidden;
-            transition: 0.3s;
-            position: relative;
-        }
 
-        .prod-card:hover {
-            border-color: var(--red);
-            transform: translateY(-5px);
-        }
-
-        .prod-img {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            background: #1a1a1a;
-        }
-
-        .prod-content {
-            padding: 20px;
-        }
-
-        .prod-cat {
-            font-size: 10px;
-            font-weight: 800;
-            color: var(--red);
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-
-        .prod-name {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-        .prod-price {
-            font-size: 16px;
-            font-weight: 800;
-            color: var(--green);
-        }
-
-        .badge {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            padding: 5px 12px;
-            border-radius: 50px;
-            font-size: 10px;
-            font-weight: 800;
-        }
-
-        .badge-on {
-            background: rgba(46, 204, 113, 0.2);
-            color: var(--green);
-        }
-
-        .badge-off {
-            background: rgba(255, 49, 49, 0.2);
-            color: var(--red);
-        }
-
-        .size-badges {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            display: flex;
-            gap: 4px;
-        }
-        .size-badge {
-            padding: 2px 8px;
-            border-radius: 50px;
-            font-size: 9px;
-            font-weight: 800;
-            text-align: center;
-            line-height: 1.8;
-            min-width: 22px;
-        }
-        .size-badge.on {
-            background: rgba(46, 204, 113, 0.2);
-            color: var(--green);
-        }
-        .size-badge.off {
-            background: rgba(255, 49, 49, 0.2);
-            color: var(--red);
-            text-decoration: line-through;
-        }
 
         /* Orders Feed */
         .order-card {
@@ -518,48 +435,69 @@
         }
 
         .login-card {
-            background: var(--card-bg);
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(20px);
             padding: 40px;
-            border-radius: 24px;
-            border: 1px solid var(--border);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.06);
             width: 90%;
             max-width: 400px;
             text-align: center;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
         }
 
         .login-title {
             font-family: 'Titan One', cursive;
             color: var(--red);
-            font-size: 32px;
-            margin-bottom: 30px;
+            font-size: 28px;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
         }
 
         .login-input {
             width: 100%;
-            padding: 12px 20px;
-            background: #1a1a1a;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: white;
-            margin-bottom: 15px;
+            height: 44px;
+            padding: 0 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            color: #fff;
             font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+        }
+        .login-input:focus {
+            border-color: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.06);
+        }
+        .login-input:hover {
+            background: rgba(255,255,255,0.07);
+            border-color: rgba(255,255,255,0.12);
+        }
+        .login-input::placeholder {
+            color: rgba(255,255,255,0.3);
         }
 
         .login-btn {
             width: 100%;
-            padding: 14px;
+            height: 44px;
             background: var(--red);
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             font-weight: 700;
+            font-size: 14px;
+            font-family: inherit;
             cursor: pointer;
-            transition: 0.3s;
+            transition: background 0.2s, transform 0.2s;
         }
-
         .login-btn:hover {
-            transform: scale(1.02);
-            filter: brightness(1.2);
+            background: #ff4d4d;
+            transform: translateY(-1px);
         }
 
         /* Modal / Form */
@@ -593,6 +531,11 @@
             font-weight: 700;
             letter-spacing: -0.3px;
             margin: 0 0 20px;
+        }
+        .modal-subtitle {
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 20px;
+            font-size: 13px;
         }
 
         .modal-actions {
@@ -705,24 +648,87 @@
             cursor: pointer;
         }
 
-        /* ── Dashboard KPI (refactored) ── */
+        .text-dim {
+            color: rgba(255,255,255,0.3);
+            font-weight: 400;
+        }
+        .uppercase {
+            text-transform: uppercase;
+        }
+
+        .stock-sizes {
+            display: flex;
+            gap: 16px;
+            margin-top: 6px;
+        }
+        .stock-size-label {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .promo-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: rgba(255,255,255,0.5);
+        }
+        .promo-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .promo-day-label {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        #new-cat-area .form-group,
+        #existing-cat-settings .form-group {
+            margin-bottom: 10px;
+        }
+        #new-cat-area .form-group:has(> .inline-check),
+        #existing-cat-settings .form-group:has(> .inline-check) {
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #new-cat-area .inline-check,
+        #existing-cat-settings .inline-check {
+            width: auto;
+        }
+        #new-cat-area .inline-check + label,
+        #existing-cat-settings .inline-check + label {
+            margin-bottom: 0;
+        }
+        .cat-blue-label {
+            color: #4f9cf7;
+        }
+
+        /* ── Dashboard KPI ── */
         #dashboard .dash-kpi {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 16px;
         }
-
         #dashboard .dash-kpi .ana-number {
             font-size: 28px;
         }
-
         @media (max-width: 600px) {
             #dashboard .dash-kpi {
                 grid-template-columns: 1fr;
             }
         }
 
-        /* ── Inventory premium ── */
+        /* ── Inventory controls ── */
         #inventory .controls {
             display: flex;
             gap: 12px;
@@ -733,32 +739,6 @@
             border-radius: 14px;
             padding: 16px 20px;
             align-items: center;
-        }
-
-        #inventory .search {
-            flex: 1;
-            min-width: 180px;
-            height: 44px;
-            padding: 0 14px;
-            font-size: 13px;
-            font-family: inherit;
-            color: #fff;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 10px;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            box-sizing: border-box;
-        }
-
-        #inventory .search:focus {
-            border-color: rgba(255,255,255,0.2);
-            box-shadow: 0 0 0 3px rgba(255,255,255,0.06);
-        }
-
-        #inventory .search:hover {
-            background: rgba(255,255,255,0.07);
-            border-color: rgba(255,255,255,0.12);
         }
 
         #inventory select.search {
@@ -1357,9 +1337,11 @@
 
         #modal-coupon .field-grid {
             display: grid;
-            gap: 16px;
+            gap: 12px;
         }
-
+        #modal-coupon .field-grid + .field-grid {
+            margin-top: 16px;
+        }
         #modal-coupon .field-grid.cols-2 {
             grid-template-columns: 1fr 1fr;
         }
@@ -1726,8 +1708,7 @@
     <div id="login-overlay">
         <div class="login-card">
             <div class="login-title">PEPPE'S ADMIN</div>
-            <p style="color: var(--text-dim); margin-bottom: 25px; font-size: 13px;">Ingresa tu correo autorizado para
-                continuar</p>
+            <p style="color: rgba(255,255,255,0.4); margin-bottom: 24px; font-size: 13px;">Ingresa tu correo autorizado para continuar</p>
             <input type="email" id="login-user" class="login-input" placeholder="Correo Electrónico">
             <input type="password" id="login-pass" class="login-input" placeholder="Contraseña">
             <button class="login-btn" onclick="handleLogin()">Entrar al Panel</button>
@@ -1888,11 +1869,10 @@
                 </table>
             </div>
         </section>
-    </main>
 
-    <!-- ANALYTICS SECTION -->
-    <section id="analytics" class="section">
-        <header class="header">
+        <!-- ANALYTICS SECTION -->
+            <section id="analytics" class="section">
+                <header class="header">
             <div>
                 <h1>Analytics</h1>
                 <p class="subtitle">Métricas operativas en tiempo real</p>
@@ -1960,6 +1940,7 @@
             </div>
         </div>
     </section>
+    </main>
 
     <div id="modal-product" class="modal">
         <div class="modal-content" style="max-width: 560px;">
@@ -1989,20 +1970,20 @@
                 </div>
 
                 <div id="new-cat-area" class="new-cat-box" style="display: none;">
-                    <div class="form-group" style="margin-bottom: 10px;">
-                        <label style="color: #4f9cf7;">Nombre de la Nueva Categoría</label>
+                    <div class="form-group">
+                        <label class="cat-blue-label">Nombre de la Nueva Categoría</label>
                         <input type="text" id="p-new-cat" placeholder="ej: Sandwich, Kids">
                     </div>
-                    <div class="form-group" style="margin-bottom: 0; display: flex; align-items: center; gap: 10px;">
-                        <input type="checkbox" id="p-new-cat-extras" checked style="width: auto;">
-                        <label for="p-new-cat-extras" style="margin-bottom: 0;">Permitir añadir extras</label>
+                    <div class="form-group">
+                        <input type="checkbox" id="p-new-cat-extras" checked class="inline-check">
+                        <label for="p-new-cat-extras">Permitir añadir extras</label>
                     </div>
                 </div>
 
                 <div id="existing-cat-settings" class="existing-cat-box" style="display: none;">
-                    <div class="form-group" style="margin-bottom: 0; display: flex; align-items: center; gap: 10px;">
-                        <input type="checkbox" id="p-cat-extras" style="width: auto;">
-                        <label for="p-cat-extras" style="margin-bottom: 0;">Permitir Extras en esta categoría</label>
+                    <div class="form-group">
+                        <input type="checkbox" id="p-cat-extras" class="inline-check">
+                        <label for="p-cat-extras">Permitir Extras en esta categoría</label>
                     </div>
                 </div>
 
@@ -2047,24 +2028,24 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Stock por Tamaño <span style="color:rgba(255,255,255,0.3);font-weight:400;">(pizzas con varios tamaños)</span></label>
-                    <div style="display:flex;gap:16px;margin-top:6px;">
-                        <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="p-stock-p" checked> Personal (P)</label>
-                        <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="p-stock-m" checked> Mediana (M)</label>
-                        <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="p-stock-g" checked> Grande (G)</label>
+                    <label>Stock por Tamaño <span class="text-dim">(pizzas con varios tamaños)</span></label>
+                    <div class="stock-sizes">
+                        <label class="stock-size-label"><input type="checkbox" id="p-stock-p" checked> Personal (P)</label>
+                        <label class="stock-size-label"><input type="checkbox" id="p-stock-m" checked> Mediana (M)</label>
+                        <label class="stock-size-label"><input type="checkbox" id="p-stock-g" checked> Grande (G)</label>
                     </div>
                 </div>
 
                 <div id="promo-days-area" class="promo-days-box" style="display: none;">
-                    <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:rgba(255,255,255,0.5);">Días de Promoción</label>
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 6px;">
-                        <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="promo-day" value="1"> Lun</label>
-                        <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="promo-day" value="2"> Mar</label>
-                        <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="promo-day" value="3"> Mie</label>
-                        <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="promo-day" value="4"> Jue</label>
-                        <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="promo-day" value="5"> Vie</label>
-                        <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="promo-day" value="6"> Sab</label>
-                        <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="promo-day" value="0"> Dom</label>
+                    <label class="promo-label">Días de Promoción</label>
+                    <div class="promo-grid">
+                        <label class="promo-day-label"><input type="checkbox" class="promo-day" value="1"> Lun</label>
+                        <label class="promo-day-label"><input type="checkbox" class="promo-day" value="2"> Mar</label>
+                        <label class="promo-day-label"><input type="checkbox" class="promo-day" value="3"> Mie</label>
+                        <label class="promo-day-label"><input type="checkbox" class="promo-day" value="4"> Jue</label>
+                        <label class="promo-day-label"><input type="checkbox" class="promo-day" value="5"> Vie</label>
+                        <label class="promo-day-label"><input type="checkbox" class="promo-day" value="6"> Sab</label>
+                        <label class="promo-day-label"><input type="checkbox" class="promo-day" value="0"> Dom</label>
                     </div>
                 </div>
 
@@ -2141,7 +2122,7 @@
     <div id="modal-hours" class="modal">
         <div class="modal-content" style="max-width: 400px;">
             <h2>Horario de Atención</h2>
-            <p style="color: rgba(255,255,255,0.4); margin-bottom: 20px; font-size: 13px;">Configura apertura y cierre. El sistema usa hora de Chile.</p>
+            <p class="modal-subtitle">Configura apertura y cierre. El sistema usa hora de Chile.</p>
             <div class="form-row">
                 <div class="form-group">
                     <label>Apertura</label>
@@ -2167,11 +2148,11 @@
             <div class="field-grid">
                 <div class="field full">
                     <label>Código</label>
-                    <input type="text" id="c-code" placeholder="Ej: PEPPES10" style="text-transform: uppercase;" required>
+                    <input type="text" id="c-code" placeholder="Ej: PEPPES10" class="uppercase" required>
                 </div>
             </div>
 
-            <div class="field-grid cols-2" style="margin-top: 16px;">
+            <div class="field-grid cols-2">
                 <div class="field">
                     <label>Tipo</label>
                     <select id="c-type">
@@ -2185,7 +2166,7 @@
                 </div>
             </div>
 
-            <div class="field-grid cols-2" style="margin-top: 16px;">
+            <div class="field-grid cols-2">
                 <div class="field">
                     <label>Expira <span class="tag">opcional</span></label>
                     <input type="datetime-local" id="c-expires">
@@ -2196,14 +2177,14 @@
                 </div>
             </div>
 
-            <div class="field-grid" style="margin-top: 16px;">
+            <div class="field-grid">
                 <div class="field">
                     <label>Monto mínimo subtotal</label>
                     <input type="number" id="c-min-subtotal" placeholder="0" min="0">
                 </div>
             </div>
 
-            <div class="field-grid" style="margin-top: 16px;">
+            <div class="field-grid">
                 <div class="toggle-row">
                     <div class="toggle-info">
                         <span class="toggle-label">1 uso por teléfono</span>
@@ -2216,7 +2197,7 @@
                 </div>
             </div>
 
-            <div class="field-grid" style="margin-top: 16px;">
+            <div class="field-grid">
                 <div id="coupon-stats" class="stats-bar" style="display: none;">
                     <div class="stat-item">
                         <div class="stat-icon">🔄</div>
@@ -2244,7 +2225,7 @@
                 </div>
             </div>
 
-            <div class="field-grid" style="margin-top: 16px;">
+            <div class="field-grid">
                 <div class="field full">
                     <label>Estado</label>
                     <select id="c-active">
@@ -2613,7 +2594,12 @@
 
         // --- Helpers para paymentStatus / orderStatus ---
         function derivePaymentStatus(order) {
-            if (order.paymentStatus) return order.paymentStatus;
+            if (order.paymentStatus) {
+                const s = order.paymentStatus.toLowerCase();
+                if (s === 'pending') return 'pending';
+                if (s === 'failed') return 'failed';
+                return 'paid';
+            }
             const e = (order.estado || '').toLowerCase();
             if (e === 'pago_pendiente') return 'pending';
             if (e === 'pago_fallido') return 'failed';
@@ -2621,7 +2607,7 @@
         }
 
         function deriveOrderStatus(order) {
-            if (order.orderStatus) return order.orderStatus;
+            if (order.orderStatus) return order.orderStatus.toLowerCase();
             const e = (order.estado || '').toLowerCase();
             if (e === 'pago_pendiente' || e === 'pendiente') return 'recibido';
             if (e === 'cocinando') return 'en_horno';
@@ -3642,13 +3628,17 @@
                 }
                 const coupons = couponsSnap.val() || {};
                 renderAnalytics(all, coupons);
+            }).catch(err => {
+                console.error('[analytics] Error cargando datos:', err);
+                document.querySelectorAll('#analytics .ana-skeleton').forEach(el => el.remove());
+                document.querySelectorAll('#analytics .ana-number').forEach(el => el.textContent = '⚠️ Error');
             });
         }
 
         function renderAnalytics(orders, coupons) {
-            const now = Date.now();
+            console.log('[analytics] renderAnalytics called with', orders.length, 'orders');
             const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-            const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - 7); weekStart.setHours(0,0,0,0);
+            const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - 6); weekStart.setHours(0,0,0,0);
             const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
 
             const paid = orders.filter(o => {

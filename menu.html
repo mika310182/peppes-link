@@ -479,7 +479,7 @@
     const IMG_PATH = "assets/";
 
     function resolveImg(path) {
-      if (!path) return "https://via.placeholder.com/300x300?text=Peppe's";
+      if (!path) return "assets/placeholder.png";
       const p = String(path).trim();
       if (p.startsWith('http') || p.startsWith('assets/') || p.startsWith('data:')) return p;
       return IMG_PATH + p;
@@ -589,7 +589,7 @@
             class="prodSlideImg ${(p.stockBySize && typeof p.stockBySize === 'object' ? !Object.values(p.stockBySize).some(v => v === true) : p.available === false) ? 'agotado-overlay' : ''}"
             src="${resolveImg(p.img)}"
             alt="${p.name}"
-            onerror="this.src='https://via.placeholder.com/300x300?text=Peppe\\'s'"
+            onerror="this.src='assets/placeholder.png'"
           />
         </div>
       `).join("");

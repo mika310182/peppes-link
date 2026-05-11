@@ -393,6 +393,7 @@
       width: 320px;
       height: 320px;
       object-fit: contain;
+      background: #1a1a1a;
       filter: drop-shadow(0 25px 25px rgba(0, 0, 0, 0.25));
       transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
@@ -2171,11 +2172,23 @@
 
       const btn = document.getElementById("btnFloatingTrack");
 
+      let orderFetchErrors = 0;
+      const MAX_ORDER_FETCH_ERRORS = 3;
+
       // Dado que ".read: auth != null" nos bloquea del Firebase directo, usamos un Polling Seguro al endpoint
       activeOrderListener = setInterval(async () => {
         try {
           const res = await fetch(`/api/get-order?id=${savedOrderId}&token=${savedAuthToken || ''}`);
-          if (!res.ok) throw new Error("Order API failed");
+
+          // 404 = order doesn't exist → stop immediately
+          if (res.status === 404) {
+            console.warn("[track] Order 404, cleaning up tracking");
+            limpiarSeguimiento(true);
+            return;
+          }
+          if (!res.ok) throw new Error("Order API failed: " + res.status);
+
+          orderFetchErrors = 0;
           const order = await res.json();
 
           if (order && !order.error) {
@@ -2205,8 +2218,12 @@
             }
           }
         } catch (e) {
-          // If we fail a lot, it might be an invalid order. We give it some time, then clear.
-          console.warn("Retrying order fetch...");
+          orderFetchErrors++;
+          console.warn(`[track] Error fetching order (${orderFetchErrors}/${MAX_ORDER_FETCH_ERRORS}):`, e.message);
+          if (orderFetchErrors >= MAX_ORDER_FETCH_ERRORS) {
+            console.warn("[track] Max errors reached, cleaning up tracking");
+            limpiarSeguimiento();
+          }
         }
       }, 7000); // Revisar cada 7 segundos para no bombardear el servidor
 
@@ -2515,7 +2532,7 @@
       const snap = document.getElementById("pizzasSnap");
       const list = getCleanProductList(id);
 
-      snap.innerHTML = list.map((p, idx) => `<div class="pizzaSlide" data-index="${idx}"><img class="prodSlideImg" src="${resolveImgPath(p.img)}"></div>`).join("");
+      snap.innerHTML = list.map((p, idx) => `<div class="pizzaSlide" data-index="${idx}"><img class="prodSlideImg" src="${resolveImgPath(p.img)}" onerror="this.onerror=null;this.src='assets/placeholder.png'"></div>`).join("");
 
       // ✅ FIX: Desconectar observer anterior antes de crear uno nuevo
       if (activeSlideObserver) { activeSlideObserver.disconnect(); activeSlideObserver = null; }
@@ -2593,10 +2610,8 @@
 
       const slides = document.querySelectorAll('.prodSlideImg');
       if (slides[state.productIndex]) {
-        const finalUrl = resolveImgPath(p.img);
-        slides[state.productIndex].src = finalUrl;
-        // Fallback para errores de carga de imagen
-        slides[state.productIndex].onerror = function () { this.src = 'assets/placeholder.png'; };
+        slides[state.productIndex].onerror = function () { this.onerror=null; this.src = 'assets/placeholder.png'; };
+        slides[state.productIndex].src = resolveImgPath(p.img);
       }
 
       document.querySelectorAll('.prodSlideImg').forEach(img => img.style.transform = `scale(${scaleBySize[state.size]})`);
