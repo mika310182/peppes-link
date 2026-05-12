@@ -834,18 +834,6 @@
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
     }
 
-    .deliveryForm input {
-      width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      border: 1px solid #eef0f5;
-      margin-bottom: 10px;
-      font-family: inherit;
-      font-size: 14px;
-      background: #fcfdfe;
-      outline: none;
-    }
-
     .cutlery-option {
       display: flex;
       justify-content: space-between;
@@ -900,6 +888,320 @@
 
     input:checked+.slider:before {
       transform: translateX(20px);
+    }
+
+    /* Stepper */
+    .stepper-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 0;
+      margin-bottom: 20px;
+      padding-right: 36px;
+      position: relative;
+    }
+    .modal-x {
+      position: absolute;
+      right: 0;
+      top: 2px;
+      border: 0;
+      background: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #8a91a5;
+      padding: 4px;
+      line-height: 1;
+    }
+    .stepper {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      gap: 0;
+    }
+    .step-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #e0e0e0;
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .step-dot.active {
+      background: var(--black);
+    }
+    .step-bar {
+      flex: 1;
+      height: 2px;
+      background: #e0e0e0;
+      margin: 0 6px;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .step-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--black);
+      transition: width 0.4s cubic-bezier(0.25,1,0.5,1);
+    }
+    .step-labels {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      padding: 0 0 0 0;
+    }
+    .step-lbl {
+      font-size: 11px;
+      font-weight: 600;
+      color: #bbb;
+      transition: color 0.3s;
+    }
+    .step-lbl.active {
+      color: #111;
+    }
+
+    /* Checkout steps */
+    .checkout-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 4px;
+      margin-bottom: 8px;
+    }
+    .checkout-step {
+      display: block;
+    }
+
+    /* Step footers */
+    .step-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .step-actions .addBtn {
+      flex: 1;
+    }
+    .addBtn-o {
+      background: #f1f3f7 !important;
+      color: #111 !important;
+      flex: 0 0 auto !important;
+      padding: 0 20px;
+    }
+    .addBtn-o:hover {
+      background: #e5e7eb !important;
+    }
+    .addBtn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .legal-text {
+      font-size: 11px;
+      color: #8a91a5;
+      margin: 14px 0 2px;
+      text-align: center;
+    }
+    .legal-link {
+      text-decoration: underline;
+      cursor: pointer;
+      color: var(--pepper-red);
+      font-weight: 700;
+    }
+
+    /* Cart totals */
+    .cart-totals {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px dashed #eef0f5;
+    }
+    .tr {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: #8a91a5;
+      font-size: 14px;
+    }
+    .tr-delivery {
+      font-size: 13px;
+    }
+    .tr-discount {
+      color: #2ecc71;
+      font-weight: 700;
+    }
+    .tr-total {
+      margin-top: 4px;
+      font-weight: 900;
+      font-size: 20px;
+      color: #111;
+    }
+
+    /* Payment methods */
+    .pmt-methods {
+      margin-top: 20px;
+    }
+    .pmt-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1.5px solid #eef0f5;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .pmt-option.active {
+      border-color: var(--black);
+      box-shadow: 0 0 0 1px var(--black);
+    }
+    .pmt-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .pmt-name {
+      font-weight: 700;
+      font-size: 15px;
+      color: #111;
+    }
+    .pmt-desc {
+      font-size: 12px;
+      color: #8a91a5;
+    }
+    .pmt-check {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--black);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    /* Payment summary */
+    #paymentSummary {
+      margin-bottom: 16px;
+    }
+    .ps-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f3f7;
+      font-size: 13px;
+    }
+    .ps-item:last-child {
+      border-bottom: none;
+    }
+    .ps-item-name {
+      font-weight: 600;
+      color: #111;
+    }
+    .ps-item-qty {
+      color: #8a91a5;
+      font-size: 12px;
+      margin-left: 6px;
+    }
+    .ps-item-price {
+      font-weight: 700;
+      color: #111;
+    }
+    .ps-total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0 4px;
+      font-weight: 900;
+      font-size: 18px;
+    }
+    .ps-info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 13px;
+      color: #555;
+    }
+    .ps-info-row strong {
+      color: #111;
+    }
+
+    /* Coupon button */
+    .coupon-btn {
+      padding: 0 20px;
+      background: var(--black);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    /* Delivery form refinements */
+    .deliveryForm input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #eef0f5;
+      margin-bottom: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      background: #fcfdfe;
+      outline: none;
+    }
+    .note-field {
+      width: 100%;
+      height: 80px;
+      padding: 12px 20px;
+      border: 1px solid #eef0f5;
+      border-radius: 12px;
+      background: #fbfbfb;
+      font-size: 14px;
+      margin-top: 10px;
+      font-family: inherit;
+      resize: none;
+    }
+    .gps-btn {
+      background: none;
+      border: none;
+      color: var(--pepper-red);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 5px 0;
+      font-family: inherit;
+    }
+
+    /* Step 2 summary */
+    .step2-summary {
+      margin-top: 20px;
+      padding: 14px 16px;
+      background: #f8f9fa;
+      border-radius: 16px;
+    }
+    .ss-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      font-size: 13px;
+      color: #555;
+    }
+    /* Footer total bar */
+    .footer-total-bar {
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0 16px;
+      margin-bottom: 4px;
+      border-bottom: 1px dashed #eef0f5;
+    }
+    .ft-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #555;
+    }
+    .ft-price {
+      font-size: 20px;
+      font-weight: 900;
+      color: #111;
     }
 
     .cancelBox {
@@ -1762,77 +2064,108 @@
 
       <div id="cartModal">
         <div class="cartPanel">
-          <center>
-            <div style="width: 40px; height: 4px; background: #e0e0e0; border-radius: 10px; margin-bottom: 20px;"></div>
-          </center>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-            <h2 style="font-size:24px; font-weight:900; margin:0;">Tu Pedido</h2>
-            <button onclick="toggleLegal(true)"
-              style="border:0; background:#f1f3f7; width:36px; height:36px; border-radius:50%; font-size:16px; cursor:pointer; color:#111; font-weight:bold; margin-left: auto; margin-right: 15px;">i</button>
-            <button onclick="toggleCart()"
-              style="border:0; background:none; font-size:20px; cursor:pointer; color:#8a91a5">✕</button>
-          </div>
-          <div class="cartMainScroll" style="flex-grow:1; overflow-y:auto; padding-right:5px; margin-bottom:10px;">
-            <div id="cartItemsList"></div>
-
-            <div class="deliveryToggle">
-              <button class="toggleBtn active" id="btnRetiro" onclick="setDelivery(false)">Retiro</button>
-              <button class="toggleBtn" id="btnDelivery" onclick="setDelivery(true)">Delivery</button>
+          <!-- Stepper -->
+          <div class="stepper-wrap">
+            <div class="stepper">
+              <div class="step-dot active" data-step="1"></div>
+              <div class="step-bar"><div class="step-fill" id="stepBar1"></div></div>
+              <div class="step-dot" data-step="2"></div>
+              <div class="step-bar"><div class="step-fill" id="stepBar2"></div></div>
+              <div class="step-dot" data-step="3"></div>
             </div>
+            <div class="step-labels">
+              <span class="step-lbl active" data-step="1">Carrito</span>
+              <span class="step-lbl" data-step="2">Entrega</span>
+              <span class="step-lbl" data-step="3">Pago</span>
+            </div>
+            <button onclick="toggleCart()" class="modal-x">✕</button>
+          </div>
 
-            <div class="deliveryForm" id="formDatos">
-              <input type="text" id="custName" placeholder="Nombre completo">
-              <input type="tel" id="custPhone" placeholder="Teléfono de contacto">
-              <div id="deliveryFields" style="display:none; flex-direction:column; gap:10px;">
-                <input type="text" id="address_street" placeholder="Calle y Número exacto" class="address-field"
-                  style="display:block; margin-top:0;">
-
-                <div style="text-align: right;">
-                  <button id="btnGPSManual" onclick="useCurrentLocation()"
-                    style="background:none; border:none; color:var(--pepper-red); font-size:12px; cursor:pointer; padding:5px 0;">
-                    📍 Enviar mi ubicación actual (Opcional)
-                  </button>
+          <div class="checkout-scroll">
+            <!-- STEP 1: CARRITO -->
+            <div class="checkout-step" id="step-cart">
+              <div id="cartItemsList"></div>
+              <div id="couponContainer" style="display:flex; gap:10px; margin:16px 0 12px;">
+                <input type="text" id="couponInput" placeholder="Código de descuento"
+                  oninput="if(appliedCoupon && this.value.trim().toUpperCase() !== appliedCoupon.code) { appliedCoupon = null; document.getElementById('couponMessage').style.display='none'; updateCartUI(); }"
+                  style="flex:1; padding:12px; border-radius:12px; border:1px solid #eef0f5; font-family:inherit; font-size:14px; text-transform:uppercase;">
+                <button onclick="applyCoupon()" class="coupon-btn">Aplicar</button>
+              </div>
+              <div id="couponMessage" style="font-size:12px; font-weight:700; margin-bottom:12px; display:none;"></div>
+              <div class="cart-totals">
+                <div class="tr">
+                  <span>Subtotal</span> <span id="subtotalText">$0</span>
+                </div>
+                <div id="deliveryRow" style="display:none;" class="tr tr-delivery">
+                  <span>Costo Envío</span> <span id="deliveryText">$0</span>
+                </div>
+                <div id="discountRow" style="display:none;" class="tr tr-discount">
+                  <span>Descuento</span> <span id="discountText">-$0</span>
+                </div>
+                <div class="tr tr-total">
+                  <span>Total</span> <span id="cartTotalText">$0</span>
                 </div>
               </div>
-              <textarea id="custNote" placeholder="Nota especial (ej: dejar en conserjería...)"
-                style="width: 100%; height: 80px; padding: 12px 20px; border: 1px solid #eef0f5; border-radius: 12px; background: #fbfbfb; font-size: 14px; margin-top: 10px; font-family: inherit; resize: none;"></textarea>
+            </div>
+
+            <!-- STEP 2: ENTREGA -->
+            <div class="checkout-step" id="step-delivery" style="display:none">
+              <div class="deliveryToggle">
+                <button class="toggleBtn active" id="btnRetiro" onclick="setDelivery(false)">Retiro</button>
+                <button class="toggleBtn" id="btnDelivery" onclick="setDelivery(true)">Delivery</button>
+              </div>
+              <div class="deliveryForm" id="formDatos">
+                <input type="text" id="custName" placeholder="Nombre completo">
+                <input type="tel" id="custPhone" placeholder="Teléfono de contacto">
+                <div id="deliveryFields" style="display:none; flex-direction:column; gap:10px;">
+                  <input type="text" id="address_street" placeholder="Calle y Número exacto" class="address-field" style="display:block; margin-top:0;">
+                  <div style="text-align: right;">
+                    <button id="btnGPSManual" onclick="useCurrentLocation()" class="gps-btn">
+                      📍 Enviar mi ubicación actual (Opcional)
+                    </button>
+                  </div>
+                </div>
+                <textarea id="custNote" placeholder="Nota especial (ej: dejar en conserjería...)" class="note-field"></textarea>
+              </div>
+              <div class="step2-summary" id="step2Summary">
+                <div class="ss-row"><span>Subtotal</span><span id="ss-subtotal">$0</span></div>
+                <div class="ss-row"><span id="ss-delivery-label">Retiro: gratis</span></div>
+              </div>
+            </div>
+
+            <!-- STEP 3: PAGO -->
+            <div class="checkout-step" id="step-payment" style="display:none">
+              <div id="paymentSummary"></div>
+              <div class="pmt-methods">
+                <div class="pmt-option active" onclick="selectPayment('mercadopago')" id="pmt-mercadopago">
+                  <div class="pmt-info">
+                    <span class="pmt-name">Mercado Pago</span>
+                    <span class="pmt-desc">Débito • Crédito • Prepago</span>
+                  </div>
+                  <span class="pmt-check">✓</span>
+                </div>
+              </div>
             </div>
           </div>
 
+          <!-- STEP FOOTERS -->
           <div class="cartFooter">
-
-            <!-- CONTENEDOR DE CUPONES -->
-            <div id="couponContainer" style="display:flex; gap:10px; margin-bottom:15px;">
-              <input type="text" id="couponInput" placeholder="¿Código de descuento?"
-                oninput="if(appliedCoupon && this.value.trim().toUpperCase() !== appliedCoupon.code) { appliedCoupon = null; document.getElementById('couponMessage').style.display='none'; updateCartUI(); }"
-                style="flex:1; padding:12px; border-radius:12px; border:1px solid #eef0f5; font-family:inherit; font-size:14px; text-transform:uppercase;">
-              <button onclick="applyCoupon()"
-                style="padding:0 20px; background:var(--black); color:#fff; border:none; border-radius:12px; font-weight:700; cursor:pointer;">Aplicar</button>
+            <div class="footer-total-bar" id="footerTotalBar">
+              <span class="ft-label">Total</span>
+              <span class="ft-price" id="footerTotalPrice">$0</span>
             </div>
-            <div id="couponMessage"
-              style="font-size:12px; font-weight:700; margin-top:-10px; margin-bottom:15px; display:none;"></div>
-
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px; color:#8a91a5;">
-              <span>Subtotal</span> <span id="subtotalText">$0</span>
+            <div class="step-actions" id="footer-step1">
+              <button class="addBtn" onclick="goToStep(2)" id="btnToStep2">Continuar →</button>
             </div>
-            <div id="deliveryRow"
-              style="display:none; justify-content:space-between; margin-bottom:10px; color:#8a91a5; font-size:14px;">
-              <span>Costo Envío (Antofagasta)</span> <span>$2.500</span>
+            <div class="step-actions" id="footer-step2" style="display:none">
+              <button class="addBtn addBtn-o" onclick="goToStep(1)">← Volver</button>
+              <button class="addBtn" onclick="goToStep(3)" id="btnToStep3">Continuar al pago →</button>
             </div>
-            <div id="discountRow"
-              style="display:none; justify-content:space-between; margin-bottom:10px; color:#2ecc71; font-size:14px; font-weight:700;">
-              <span>Descuento</span> <span id="discountText">-$0</span>
+            <div class="step-actions" id="footer-step3" style="display:none">
+              <button class="addBtn addBtn-o" onclick="goToStep(2)">← Volver</button>
+              <button class="addBtn btn-confirmar" onclick="confirmOrder(event)" id="btnConfirmOrder">Confirmar y Pagar</button>
             </div>
-            <div style="display:flex; justify-content:space-between; margin-top:5px; font-weight:900; font-size:24px;">
-              <span>Total</span> <span id="cartTotalText">$0</span>
-            </div>
-            <p style="font-size: 11px; color: #8a91a5; margin-top: 10px; text-align: center;">Al confirmar, aceptas
-              nuestras <span onclick="toggleLegal(true)"
-                style="text-decoration:underline; cursor:pointer; color:var(--pepper-red); font-weight:700;">políticas
-                de reembolso</span>.</p>
-            <button class="addBtn btn-confirmar"
-              style="width:100%; margin-top: 15px; background: #000; height: 64px; font-size: 18px; border-radius: 16px;"
-              onclick="confirmOrder(event)">Confirmar y Pagar →</button>
+            <p class="legal-text">Al confirmar, aceptas nuestras <span onclick="toggleLegal(true)" class="legal-link">políticas de reembolso</span>.</p>
           </div>
         </div>
       </div>
@@ -2185,6 +2518,8 @@
     let tiempoRestante = 180;
     let intervalCancelacion;
     let currentOrderId = "";
+    let currentStep = 1;
+    let selectedPaymentMethod = 'mercadopago';
 
     async function checkPaymentReturn() {
       const params = new URLSearchParams(window.location.search);
@@ -2817,6 +3152,115 @@
       updateCartUI();
     }
 
+    // --- 3-STEP CHECKOUT NAVIGATION ---
+    function goToStep(step) {
+      if (step > currentStep) {
+        if (step === 2 && state.cart.length === 0) return;
+        if (step === 3 && !isCheckoutValid()) return;
+      }
+      currentStep = step;
+
+      document.querySelectorAll('.step-dot').forEach(d => {
+        d.classList.toggle('active', parseInt(d.dataset.step) <= step);
+      });
+      document.querySelectorAll('.step-bar').forEach((bar, i) => {
+        const fill = bar.querySelector('.step-fill');
+        if (fill) fill.style.width = (i + 1 <= step - 1) ? '100%' : '0%';
+      });
+      document.querySelectorAll('.step-lbl').forEach(l => {
+        l.classList.toggle('active', parseInt(l.dataset.step) <= step);
+      });
+
+      const stepMap = {1:'step-cart',2:'step-delivery',3:'step-payment'};
+      Object.values(stepMap).forEach(id => {
+        document.getElementById(id).style.display = id === stepMap[step] ? 'block' : 'none';
+      });
+      for (let i = 1; i <= 3; i++) {
+        const f = document.getElementById('footer-step'+i);
+        if (f) f.style.display = i === step ? 'flex' : 'none';
+      }
+
+      // Footer total bar: only on step 2 (steps 1 and 3 already show total in their content)
+      const ftBar = document.getElementById('footerTotalBar');
+      if (ftBar) ftBar.style.display = step === 2 ? 'flex' : 'none';
+
+      updateCheckoutTotals();
+
+      if (step === 3) {
+        renderPaymentSummary();
+        updateConfirmButtonState();
+      }
+    }
+
+    function selectPayment(method) {
+      document.querySelectorAll('.pmt-option').forEach(o => o.classList.remove('active'));
+      const el = document.getElementById('pmt-'+method);
+      if (el) el.classList.add('active');
+      selectedPaymentMethod = method;
+    }
+
+    function renderPaymentSummary() {
+      const container = document.getElementById('paymentSummary');
+      if (!container) return;
+      let subtotal = state.cart.reduce((s, i) => s + i.price, 0);
+      const del = (state.isDelivery && subtotal > 0) ? (state.deliveryCost || 0) : 0;
+      const cutleryFee = includeCutlery ? CUTLERY_PRICE : 0;
+      const discountAmount = appliedCoupon ? (appliedCoupon.amountCalculated || 0) : 0;
+      const total = Math.max(0, subtotal + del + cutleryFee - discountAmount);
+      const fmt = (n) => '$' + n.toLocaleString('es-CL');
+      const getExtraName = (id) => {
+        const ex = DATA.extras.find(x => x.id === id);
+        return ex ? ex.name : id;
+      };
+      let html = '';
+      state.cart.forEach(item => {
+        let extrasHtml = '';
+        if (item.selectedExtrasIds && item.selectedExtrasIds.length > 0) {
+          extrasHtml = '<div style="font-size:11px;color:#8a91a5;margin-top:2px;">' +
+            item.selectedExtrasIds.map(id => getExtraName(id)).join(' • ') + '</div>';
+        }
+        html += `<div class="ps-item"><div><span class="ps-item-name">${item.name}${item.size ? ' ('+item.size+')' : ''}</span><span class="ps-item-qty">x${item.qty}</span>${extrasHtml}</div><span class="ps-item-price">${fmt(item.price)}</span></div>`;
+      });
+      html += `<div class="ps-total-row"><span>Subtotal</span><span>${fmt(subtotal)}</span></div>`;
+      if (del > 0) html += `<div class="ps-info-row"><span>Delivery</span><span>+${fmt(del)}</span></div>`;
+      if (cutleryFee > 0) html += `<div class="ps-info-row"><span>Cubiertos</span><span>+${fmt(cutleryFee)}</span></div>`;
+      if (discountAmount > 0) html += `<div class="ps-info-row" style="color:#2ecc71;"><span>Descuento</span><span>−${fmt(discountAmount)}</span></div>`;
+      html += `<div class="ps-total-row" style="border-top:1px solid #eef0f5;padding-top:12px;"><span>Total</span><span>${fmt(total)}</span></div>`;
+      const name = (document.getElementById('custName')?.value||'').trim();
+      const phone = (document.getElementById('custPhone')?.value||'').trim();
+      const address = (document.getElementById('address_street')?.value||'').trim();
+      const note = (document.getElementById('custNote')?.value||'').trim();
+      html += `<div style="margin-top:16px;padding-top:16px;border-top:1px dashed #eef0f5;"><div class="ps-info-row"><strong>Método</strong><span>${state.isDelivery ? 'Delivery' : 'Retiro'}</span></div><div class="ps-info-row"><strong>Nombre</strong><span>${name}</span></div><div class="ps-info-row"><strong>Teléfono</strong><span>${phone}</span></div>`;
+      if (state.isDelivery && address) html += `<div class="ps-info-row"><strong>Dirección</strong><span style="text-align:right;max-width:180px;">${address}</span></div>`;
+      if (note) html += `<div class="ps-info-row"><strong>Nota</strong><span style="text-align:right;max-width:180px;">${note}</span></div>`;
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    function updateCheckoutTotals() {
+      const subtotal = state.cart.reduce((s, i) => s + i.price, 0);
+      const del = (state.isDelivery && subtotal > 0) ? (state.deliveryCost || 0) : 0;
+      const cutleryFee = includeCutlery ? CUTLERY_PRICE : 0;
+      const discountAmount = appliedCoupon ? (appliedCoupon.amountCalculated || 0) : 0;
+      const total = Math.max(0, subtotal + del + cutleryFee - discountAmount);
+      const fmt = (n) => '$' + n.toLocaleString('es-CL');
+
+      // Step 2 summary
+      const s2sub = document.getElementById('ss-subtotal');
+      if (s2sub) s2sub.textContent = fmt(subtotal);
+      const s2delLabel = document.getElementById('ss-delivery-label');
+      if (s2delLabel) {
+        if (!state.isDelivery) s2delLabel.textContent = 'Retiro: gratis';
+        else if (state.deliveryCost && state.deliveryCost > 0 && subtotal > 0)
+          s2delLabel.textContent = 'Delivery: +' + fmt(state.deliveryCost);
+        else s2delLabel.textContent = 'Delivery: pendiente de calcular';
+      }
+
+      // Footer total bar (only visible on step 2 — no duplication)
+      const ftPrice = document.getElementById('footerTotalPrice');
+      if (ftPrice) ftPrice.textContent = fmt(total);
+    }
+
     function updateCartUI() {
       const badge = document.getElementById("cartBadge");
       const totalItems = state.cart.reduce((s, i) => s + i.qty, 0);
@@ -2907,6 +3351,7 @@
           updateConfirmButtonState();
         }
       }
+      updateCheckoutTotals();
     }
 
     // --- COUPON LOGIC ---
@@ -3311,9 +3756,10 @@
       const mod = document.getElementById("cartModal");
       const isOpen = mod.style.display === "flex";
       mod.style.display = isOpen ? "none" : "flex";
-
-      // Trigger reactive validation naturally upon opening cart
-      if (!isOpen) setTimeout(updateConfirmButtonState, 100);
+      if (!isOpen) {
+        goToStep(1);
+        setTimeout(updateConfirmButtonState, 100);
+      }
     }
 
     async function confirmOrder(e) {
