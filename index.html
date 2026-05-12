@@ -1568,29 +1568,6 @@
         font-weight: 500;
       }
 
-      /* 17. Trust chips */
-      .trust-chips {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 8px;
-        margin: 18px auto 28px;
-        padding: 0 18px;
-      }
-      .trust-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 8px 11px;
-        border-radius: 999px;
-        background: rgba(0,0,0,.06);
-        color: rgba(17,17,17,.68);
-        font-size: 12px;
-        font-weight: 800;
-        line-height: 1;
-        white-space: nowrap;
-      }
-
       /* 18. Defensive: fijar tamaño SVGs hero badges cross-browser */
       .trust-strip svg {
         width: 12px !important;
@@ -1599,6 +1576,35 @@
         max-height: 16px;
         flex-shrink: 0;
       }
+    }
+
+    /* Trust chips — global, outside any media query */
+    .product-trust-section {
+      width: 100%;
+      padding: 0 20px 34px;
+    }
+    .product-trust-section .trust-chips {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+      gap: 8px !important;
+      margin: 0 auto !important;
+    }
+    .product-trust-section .trust-chip {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      padding: 8px 12px !important;
+      border-radius: 999px !important;
+      background: rgba(0,0,0,.06) !important;
+      color: rgba(17,17,17,.72) !important;
+      font-size: 12px !important;
+      font-weight: 800 !important;
+      line-height: 1 !important;
+      white-space: nowrap !important;
+      width: auto !important;
+      max-width: max-content !important;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.05) !important;
     }
   </style>
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-16493571935"></script>
@@ -1729,11 +1735,13 @@
             <div class="review-author">— Felipe M.</div>
           </div>
         </div>
-        <div class="trust-chips">
-          <span class="trust-chip">🔒 Pago seguro</span>
-          <span class="trust-chip">🛵 Delivery y retiro</span>
-          <span class="trust-chip">🍕 Masa artesanal</span>
-          <span class="trust-chip">❤️ Hecho con amor</span>
+        <div class="product-trust-section">
+          <div class="trust-chips">
+            <span class="trust-chip">🔒 Pago seguro</span>
+            <span class="trust-chip">🛵 Delivery y retiro</span>
+            <span class="trust-chip">🍕 Masa artesanal</span>
+            <span class="trust-chip">❤️ Hecho con amor</span>
+          </div>
         </div>
       </div>
 
