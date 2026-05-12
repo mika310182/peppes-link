@@ -1537,58 +1537,59 @@
 
       /* 16. Testimonios premium */
       .testimonials {
-        margin-top: 28px;
-        padding: 0 2px;
+        margin-top: 20px;
+        padding: 0;
       }
       .testimonial-card {
         background: #fff;
-        border-radius: 16px;
-        padding: 14px 16px;
-        margin-bottom: 10px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-        border: 1px solid rgba(0,0,0,0.05);
+        border-radius: 14px;
+        padding: 12px 14px;
+        margin-bottom: 8px;
+        box-shadow: 0 1px 8px rgba(0,0,0,0.03);
+        border: 1px solid rgba(0,0,0,0.04);
       }
       .testimonial-stars {
         color: #f59e0b;
-        font-size: 11px;
-        letter-spacing: 2px;
-        margin-bottom: 4px;
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        margin-bottom: 3px;
       }
       .testimonial-text {
-        font-size: 13px;
-        line-height: 1.45;
-        color: #333;
+        font-size: 12.5px;
+        line-height: 1.4;
+        color: #444;
         font-weight: 500;
       }
       .testimonial-author {
-        font-size: 11px;
-        color: #999;
-        margin-top: 6px;
+        font-size: 10.5px;
+        color: #aaa;
+        margin-top: 4px;
         font-weight: 500;
       }
 
-      /* 17. Trust micro */
+      /* 17. Trust micro — Apple/Linear style footer */
       .trust-micro {
         display: flex;
         justify-content: center;
-        gap: 12px;
+        gap: 4px 20px;
         flex-wrap: wrap;
-        margin-top: 20px;
-        padding: 14px 0 4px;
+        margin-top: 14px;
+        padding: 10px 0 2px;
         border-top: 1px solid #eee;
       }
       .trust-micro-item {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 11px;
-        font-weight: 600;
-        color: #888;
+        font-size: 10px;
+        font-weight: 500;
+        color: #999;
+        letter-spacing: 0.3px;
       }
-      .trust-micro-icon {
-        width: 14px;
-        height: 14px;
-        opacity: 0.45;
+
+      /* 18. Defensive: fijar tamaño SVGs hero badges cross-browser */
+      .trust-strip svg {
+        width: 12px !important;
+        height: 12px !important;
+        max-width: 16px;
+        max-height: 16px;
         flex-shrink: 0;
       }
     }
@@ -1712,37 +1713,20 @@
         <div class="testimonials">
           <div class="testimonial-card">
             <div class="testimonial-stars">★★★★★</div>
-            <div class="testimonial-text">"La masa se siente artesanal de verdad. Pizza artesanal en Antofagasta como debe ser."</div>
+            <div class="testimonial-text">"La masa artesanal se siente de verdad. Pizza artesanal en Antofagasta como debe ser."</div>
             <div class="testimonial-author">— Camila V.</div>
           </div>
           <div class="testimonial-card">
             <div class="testimonial-stars">★★★★★</div>
-            <div class="testimonial-text">"Delivery pizza Antofagasta rápido y caliente. La Margarita me sorprendió, salsa real."</div>
+            <div class="testimonial-text">"Delivery rápido y caliente. La Margarita con mozzarella real me sorprendió."</div>
             <div class="testimonial-author">— Felipe M.</div>
-          </div>
-          <div class="testimonial-card">
-            <div class="testimonial-stars">★★★★★</div>
-            <div class="testimonial-text">"La lasaña casera me recordó a la de mi nonna. Sabor italiano auténtico."</div>
-            <div class="testimonial-author">— María P.</div>
           </div>
         </div>
         <div class="trust-micro">
-          <span class="trust-micro-item">
-            <svg class="trust-micro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-            Pago seguro
-          </span>
-          <span class="trust-micro-item">
-            <svg class="trust-micro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-            Delivery y retiro
-          </span>
-          <span class="trust-micro-item">
-            <svg class="trust-micro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-            Masa artesanal
-          </span>
-          <span class="trust-micro-item">
-            <svg class="trust-micro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-            Hecho con amor
-          </span>
+          <span class="trust-micro-item">Pago seguro</span>
+          <span class="trust-micro-item">Delivery y retiro</span>
+          <span class="trust-micro-item">Masa artesanal</span>
+          <span class="trust-micro-item">Hecho con amor</span>
         </div>
       </div>
 
