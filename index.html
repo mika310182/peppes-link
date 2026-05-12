@@ -1568,21 +1568,27 @@
         font-weight: 500;
       }
 
-      /* 17. Trust micro — Apple/Linear style footer */
-      .trust-micro {
+      /* 17. Trust chips */
+      .trust-chips {
         display: flex;
-        justify-content: center;
-        gap: 4px 20px;
         flex-wrap: wrap;
-        margin-top: 14px;
-        padding: 10px 0 2px;
-        border-top: 1px solid #eee;
+        justify-content: center;
+        gap: 8px;
+        margin: 18px auto 28px;
+        padding: 0 18px;
       }
-      .trust-micro-item {
-        font-size: 10px;
-        font-weight: 500;
-        color: #999;
-        letter-spacing: 0.3px;
+      .trust-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 8px 11px;
+        border-radius: 999px;
+        background: rgba(0,0,0,.06);
+        color: rgba(17,17,17,.68);
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1;
+        white-space: nowrap;
       }
 
       /* 18. Defensive: fijar tamaño SVGs hero badges cross-browser */
@@ -1723,11 +1729,11 @@
             <div class="review-author">— Felipe M.</div>
           </div>
         </div>
-        <div class="trust-micro">
-          <span class="trust-micro-item">Pago seguro</span>
-          <span class="trust-micro-item">Delivery y retiro</span>
-          <span class="trust-micro-item">Masa artesanal</span>
-          <span class="trust-micro-item">Hecho con amor</span>
+        <div class="trust-chips">
+          <span class="trust-chip">🔒 Pago seguro</span>
+          <span class="trust-chip">🛵 Delivery y retiro</span>
+          <span class="trust-chip">🍕 Masa artesanal</span>
+          <span class="trust-chip">❤️ Hecho con amor</span>
         </div>
       </div>
 
