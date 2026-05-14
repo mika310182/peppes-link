@@ -3121,7 +3121,8 @@
 
       const cartItem = {
         id: Date.now(), name: syncP.name, size: (state.size === "U" ? "" : state.size), img: resolveImgPath(syncP.img), qty: state.qty,
-        selectedExtrasIds: extrasIds, price: (base + exT) * state.qty
+        selectedExtrasIds: extrasIds, price: (base + exT) * state.qty,
+        productId: p.id, categoryId: state.categoryId
       };
 
       // Add promo metadata if it's a promo product
@@ -3830,10 +3831,17 @@
         });
 
         const newCounter = snapshot.val();
-        const orderId = "PP-" + String(newCounter).padStart(4, '0');
 
-        // Generar Token de Seguridad aleatorio
-        const authToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        // Generar sufijo aleatorio para order ID impredecible
+        const idBytes = new Uint8Array(4);
+        crypto.getRandomValues(idBytes);
+        const randomSuffix = Array.from(idBytes, b => b.toString(36)).join('');
+        const orderId = "PP-" + String(newCounter).padStart(4, '0') + "-" + randomSuffix;
+
+        // Generar Token de Seguridad criptográfico
+        const tokenBytes = new Uint8Array(12);
+        crypto.getRandomValues(tokenBytes);
+        const authToken = Array.from(tokenBytes, b => b.toString(36).padStart(2, '0')).join('');
 
         const subtotal = state.cart.reduce((s, i) => s + i.price, 0);
         const deliveryFee = state.isDelivery ? (state.deliveryCost || 0) : 0;

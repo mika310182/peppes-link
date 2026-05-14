@@ -141,11 +141,16 @@ module.exports = async (req, res) => {
 
       // Consumir cupón si existe en el pedido
       if (pendingOrder.descuento && pendingOrder.descuento.code) {
-        console.log("[MP-Webhook] Consumiendo cupon:", pendingOrder.descuento.code, "para order:", orderId);
+        // Recalcular subtotal real desde los items del pedido
+        const realSubtotal = (pendingOrder.items || []).reduce((sum, item) => {
+          return sum + Math.max(0, Math.round(item.price || 0));
+        }, 0);
+        console.log("[MP-Webhook] Consumiendo cupon:", pendingOrder.descuento.code, "para order:", orderId, "subtotal:", realSubtotal);
         const couponResult = await consumeCoupon(
           pendingOrder.descuento.code,
           pendingOrder.telefono || '',
-          orderId
+          orderId,
+          realSubtotal
         );
         console.log("[MP-Webhook] Resultado consumo cupon:", JSON.stringify(couponResult));
         if (couponResult.consumed) {

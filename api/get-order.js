@@ -19,6 +19,10 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Falta el ID del pedido' });
   }
 
+  if (!token) {
+    return res.status(401).json({ error: 'Token de autenticación requerido' });
+  }
+
   try {
     console.log(`[get-order] Buscando pedido ${orderId} en orders/`);
     let order = await getFirebaseData(`orders/${orderId}`);
@@ -35,7 +39,8 @@ module.exports = async (req, res) => {
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
 
-    if (token && order.auth_token && order.auth_token !== token) {
+    // Validar token contra el auth_token del pedido
+    if (!order.auth_token || order.auth_token !== token) {
       console.log(`[get-order] Token invalido para pedido ${orderId}`);
       return res.status(403).json({ error: 'Token invalido' });
     }

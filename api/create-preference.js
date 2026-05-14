@@ -1,5 +1,44 @@
 const https = require('https');
 
+const firebaseConfig = {
+  databaseURL: "https://peppes-stock-default-rtdb.firebaseio.com"
+};
+
+function buildFirebaseUrl(path) {
+  const secret = process.env.FIREBASE_DATABASE_SECRET;
+  const base = `${firebaseConfig.databaseURL}/${path}.json`;
+  return secret ? `${base}?auth=${secret}` : base;
+}
+
+async function getFirebaseData(path) {
+  return new Promise((resolve, reject) => {
+    https.get(buildFirebaseUrl(path), res => {
+      let buffer = '';
+      res.on('data', chunk => buffer += chunk);
+      res.on('end', () => {
+        try {
+          const data = JSON.parse(buffer);
+          if (data && data.error) { resolve(null); return; }
+          resolve(data);
+        } catch (e) { reject(e); }
+      });
+    }).on('error', reject);
+  });
+}
+
+function calcDiscountAmount(coupon, subtotal) {
+  if (!coupon) return 0;
+  let amount = 0;
+  if (coupon.type === 'percent' || coupon.type === 'percentage') {
+    amount = Math.round(subtotal * (coupon.value / 100));
+  } else {
+    amount = Math.round(coupon.value);
+  }
+  if (amount > subtotal) amount = subtotal;
+  if (amount < 0) amount = 0;
+  return amount;
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -14,6 +53,10 @@ module.exports = async (req, res) => {
 
     if (!ACCESS_TOKEN) {
       return res.status(500).json({ error: 'Missing MP_ACCESS_TOKEN env variable' });
+    }
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Carrito vacío' });
     }
 
     let normalizedAddress = null;
@@ -42,40 +85,109 @@ module.exports = async (req, res) => {
       }
     }
 
+    // ── Server-side price recalculation ──
+    const [inventory, extras] = await Promise.all([
+      getFirebaseData('inventory_clean'),
+      getFirebaseData('extras')
+    ]);
+
+    const mpItems = [];
+    let recalculatedSubtotal = 0;
+
+    for (const item of items) {
+      const qty = Math.max(1, Math.min(99, parseInt(item.qty) || 1));
+      let unitPrice = 0;
+      let found = false;
+
+      // Look up real price from Firebase catalog
+      if (item.productId && item.categoryId && inventory) {
+        const catData = inventory[item.categoryId];
+        if (catData) {
+          const realProduct = catData[item.productId];
+          if (realProduct && realProduct.prices) {
+            found = true;
+            const size = (item.size || 'U').toUpperCase();
+            unitPrice = realProduct.prices[size] || realProduct.prices['U'] || 0;
+            if (typeof unitPrice !== 'number') unitPrice = 0;
+
+            // Add extras prices from Firebase
+            if (item.selectedExtrasIds && Array.isArray(item.selectedExtrasIds) && extras) {
+              for (const extraId of item.selectedExtrasIds) {
+                const realExtra = extras[extraId];
+                if (realExtra) {
+                  const extraPrice = (size === 'G')
+                    ? (realExtra.g || realExtra.price || 0)
+                    : (realExtra.pm || realExtra.price || 0);
+                  unitPrice += (typeof extraPrice === 'number') ? extraPrice : 0;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (!found) {
+        if (inventory) {
+          // Catalog available but product not found — reject
+          return res.status(400).json({
+            error: !item.productId || !item.categoryId
+              ? 'Carrito desactualizado. Recarga la página y vuelve a agregar los productos.'
+              : `Producto "${item.name || item.productId}" no encontrado en catálogo.`
+          });
+        }
+        // Firebase unavailable — trust client price as best-effort
+        unitPrice = Math.max(0, Math.round((item.price || 0) / qty));
+      }
+
+      unitPrice = Math.max(0, Math.round(unitPrice));
+      recalculatedSubtotal += unitPrice * qty;
+
+      mpItems.push({
+        id: item.productId || item.id || 'producto',
+        title: item.name || 'Producto',
+        quantity: qty,
+        unit_price: unitPrice,
+        currency_id: 'CLP'
+      });
+    }
+
+    if (metodo === 'Delivery') {
+      const validDeliveryFee = Math.max(0, Math.min(50000, Math.round(parseFloat(deliveryFee) || 0)));
+      mpItems.push({
+        id: 'delivery',
+        title: 'Despacho a domicilio',
+        quantity: 1,
+        unit_price: validDeliveryFee,
+        currency_id: 'CLP'
+      });
+    }
+
+    // Recalculate discount from Firebase coupon data
+    let recalculatedDiscount = 0;
+    if (discountData && discountData.code) {
+      const normCode = discountData.code.trim().toUpperCase().replace(/\s+/g, '');
+      const coupon = await getFirebaseData(`store_settings/coupons/${normCode}`);
+      if (coupon) {
+        recalculatedDiscount = calcDiscountAmount(coupon, recalculatedSubtotal);
+      }
+    }
+
+    if (recalculatedDiscount > 0) {
+      mpItems.push({
+        id: 'discount',
+        title: `Descuento: ${discountData.code}`,
+        quantity: 1,
+        unit_price: -Math.round(recalculatedDiscount),
+        currency_id: 'CLP'
+      });
+    }
+
     const isSandbox = ACCESS_TOKEN.startsWith('TEST-');
     console.log(`[create-preference] Modo: ${isSandbox ? 'SANDBOX (TEST-)' : 'PRODUCCION'}, token prefix: ${ACCESS_TOKEN.substring(0, 8)}...`);
 
     const rawUrl = process.env.FRONTEND_URL || 'https://www.peppes.cl';
     const baseUrl = rawUrl.replace(/\/+$/, '');
-    console.log(`[create-preference] baseUrl calculado: ${baseUrl} (rawUrl=${rawUrl}, FRONTEND_URL=${process.env.FRONTEND_URL || 'unset'})`);
-
-    const mpItems = items.map(item => ({
-      id: item.id || 'producto',
-      title: item.name || 'Producto',
-      quantity: item.qty || 1,
-      unit_price: Math.round(item.price / (item.qty || 1)),
-      currency_id: 'CLP'
-    }));
-
-    if (metodo === 'Delivery') {
-      mpItems.push({
-        id: 'delivery',
-        title: 'Despacho a domicilio',
-        quantity: 1,
-        unit_price: Math.round(deliveryFee),
-        currency_id: 'CLP'
-      });
-    }
-
-    if (discountData && discountData.amount > 0) {
-      mpItems.push({
-        id: 'discount',
-        title: `Descuento: ${discountData.code}`,
-        quantity: 1,
-        unit_price: -Math.round(discountData.amount),
-        currency_id: 'CLP'
-      });
-    }
+    console.log(`[create-preference] baseUrl calculado: ${baseUrl}`);
 
     const preference = {
       items: mpItems,
@@ -92,7 +204,6 @@ module.exports = async (req, res) => {
     };
 
     console.log("[create-preference] notification_url:", preference.notification_url);
-    console.log("[create-preference] back_urls:", JSON.stringify(preference.back_urls));
     console.log("[create-preference] Enviando a MP, orderId:", orderId);
     const mpResponse = await postToMP('/checkout/preferences', ACCESS_TOKEN, preference);
     console.log("[create-preference] init_point:", mpResponse.init_point);
@@ -100,11 +211,9 @@ module.exports = async (req, res) => {
     console.log("[create-preference] preference_id:", mpResponse.id);
 
     const finalInitPoint = mpResponse.init_point || mpResponse.sandbox_init_point;
-    console.log("[create-preference] finalInitPoint usado:", finalInitPoint);
-    console.log("[create-preference] Es HTTPS:", finalInitPoint ? finalInitPoint.startsWith('https://') : 'NO (undefined!)');
 
     if (!finalInitPoint) {
-      console.error("[create-preference] CRITICO: init_point es undefined - posiblemente token TEST sin sandbox_init_point");
+      console.error("[create-preference] CRITICO: init_point es undefined");
       return res.status(500).json({ error: 'Mercado Pago no devolvió URL de checkout' });
     }
 

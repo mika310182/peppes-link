@@ -109,12 +109,12 @@ function calculateDiscount(coupon, subtotal) {
   return amount;
 }
 
-async function consumeCoupon(code, phone, orderId) {
+async function consumeCoupon(code, phone, orderId, subtotal) {
   if (!code) return { consumed: false, reason: 'no_code' };
   const normCode = normalizeCode(code);
   if (!normCode) return { consumed: false, reason: 'invalid_code' };
 
-  console.log(`[coupon-utils] consumeCoupon: code=${normCode} phone=${phone} orderId=${orderId}`);
+  console.log(`[coupon-utils] consumeCoupon: code=${normCode} phone=${phone} orderId=${orderId} subtotal=${subtotal}`);
 
   const coupon = await getFirebaseData(`store_settings/coupons/${normCode}`);
   if (!coupon) {
@@ -127,7 +127,7 @@ async function consumeCoupon(code, phone, orderId) {
     return { consumed: true, reason: 'already_consumed' };
   }
 
-  const validation = validateCoupon(coupon, 0, phone);
+  const validation = validateCoupon(coupon, subtotal || 0, phone);
   if (!validation.valid) {
     console.log(`[coupon-utils] Cupon ${normCode} no valido al consumir:`, validation.message);
     return { consumed: false, reason: validation.message };
@@ -150,7 +150,7 @@ async function consumeCoupon(code, phone, orderId) {
   try {
     await updateFirebaseData(`store_settings/coupons/${normCode}`, { ...coupon, ...updateData });
     console.log(`[coupon-utils] Cupon ${normCode} consumido exitosamente para order ${orderId}`);
-    return { consumed: true, discountAmount: calculateDiscount(coupon, 0) };
+    return { consumed: true, discountAmount: calculateDiscount(coupon, subtotal || 0) };
   } catch (err) {
     console.error(`[coupon-utils] Error al consumir cupon ${normCode}:`, err.message);
     return { consumed: false, reason: 'firebase_error' };
