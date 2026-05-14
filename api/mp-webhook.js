@@ -92,7 +92,7 @@ module.exports = async (req, res) => {
     console.log("[MP-Webhook] Payment status REAL:", payment && payment.status);
     console.log("[MP-Webhook] external_reference:", payment && payment.external_reference);
     console.log("[MP-Webhook] paymentId REAL:", payment && payment.id);
-    console.log("[MP-Webhook] response.data completa:", JSON.stringify(payment));
+    console.log("[MP-Webhook] payment_metadata:", JSON.stringify({ status: payment.status, external_reference: payment.external_reference, id: payment.id, transaction_amount: payment.transaction_amount, payment_method_id: payment.payment_method_id, payer: { email: payment.payer?.email } }));
 
     if (payment && payment.status === 'approved') {
       const orderId = payment.external_reference;

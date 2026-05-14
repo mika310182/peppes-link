@@ -4,6 +4,8 @@ const firebaseConfig = {
   databaseURL: "https://peppes-stock-default-rtdb.firebaseio.com"
 };
 
+const CUTLERY_PRICE = 500;
+
 function buildFirebaseUrl(path) {
   const secret = process.env.FIREBASE_DATABASE_SECRET;
   const base = `${firebaseConfig.databaseURL}/${path}.json`;
@@ -48,7 +50,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   try {
-    const { items, orderId, metodo, authToken, deliveryFee, addressDetails, discountData } = req.body;
+    const { items, orderId, metodo, authToken, deliveryFee, addressDetails, discountData, cliente, telefono, nota, direccion, glink, coords, distanceKm, incluyeCubiertos } = req.body;
     const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
 
     if (!ACCESS_TOKEN) {
@@ -92,6 +94,7 @@ module.exports = async (req, res) => {
     ]);
 
     const mpItems = [];
+    const orderItems = [];
     let recalculatedSubtotal = 0;
 
     for (const item of items) {
@@ -149,10 +152,27 @@ module.exports = async (req, res) => {
         unit_price: unitPrice,
         currency_id: 'CLP'
       });
+
+      orderItems.push({
+        id: item.id || item.productId || null,
+        name: item.name || 'Producto',
+        size: item.size || '',
+        img: item.img || '',
+        qty: qty,
+        productId: item.productId || null,
+        categoryId: item.categoryId || null,
+        selectedExtrasIds: item.selectedExtrasIds || [],
+        price: unitPrice * qty,
+        unit_price: unitPrice,
+        isPromo: item.isPromo || false,
+        promoType: item.promoType || null,
+        basePizzas: item.basePizzas || null
+      });
     }
 
+    let validDeliveryFee = 0;
     if (metodo === 'Delivery') {
-      const validDeliveryFee = Math.max(0, Math.min(50000, Math.round(parseFloat(deliveryFee) || 0)));
+      validDeliveryFee = Math.max(0, Math.min(50000, Math.round(parseFloat(deliveryFee) || 0)));
       mpItems.push({
         id: 'delivery',
         title: 'Despacho a domicilio',
@@ -182,8 +202,42 @@ module.exports = async (req, res) => {
       });
     }
 
+    // ── Create pending_order with server-recalculated values ──
+    const cutleryFee = incluyeCubiertos ? CUTLERY_PRICE : 0;
+    const recalculatedTotal = recalculatedSubtotal + validDeliveryFee + cutleryFee - recalculatedDiscount;
+
+    const pendingOrderData = {
+      id: orderId,
+      cliente: cliente || '',
+      telefono: telefono || '',
+      metodo,
+      direccion: direccion || (metodo === 'Retiro' ? 'Retiro en local' : ''),
+      glink: glink || null,
+      coords: coords || null,
+      distanceKm: distanceKm || null,
+      nota: nota || '',
+      items: orderItems,
+      subtotal: recalculatedSubtotal,
+      deliveryCost: validDeliveryFee,
+      cutleryFee: cutleryFee,
+      discountAmount: recalculatedDiscount,
+      total: recalculatedTotal,
+      descuento: discountData?.code ? { code: discountData.code, amount: recalculatedDiscount } : null,
+      incluyeCubiertos: !!incluyeCubiertos,
+      auth_token: authToken,
+      estado: "pago_pendiente",
+      paymentStatus: "pending",
+      orderStatus: "recibido",
+      timestamp: Date.now(),
+      fecha: new Date().toLocaleString('es-CL')
+    };
+
+    console.log(`[create-preference] Creando pending_order ${orderId}...`);
+    await updateFirebaseData(`pending_orders/${orderId}`, pendingOrderData);
+    console.log(`[create-preference] pending_order ${orderId} creado exitosamente`);
+
     const isSandbox = ACCESS_TOKEN.startsWith('TEST-');
-    console.log(`[create-preference] Modo: ${isSandbox ? 'SANDBOX (TEST-)' : 'PRODUCCION'}, token prefix: ${ACCESS_TOKEN.substring(0, 8)}...`);
+    console.log(`[create-preference] Modo: ${isSandbox ? 'SANDBOX' : 'PRODUCCION'}`);
 
     const rawUrl = process.env.FRONTEND_URL || 'https://www.peppes.cl';
     const baseUrl = rawUrl.replace(/\/+$/, '');
@@ -259,6 +313,36 @@ function postToMP(path, token, data) {
       });
     });
 
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+async function updateFirebaseData(path, data) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify(data);
+    const url = new URL(buildFirebaseUrl(path));
+    const options = {
+      hostname: url.hostname,
+      path: url.pathname + url.search,
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body)
+      }
+    };
+    const req = https.request(options, res => {
+      let buffer = '';
+      res.on('data', chunk => buffer += chunk);
+      res.on('end', () => {
+        if (res.statusCode >= 400) {
+          reject(new Error(`Firebase PUT error ${res.statusCode}`));
+        } else {
+          resolve();
+        }
+      });
+    });
     req.on('error', reject);
     req.write(body);
     req.end();

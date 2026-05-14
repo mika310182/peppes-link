@@ -3850,34 +3850,10 @@
         const total = subtotal + deliveryFee + cutleryFee - discountAmount;
         const metodo = state.isDelivery ? "Delivery" : "Retiro";
 
-        const orderData = {
-          id: orderId, cliente: name, telefono: phone,
-          metodo,
-          direccion: state.isDelivery ? finalAddress : "Retiro en local",
-          glink: state.isDelivery ? customerLocation.glink : null,
-          coords: state.isDelivery ? customerLocation.coords : null,
-          distanceKm: state.isDelivery ? customerLocation.distanceKm : null,
-          nota: note,
-          items: state.cart,
-          subtotal: subtotal,
-          deliveryCost: deliveryFee,
-          cutleryFee: cutleryFee,
-          discountAmount: discountAmount,
-          total: total,
-          descuento: appliedCoupon ? { code: appliedCoupon.code, amount: appliedCoupon.amountCalculated } : null,
-          incluyeCubiertos: includeCutlery,
-          auth_token: authToken,
-          estado: "pago_pendiente",
-          paymentStatus: "pending",
-          orderStatus: "recibido",
-          timestamp: Date.now(), fecha: new Date().toLocaleString()
-        };
-
-        // 1. Guardar pedido en Firebase en colección PENDIENTE
+        // 1. Guardar referencia local (el pending_order lo crea el backend)
         localStorage.removeItem('peppes_view_status');
-        await db.ref('pending_orders/' + orderId).set(orderData);
 
-        // 2. Llamar a la Netlify Function para crear la preferencia en MP
+        // 2. Llamar al backend para crear pending_order + preferencia MP
         const res = await fetch('/api/create-preference', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -3885,10 +3861,18 @@
             items: state.cart,
             orderId,
             metodo,
-            authToken, // Enviar token a Netlify
-            deliveryFee, // Enviar fee a Netlify para preferencia MP
+            authToken,
+            deliveryFee,
             addressDetails: state.isDelivery ? customerLocation.rawAddressDetails : null,
-            discountData: appliedCoupon ? { code: appliedCoupon.code, amount: appliedCoupon.amountCalculated } : null
+            discountData: appliedCoupon ? { code: appliedCoupon.code, amount: appliedCoupon.amountCalculated } : null,
+            cliente: name,
+            telefono: phone,
+            nota: note,
+            direccion: state.isDelivery ? finalAddress : "Retiro en local",
+            glink: state.isDelivery ? customerLocation.glink : null,
+            coords: state.isDelivery ? customerLocation.coords : null,
+            distanceKm: state.isDelivery ? customerLocation.distanceKm : null,
+            incluyeCubiertos: includeCutlery
           })
         });
 
