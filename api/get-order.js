@@ -1,8 +1,4 @@
-const https = require('https');
-
-const firebaseConfig = {
-  databaseURL: "https://peppes-stock-default-rtdb.firebaseio.com"
-};
+const { get: getFirebaseData } = require('./firebase');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -76,24 +72,4 @@ module.exports = async (req, res) => {
   }
 };
 
-function buildFirebaseUrl(path) {
-  const secret = process.env.FIREBASE_DATABASE_SECRET;
-  const base = `${firebaseConfig.databaseURL}/${path}.json`;
-  return secret ? `${base}?auth=${secret}` : base;
-}
 
-async function getFirebaseData(path) {
-  return new Promise((resolve, reject) => {
-    https.get(buildFirebaseUrl(path), res => {
-      let buffer = '';
-      res.on('data', chunk => buffer += chunk);
-      res.on('end', () => {
-        try {
-          const data = JSON.parse(buffer);
-          if (data && data.error) { resolve(null); return; }
-          resolve(data);
-        } catch (e) { reject(e); }
-      });
-    }).on('error', reject);
-  });
-}

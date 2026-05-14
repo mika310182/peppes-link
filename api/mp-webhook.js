@@ -1,9 +1,6 @@
 const https = require('https');
 const { consumeCoupon } = require('./coupon-utils');
-
-const firebaseConfig = {
-  databaseURL: "https://peppes-stock-default-rtdb.firebaseio.com"
-};
+const { get: getFirebaseData, set: updateFirebaseData, del: deleteFirebaseData } = require('./firebase');
 
 const SAFETY_TIMEOUT_MS = 9000;
 
@@ -312,76 +309,4 @@ function getFromMP(path, token) {
   });
 }
 
-function buildFirebaseUrl(path) {
-  const secret = process.env.FIREBASE_DATABASE_SECRET;
-  const base = `${firebaseConfig.databaseURL}/${path}.json`;
-  return secret ? `${base}?auth=${secret}` : base;
-}
 
-async function getFirebaseData(path) {
-  return new Promise((resolve, reject) => {
-    https.get(buildFirebaseUrl(path), res => {
-      let buffer = '';
-      res.on('data', chunk => buffer += chunk);
-      res.on('end', () => {
-        try {
-          const data = JSON.parse(buffer);
-          if (data && data.error) {
-            console.warn(`[MP-Webhook] Firebase error GET ${path}:`, data.error);
-            resolve(null);
-            return;
-          }
-          resolve(data);
-        } catch (e) { reject(e); }
-      });
-    }).on('error', reject);
-  });
-}
-
-async function updateFirebaseData(path, data) {
-  return new Promise((resolve, reject) => {
-    const body = JSON.stringify(data);
-    const url = new URL(buildFirebaseUrl(path));
-    const options = {
-      hostname: url.hostname,
-      path: url.pathname + url.search,
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body)
-      }
-    };
-    const req = https.request(options, res => {
-      let buffer = '';
-      res.on('data', chunk => buffer += chunk);
-      res.on('end', () => {
-        if (res.statusCode >= 400) {
-          console.error(`[MP-Webhook] Firebase PUT ${path} devolvio ${res.statusCode}:`, buffer);
-          reject(new Error(`Firebase PUT error ${res.statusCode}`));
-        } else {
-          resolve();
-        }
-      });
-    });
-    req.on('error', reject);
-    req.write(body);
-    req.end();
-  });
-}
-
-async function deleteFirebaseData(path) {
-  return new Promise((resolve, reject) => {
-    const url = new URL(buildFirebaseUrl(path));
-    const options = {
-      hostname: url.hostname,
-      path: url.pathname + url.search,
-      method: 'DELETE'
-    };
-    const req = https.request(options, res => {
-      res.on('data', () => {});
-      res.on('end', () => resolve());
-    });
-    req.on('error', reject);
-    req.end();
-  });
-}
