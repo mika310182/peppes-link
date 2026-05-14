@@ -2,13 +2,13 @@
   "inventory_clean": {
     "promo": {
       "personal_beb": { "id": "personal_beb", "category": "promo", "name": "Personal + Bebida", "desc": "Pizza personal a elección + bebida lata de 220ml.", "img": "assets/promo_pizza_personal_bebida_220ml.png", "prices": { "U": 6990 }, "days": [1], "available": true, "type": "Promo" },
-      "combo_p": { "id": "combo_p", "category": "promo", "name": "2x1", "desc": "Combo 2x1 para 2 personas.", "img": "assets/2x1.png", "prices": { "U": 6990 }, "days": [1], "available": true, "type": "Promo" },
+      "combo_p": { "id": "combo_p", "category": "promo", "name": "2x1", "desc": "Combo 2x1 para 2 personas.", "img": "assets/2x1-v2.png", "prices": { "U": 6990 }, "days": [1], "available": true, "type": "Promo" },
       "las_beb": { "id": "las_beb", "category": "promo", "name": "Lasaña + Bebida", "desc": "Lasaña artesanal + bebida lata 220ml.", "img": "assets/promo-lasaña-boloñesa.png", "prices": { "U": 6990 }, "days": [2], "available": true, "type": "Promo" },
       "martes_fest": { "id": "martes_fest", "category": "promo", "name": "Martes Fest", "desc": "Especial del día martes, elige tu pizza clasica favorita.", "img": "assets/martesfest.png", "prices": { "U": 21990 }, "days": [2], "available": true, "type": "Fest" },
       "gemelas": { "id": "gemelas", "category": "promo", "name": "Las Gemelas", "desc": "Dos pizzas de pepperoni estilo romano.", "img": "assets/gemelas.png", "prices": { "U": 8990 }, "days": [3], "available": true, "type": "Promo" },
       "combo_2": { "id": "combo_2", "category": "promo", "name": "Combo para 2", "desc": "Pizza Grande + Bebida de 1.5Lt.", "img": "assets/combo-para-2.png", "prices": { "U": 14990 }, "days": [3], "available": true, "type": "Promo" },
       "pers_pali": { "id": "pers_pali", "category": "promo", "name": "Personal + Palitos", "desc": "Pizza personal + porción de palitos de ajo.", "img": "assets/promo_pizza_personal_bebida_220ml.png", "prices": { "U": 8990 }, "days": [4], "available": true, "type": "Promo" },
-      "duo_fam_f": { "id": "duo_fam_f", "category": "promo", "name": "Dúo Familiar Fest", "desc": "2 Pizzas familiares + bebida 1.5L.", "img": "assets/2x1.png", "prices": { "U": 19990 }, "days": [4, 6], "available": true, "type": "Fest" },
+      "duo_fam_f": { "id": "duo_fam_f", "category": "promo", "name": "Dúo Familiar Fest", "desc": "2 Pizzas familiares + bebida 1.5L.", "img": "assets/2x1-v2.png", "prices": { "U": 19990 }, "days": [4, 6], "available": true, "type": "Fest" },
       "viernes_mix": { "id": "viernes_mix", "category": "promo", "name": "Fideos + Palitos + Bebida", "desc": "Pasta a elección + palitos + bebida 220ml.", "img": "assets/pasta-boloñesa.png", "prices": { "U": 9990 }, "days": [5], "available": true, "type": "Promo" }
     },
     "pizzas": {
