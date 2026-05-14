@@ -2421,7 +2421,7 @@
           { id: "martes_fest", type: "Fest", name: "Martes Fest", desc: "Especial del día martes, elige tu pizza clasica favorita.", img: IMG_PATH + "martesfest.png", prices: { U: 21990 }, days: [2] },
           { id: "gemelas", type: "Promo", name: "Las Gemelas", desc: "Dos pizzas de pepperoni estilo romano.", img: IMG_PATH + "gemelas.png", prices: { U: 8990 }, days: [3] },
           { id: "combo_2", type: "Promo", name: "Combo para 2", desc: "Pizza Grande + Bebida de 1.5Lt.", img: IMG_PATH + "combo-para-2.png", prices: { U: 14990 }, days: [3] },
-          { id: "pers_pali", type: "Promo", name: "Personal + Palitos", desc: "Pizza personal + porción de palitos de ajo.", img: IMG_PATH + "promo_pizza_personal_bebida_220ml.png", prices: { U: 8990 }, days: [4] },
+          { id: "pers_pali", type: "Promo", name: "Personal + Palitos", desc: "Pizza personal + porción de palitos de ajo.", img: IMG_PATH + "personal_palitos.png", prices: { U: 8990 }, days: [4] },
           { id: "duo_fam_f", type: "Fest", name: "Dúo Familiar Fest", desc: "2 Pizzas familiares + bebida 1.5L.", img: IMG_PATH + "duo_familiar_fest.png", prices: { U: 26990 }, days: [4, 6] },
           { id: "viernes_mix", type: "Promo", name: "Fideos + Palitos + Bebida", desc: "Pasta a elección + palitos + bebida 220ml.", img: IMG_PATH + "pasta-boloñesa.png", prices: { U: 9990 }, days: [5] }
         ],
@@ -3903,7 +3903,7 @@
         if (authToken) localStorage.setItem('peppes_order_auth', authToken);
 
         // 4. Redirigir al checkout de Mercado Pago
-        console.log("[checkout] Redirigiendo a MP:", initPoint);
+        
         window.location.href = initPoint;
 
       } catch (e) {
