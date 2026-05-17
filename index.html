@@ -189,12 +189,13 @@
     }
 
     .top {
-      background: var(--pepper-red);
+      background: linear-gradient(175deg, var(--pepper-red) 0%, #d02a2a 100%);
       height: 450px;
       position: relative;
       color: #fff;
       padding: calc(20px + env(safe-area-inset-top)) 18px 0;
       flex-shrink: 0;
+      box-shadow: 0 0 50px rgba(255, 49, 49, 0.12);
     }
 
     .topBar {
@@ -221,11 +222,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #111;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       color: #fff;
       cursor: pointer;
       position: relative;
-      border: none;
+      border: 1px solid rgba(255, 255, 255, 0.12);
       font-size: 20px;
       transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
@@ -242,14 +245,14 @@
       height: 20px;
       padding: 0 4px;
       border-radius: 999px;
-      background: var(--black);
+      background: var(--pepper-red);
       color: #fff;
       font-size: 11px;
       font-weight: 900;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 2px solid var(--pepper-red);
+      border: 2px solid #fff;
       transform: scale(0);
       opacity: 0;
       transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -288,12 +291,19 @@
       scroll-snap-align: center;
       padding: 10px 18px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, .18);
-      border: 1px solid rgba(255, 255, 255, .25);
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       color: #fff;
       font-weight: 800;
       font-size: 13px;
       cursor: pointer;
+      transition: background 0.25s ease, transform 0.2s ease;
+    }
+
+    .catPill:active {
+      transform: scale(0.95);
     }
 
     .catPill.isActive {
@@ -327,12 +337,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      /* ✅ FIX: sombra fuerte que garantiza legibilidad sobre fondo rojo Y sobre la curva blanca */
-      text-shadow:
-        0 2px 12px rgba(0, 0, 0, 0.55),
-        0 1px 3px rgba(0, 0, 0, 0.8);
-      /* ✅ FIX: borde de texto oscuro como fallback extra para colores intermedios */
-      -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.15);
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
     }
 
     .trust-strip {
@@ -352,26 +357,25 @@
       font-size: 8.5px;
       font-weight: 700;
       letter-spacing: 0.2px;
-      color: rgba(255,255,255,0.7);
-      background: rgba(0,0,0,0.25);
-      border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.75);
+      background: rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.1);
       padding: 3px 9px;
       border-radius: 999px;
       white-space: nowrap;
       display: inline-flex;
       align-items: center;
       gap: 3px;
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
     .curve {
       position: absolute;
       left: 0;
       right: 0;
-      bottom: -1px;
-      /* ✅ FIX: curva más baja (120px → antes 180px) para que el título no caiga sobre el bisel blanco */
-      height: 120px;
+      bottom: -8px;
+      height: 127px;
       background: #f8f9fa;
       border-top-left-radius: 220px 120px;
       border-top-right-radius: 220px 120px;
@@ -618,11 +622,19 @@
       flex: 1;
       border-radius: 999px;
       border: 0;
-      background: var(--black);
+      background: var(--pepper-red);
       color: #fff;
       font-weight: 900;
       cursor: pointer;
       transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .addBtn:active {
+      transform: scale(0.96);
     }
 
     .addBtn.success {
@@ -821,17 +833,29 @@
       border: 0;
       border-radius: 10px;
       font-weight: 600;
+      font-size: 14px;
       cursor: pointer;
       background: none;
       color: #8a91a5;
-      transition: 0.2s;
       font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.25s ease;
+    }
+
+    .toggleBtn:hover {
+      color: #5a5f73;
     }
 
     .toggleBtn.active {
       background: #fff;
-      color: #1a1c24;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      color: #121212;
+      box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.05),
+        0 0 0 1px rgba(255, 49, 49, 0.08),
+        inset 0 -2px 0 var(--pepper-red);
     }
 
     .cutlery-option {
@@ -1976,7 +2000,7 @@
         <div class="topBar">
           <div style="width:48px"></div>
           <div class="brand-tag-main">PEPPE'S 2026 ®</div>
-          <div class="iconBtn" id="btnCart">🛒<span class="cartBadge" id="cartBadge">0</span></div>
+          <div class="iconBtn" id="btnCart"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span class="cartBadge" id="cartBadge">0</span></div>
         </div>
         <div class="catRow">
           <div class="carousel-wrapper">
@@ -2058,7 +2082,7 @@
             <button class="qtyBtn" id="plus">+</button>
           </div>
           <div class="price" id="totalPrice" style="font-weight:900; font-size:22px">$0</div>
-          <button class="addBtn" id="addToCart">Agregar</button>
+          <button class="addBtn" id="addToCart">Agregar <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></button>
         </div>
       </div>
 
@@ -2111,8 +2135,8 @@
             <!-- STEP 2: ENTREGA -->
             <div class="checkout-step" id="step-delivery" style="display:none">
               <div class="deliveryToggle">
-                <button class="toggleBtn active" id="btnRetiro" onclick="setDelivery(false)">Retiro</button>
-                <button class="toggleBtn" id="btnDelivery" onclick="setDelivery(true)">Delivery</button>
+                <button class="toggleBtn active" id="btnRetiro" onclick="setDelivery(false)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8h1M5 8l7-6 7 6"/><path d="M9 21v-6h6v6"/></svg> Retiro</button>
+                <button class="toggleBtn" id="btnDelivery" onclick="setDelivery(true)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="14" height="12"/><path d="M16 8h3l3 3v5h-2"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg> Delivery</button>
               </div>
               <div class="deliveryForm" id="formDatos">
                 <input type="text" id="custName" placeholder="Nombre completo">
@@ -2513,6 +2537,7 @@
     let includeCutlery = false;
     let appliedCoupon = null; // { code, type, value, amountCalculated }
     const CUTLERY_PRICE = 500;
+    const ADD_BTN_HTML = 'Agregar <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>';
 
     const scaleBySize = { P: 0.82, M: 1.0, G: 1.15, U: 1.0 };
     let tiempoRestante = 180;
@@ -2776,8 +2801,8 @@
 
         if (index === state.productIndex) {
           btnAdd.disabled = isAgotado;
-          btnAdd.innerText = isAgotado ? "AGOTADO" : "Agregar";
-          btnAdd.style.background = isAgotado ? "#555" : "var(--black)";
+          btnAdd.innerHTML = isAgotado ? "AGOTADO" : ADD_BTN_HTML;
+          btnAdd.style.background = isAgotado ? "#555" : "var(--pepper-red)";
 
           updateSizeButtons(p);
         }
@@ -3135,13 +3160,13 @@
       state.cart.push(cartItem);
 
       const btn = document.getElementById("addToCart");
-      btn.textContent = "✅ ¡Agregado!";
+      btn.innerHTML = "✅ ¡Agregado!";
       btn.classList.add("success");
       const btnCart = document.getElementById("btnCart");
       btnCart.classList.add("jump");
       setTimeout(() => btnCart.classList.remove("jump"), 300);
       setTimeout(() => {
-        btn.textContent = "Agregar";
+        btn.innerHTML = ADD_BTN_HTML;
         btn.classList.remove("success");
         state.selectedExtras.clear(); state.promoSelections = []; state.qty = 1; clearToppings(); renderExtras(); renderDetails();
       }, 1500);
