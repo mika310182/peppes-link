@@ -1869,6 +1869,36 @@
         max-height: 16px;
         flex-shrink: 0;
       }
+
+      /* 19. Premium added-modal responsive — only structural / non-linear overrides */
+      .added-modal-container {
+        width: calc(100vw - 32px);
+        max-width: 420px;
+      }
+      .added-modal-peppe {
+        --modal-mascot-size: 96px;
+      }
+      .added-modal-frame {
+        margin-top: 65px;
+      }
+      .added-modal-title {
+        letter-spacing: -0.5px;
+      }
+      .added-modal-sub {
+        margin-bottom: 2px;
+      }
+      .added-modal-actions {
+        flex-direction: column;
+        align-items: center;
+      }
+      .added-btn-secondary,
+      .added-btn-primary {
+        max-width: 100%;
+        width: 100%;
+        height: 56px;
+        padding-left: 24px;
+        padding-right: 24px;
+      }
     }
 
     /* Trust chips — global, outside any media query */
@@ -1934,6 +1964,298 @@
       color: rgba(17,17,17,.42);
       font-size: 12px;
       font-weight: 700;
+    }
+
+    /* ============================================================
+       MODAL DESIGN TOKENS
+       ============================================================ */
+:root {
+  --modal-container-max: 720px;
+  --modal-glass-bg: rgba(255,255,255,0.75);
+  --modal-glass-border: 1px solid rgba(255,255,255,0.25);
+  --modal-glass-radius: 40px;
+  --modal-glass-shadow: 0px 20px 80px 0px rgba(0,0,0,0.20);
+  --modal-glass-blur: 5px;
+  --modal-glow-ambient-w: 420px;
+  --modal-glow-ambient-h: 400px;
+  --modal-glow-size: 200px;
+  --modal-glow-color: rgba(255,49,49,0.20);
+  --modal-mascot-size: 320px;
+  --modal-card-bg: #ffffff;
+  --modal-card-radius: 28px;
+  --modal-card-shadow: 0px 10px 40px 10px rgba(0,0,0,0.20);
+  --modal-card-py: clamp(32px, 5vw, 56px);
+  --modal-card-px: clamp(24px, 3vw, 36px);
+  --modal-card-pb: clamp(20px, 2.5vw, 32px);
+  --modal-frame-mt: 180px;
+  --modal-title-size: clamp(19px, 4vw, 30px);
+  --modal-title-lh: 1.2;
+  --modal-title-ls: 0.5px;
+  --modal-title-mb: clamp(2px, 0.5vw, 8px);
+  --modal-body-size: clamp(15px, 3vw, 18px);
+  --modal-body-mb: 4px;
+  --modal-question-mb: clamp(8px, 2vw, 28px);
+  --modal-security-size: clamp(13px, 2vw, 18px);
+  --modal-security-gap: clamp(4px, 1vw, 10px);
+  --modal-actions-gap: clamp(10px, 1.5vw, 16px);
+  --modal-actions-mb: clamp(6px, 2vw, 24px);
+  --modal-btn-radius: 22px;
+  --modal-btn-shadow: 0px 10px 30px 0px rgba(0,0,0,0.20);
+  --modal-btn-py: clamp(10px, 1.5vw, 18px);
+  --modal-btn-px: 20px;
+  --modal-btn-font: clamp(15px, 2.5vw, 18px);
+  --modal-btn-gap: clamp(8px, 1vw, 10px);
+  --modal-btn-max: 240px;
+  --modal-btn-icon: clamp(18px, 2.5vw, 22px);
+  --modal-close-size: clamp(28px, 3vw, 30px);
+  --modal-close-offset: clamp(20px, 2.5vw, 24px);
+  --modal-btn-secondary-bg: rgba(255,255,255,0.75);
+  --modal-btn-secondary-border: 1px solid rgba(17,17,17,0.05);
+  --modal-btn-secondary-color: rgba(0,0,0,0.9);
+  --modal-btn-primary-bg: rgba(255,49,49,0.80);
+  --modal-btn-primary-border: 1px solid rgba(17,17,17,0.05);
+  --modal-btn-primary-color: rgba(255,255,255,0.9);
+  --modal-security-icon: clamp(14px, 2vw, 22px);
+  --modal-overlay-py: 20px;
+}
+
+    /* ============================================================
+       PREMIUM "AGREGADO AL CARRITO" MODAL
+       - Solid white card per Penpot mockup
+       - Blurred glass backplate behind card
+       - Red glow effects
+       - Side-by-side buttons with icons
+       ============================================================ */
+
+    .added-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,15,15,0.10);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: var(--modal-overlay-py);
+    }
+    .added-modal-overlay::before {
+      content:'';
+      position:absolute;
+      inset:0;
+      background: radial-gradient(circle at center, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 35%, transparent 75%);
+      pointer-events:none;
+      z-index:0;
+    }
+
+    .added-modal-container {
+      position: relative;
+      width: 100%;
+      max-width: var(--modal-container-max);
+    }
+
+    .added-modal-glass {
+      position: absolute;
+      top: 30px;
+      left: -12px;
+      right: -12px;
+      bottom: -12px;
+      background: var(--modal-glass-bg);
+      border: var(--modal-glass-border);
+      border-radius: var(--modal-glass-radius);
+      box-shadow: var(--modal-glass-shadow);
+      filter: blur(var(--modal-glass-blur));
+      -webkit-filter: blur(var(--modal-glass-blur));
+      pointer-events: none;
+    }
+
+    .added-modal-glow-ambient {
+      position: absolute;
+      top: 200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: var(--modal-glow-ambient-w);
+      max-width: 90vw;
+      height: var(--modal-glow-ambient-h);
+      background: radial-gradient(circle, var(--modal-glow-color) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .added-modal-peppe {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: var(--modal-mascot-size);
+      height: var(--modal-mascot-size);
+      z-index: 2;
+    }
+    .added-modal-peppe-inner {
+      width: 100%;
+      height: 100%;
+      animation: peppeFloat 3.2s ease-in-out infinite;
+    }
+    .added-modal-peppe img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .added-modal-glow {
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: var(--modal-glow-size);
+      height: var(--modal-glow-size);
+      background: radial-gradient(circle, var(--modal-glow-color) 0%, transparent 70%);
+      filter: blur(60px);
+      -webkit-filter: blur(60px);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .added-modal-frame {
+      position: relative;
+      width: 100%;
+      margin-top: var(--modal-frame-mt);
+      background: var(--modal-card-bg);
+      border-radius: var(--modal-card-radius);
+      box-shadow: var(--modal-card-shadow);
+      overflow: visible;
+      animation: addedModalIn .5s cubic-bezier(0.16,1,0.3,1);
+      padding: var(--modal-card-py) var(--modal-card-px) var(--modal-card-pb);
+      text-align: center;
+    }
+    @keyframes addedModalIn {
+      from { opacity:0; transform:scale(0.92) translateY(24px); }
+      to   { opacity:1; transform:scale(1) translateY(0); }
+    }
+
+    .added-modal-close {
+      position: absolute;
+      top: var(--modal-close-offset); right: var(--modal-close-offset);
+      width: var(--modal-close-size); height: var(--modal-close-size);
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.03);
+      background: rgba(255,255,255,0.55);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: rgba(0,0,0,0.3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .25s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      z-index: 10;
+    }
+    .added-modal-close:hover {
+      background: rgba(255,255,255,0.8);
+      color: rgba(0,0,0,0.55);
+      transform:scale(1.05);
+    }
+    .added-modal-close:active {
+      transform:scale(0.93);
+    }
+
+    .added-modal-body {
+      position: relative;
+      z-index: 3;
+    }
+
+    .added-modal-title {
+      font-family: 'Titan One', cursive;
+      font-size: var(--modal-title-size);
+      color: rgba(0,0,0,0.8);
+      margin: 0 0 var(--modal-title-mb);
+      letter-spacing: var(--modal-title-ls);
+      line-height: var(--modal-title-lh);
+    }
+
+    .added-modal-sub {
+      font-size: var(--modal-body-size);
+      color: rgba(85,85,85,0.7);
+      margin: 0 0 var(--modal-body-mb);
+      font-weight: 500;
+    }
+
+    .added-modal-question {
+      font-size: var(--modal-body-size);
+      color: rgba(85,85,85,0.9);
+      margin: 0 0 var(--modal-question-mb);
+      font-weight: 500;
+    }
+
+    .added-modal-actions {
+      display: flex;
+      flex-direction: row;
+      gap: var(--modal-actions-gap);
+      justify-content: center;
+      margin-bottom: var(--modal-actions-mb);
+    }
+
+    .added-btn-secondary,
+    .added-btn-primary {
+      flex: 1;
+      max-width: var(--modal-btn-max);
+      padding: var(--modal-btn-py) var(--modal-btn-px);
+      border-radius: var(--modal-btn-radius);
+      font-size: var(--modal-btn-font);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .25s ease;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--modal-btn-gap);
+      box-shadow: var(--modal-btn-shadow);
+    }
+
+    .added-btn-secondary {
+      background: var(--modal-btn-secondary-bg);
+      border: var(--modal-btn-secondary-border);
+      color: var(--modal-btn-secondary-color);
+    }
+    .added-btn-secondary:hover {
+      background: rgba(255,255,255,0.9);
+    }
+    .added-btn-secondary:active {
+      transform: scale(0.97);
+    }
+
+    .added-btn-primary {
+      background: var(--modal-btn-primary-bg);
+      border: var(--modal-btn-primary-border);
+      color: var(--modal-btn-primary-color);
+    }
+    .added-btn-primary:hover {
+      background: rgba(255,49,49,0.92);
+    }
+    .added-btn-primary:active {
+      transform: scale(0.97);
+    }
+
+    .added-btn-icon {
+      width: var(--modal-btn-icon);
+      height: var(--modal-btn-icon);
+      flex-shrink: 0;
+    }
+
+    .added-modal-security {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--modal-security-gap);
+      font-size: var(--modal-security-size);
+      color: rgba(85,85,85,0.7);
+      font-weight: 500;
+    }
+    .added-modal-security svg {
+      width: var(--modal-security-icon);
+      height: var(--modal-security-icon);
+      flex-shrink: 0;
+      color: rgba(85,85,85,0.5);
     }
   </style>
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-16493571935"></script>
@@ -3171,6 +3493,7 @@
         state.selectedExtras.clear(); state.promoSelections = []; state.qty = 1; clearToppings(); renderExtras(); renderDetails();
       }, 1500);
       updateCartUI();
+      showAddedModal();
     }
 
     function toggleCutlery(isRequested) {
@@ -3778,6 +4101,21 @@
       handleDeliverySelection(v);
     }
 
+    function showAddedModal() {
+      const modal = document.getElementById("addedModal");
+      modal.style.display = "flex";
+      const peppeInner = document.querySelector("#addedPeppe .added-modal-peppe-inner");
+      if (peppeInner) {
+        peppeInner.style.animation = "none";
+        void peppeInner.offsetHeight;
+        peppeInner.style.animation = "peppeFloat 3.2s ease-in-out infinite";
+      }
+    }
+
+    function closeAddedModal() {
+      document.getElementById("addedModal").style.display = "none";
+    }
+
     function toggleCart() {
       const mod = document.getElementById("cartModal");
       const isOpen = mod.style.display === "flex";
@@ -4152,6 +4490,47 @@
       initCarouselNav(); // Initialize desktop arrows logic
     };
   </script>
+
+  <!-- ============================================================
+       PREMIUM "AGREGADO AL CARRITO" MODAL
+       ============================================================ -->
+  <div id="addedModal" class="added-modal-overlay" style="display:none;">
+    <div class="added-modal-container">
+      <div class="added-modal-glass"></div>
+      <div class="added-modal-glow-ambient"></div>
+      <div class="added-modal-peppe" id="addedPeppe">
+        <div class="added-modal-peppe-inner">
+          <img src="assets/peppe-thinking.png" alt="Peppe">
+        </div>
+      </div>
+      <div class="added-modal-glow"></div>
+      <div class="added-modal-frame">
+        <button class="added-modal-close" onclick="closeAddedModal()" aria-label="Cerrar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="added-modal-body">
+          <h2 class="added-modal-title">¡Buenísima elección! 🍕</h2>
+          <p class="added-modal-sub">Peppe guardó tu pizza en el carrito.</p>
+          <p class="added-modal-question">¿Qué quieres hacer ahora?</p>
+          <div class="added-modal-actions">
+            <button class="added-btn-secondary" onclick="closeAddedModal()">
+              <svg class="added-btn-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12l2 18H4L6 2z"/><path d="M9 7v3a3 3 0 0 0 6 0V7"/></svg>
+              Seguir viendo
+            </button>
+            <button class="added-btn-primary" onclick="closeAddedModal();setTimeout(function(){toggleCart()},200)">
+              <svg class="added-btn-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2 3h2.5l2.68 13.39a2 2 0 0 0 2 1.61h8.74a2 2 0 0 0 1.99-1.68L22 7H6"/></svg>
+              Ir al carrito
+            </button>
+          </div>
+          <div class="added-modal-security">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            <span>tu carrito esta seguro con Peppe</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 
 </html>
