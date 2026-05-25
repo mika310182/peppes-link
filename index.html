@@ -2357,6 +2357,9 @@
           <div id="toppingLayer"
             style="position:absolute; top: 0; left: 50%; width: min(340px, 88vw); height: min(340px, 88vw); margin-left: calc(min(340px, 88vw) / -2); pointer-events:none; z-index:100;">
           </div>
+          <img id="detailOverlay"
+            style="position:absolute; top:0; left:50%; width:min(340px,88vw); height:min(340px,88vw); margin-left:calc(min(340px,88vw)/-2); pointer-events:none; z-index:50; object-fit:contain; opacity:0; transition:opacity .3s ease;"
+            onerror="this.onerror=null;this.src='assets/placeholder.png';">
         </div>
       </div>
 
@@ -2713,8 +2716,8 @@
       const staticProds = DATA.products[catId] || [];
       let list = remote.length > 0 ? remote.map(rp => {
         const sp = staticProds.find(p => p.id === rp.id);
-        return sp ? { ...sp, ...rp, prices: { ...sp.prices, ...rp.prices } } : rp;
-      }) : staticProds;
+        return sp ? { ...sp, ...rp, prices: { ...sp.prices, ...rp.prices } } : (staticProds.length > 0 ? null : rp);
+      }).filter(Boolean) : staticProds;
 
       // Filtrar por día si es categoría "promo"
       if (catId === 'promo') {
@@ -3402,6 +3405,8 @@
         document.getElementById("productDesc").textContent = "Categoría vacía";
         document.getElementById("totalPrice").textContent = "-";
         document.getElementById("extrasContainer").style.display = "none";
+        const overlay = document.getElementById('detailOverlay');
+        if (overlay) overlay.style.opacity = '0';
         return;
       }
       document.getElementById("productName").textContent = p.name;
@@ -3447,15 +3452,27 @@
       document.getElementById("totalPrice").textContent = "$" + ((priceVal + exT) * state.qty).toLocaleString('es-CL');
       document.getElementById("qty").textContent = state.qty;
 
-      const slides = document.querySelectorAll('.prodSlideImg');
-      if (slides[state.productIndex]) {
-        slides[state.productIndex].onerror = function () { this.onerror=null; this.src = 'assets/placeholder.png'; };
-        slides[state.productIndex].src = resolveImgPath(p.imgBySize?.[state.size] || p.img);
+      const overlay = document.getElementById('detailOverlay');
+      if (overlay) {
+        const newSrc = resolveImgPath(p.imgBySize?.[state.size] || p.img);
+        if (overlay.src !== newSrc && overlay.src) {
+          window._imgLoadId = (window._imgLoadId || 0) + 1;
+          const thisId = window._imgLoadId;
+          const preload = new Image();
+          preload.onload = () => { if (window._imgLoadId === thisId) { overlay.src = preload.src; overlay.style.opacity = '1'; } };
+          preload.onerror = () => { if (window._imgLoadId === thisId) { overlay.src = 'assets/placeholder.png'; overlay.style.opacity = '1'; } };
+          overlay.style.opacity = '0.5';
+          preload.src = newSrc;
+        } else {
+          overlay.src = newSrc || overlay.src;
+          overlay.style.opacity = '1';
+        }
       }
 
       if (state.categoryId === 'pizzas') {
         document.querySelectorAll('.prodSlideImg').forEach(img => img.style.transform = `scale(${scaleBySize[state.size]})`);
         document.getElementById("toppingLayer").style.transform = `scale(${scaleBySize[state.size]})`;
+        if (overlay) overlay.style.transform = `scale(${scaleBySize[state.size]})`;
       }
       aplicarRestriccionStock();
     }
