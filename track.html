@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Peppe's — Seguimiento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Titan+One&display=swap" rel="stylesheet">
+<script src="/js/notification-utils.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0a;
+  --card:#141414;
+  --text:#f5f5f5;
+  --dim:rgba(255,255,255,0.35);
+  --red:#ff3131;
+  --green:#2ecc71;
+  --blue:#4f9cf7;
+  --border:rgba(255,255,255,0.06);
+  --radius:14px;
+}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Poppins',system-ui,-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:0 16px 40px;
+}
+#app{width:100%;max-width:420px}
+header{
+  text-align:center;
+  padding:32px 0 20px;
+}
+header h1{
+  font-family:'Titan One',cursive;
+  font-size:22px;
+  color:var(--red);
+  letter-spacing:-0.3px;
+  font-weight:400;
+}
+header .order-id{
+  font-size:13px;
+  color:var(--dim);
+  margin-top:4px;
+}
+header .order-id strong{color:var(--text);font-weight:600}
+
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:20px;
+  margin-bottom:12px;
+  border:1px solid var(--border);
+}
+.card-title{
+  font-size:13px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:0.8px;
+  color:var(--dim);
+  margin-bottom:14px;
+}
+
+/* Status timeline */
+.status-list{display:flex;flex-direction:column;gap:0}
+.status-item{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  padding:10px 0;
+  position:relative;
+}
+.status-item:not(:last-child)::after{
+  content:'';
+  position:absolute;
+  left:11px;
+  top:34px;
+  width:2px;
+  height:calc(100% - 20px);
+  background:var(--border);
+}
+.status-item.done:not(:last-child)::after{background:var(--green)}
+.status-item.active:not(:last-child)::after{background:linear-gradient(to bottom,var(--green),var(--border))}
+.status-dot{
+  width:24px;height:24px;border-radius:50%;
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;
+  border:2px solid var(--border);
+  background:transparent;
+  transition:all 0.3s;
+}
+.status-item.done .status-dot{
+  background:var(--green);
+  border-color:var(--green);
+}
+.status-item.active .status-dot{
+  background:var(--red);
+  border-color:var(--red);
+  box-shadow:0 0 12px rgba(255,49,49,0.3);
+}
+.status-info{flex:1;padding-top:2px}
+.status-info .label{
+  font-size:14px;font-weight:600;
+  transition:color 0.3s;
+}
+.status-item.done .status-info .label{color:var(--dim)}
+.status-item.active .status-info .label{color:var(--text)}
+.status-item:not(.done):not(.active) .status-info .label{color:rgba(255,255,255,0.2)}
+.status-info .desc{
+  font-size:11px;color:var(--dim);
+  margin-top:2px;
+}
+.status-item.active .status-info .desc{color:rgba(255,255,255,0.5)}
+
+/* Payment badge */
+.pay-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 12px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:600;
+}
+.pay-badge.paid{background:rgba(46,204,113,0.12);color:var(--green)}
+.pay-badge.pending{background:rgba(255,49,49,0.12);color:var(--red)}
+.pay-badge.failed{background:rgba(255,70,70,0.12);color:#ff6b6b}
+
+/* Items list */
+.item-row{
+  display:flex;justify-content:space-between;
+  padding:8px 0;
+  font-size:14px;
+  border-bottom:1px solid var(--border);
+}
+.item-row:last-child{border-bottom:none;padding-bottom:0}
+.item-row .name{color:var(--text);flex:1}
+.item-row .name .qty{color:var(--dim);margin-right:6px}
+.item-row .price{color:var(--dim)}
+.total-row{
+  display:flex;justify-content:space-between;
+  padding-top:12px;
+  font-size:16px;font-weight:700;
+  color:var(--green);
+  border-top:1px solid var(--border);
+  margin-top:4px;
+}
+.disc-row{
+  display:flex;justify-content:space-between;
+  font-size:13px;color:var(--green);
+  padding:4px 0;
+}
+
+/* Info grid */
+.info-grid{display:flex;flex-direction:column;gap:8px}
+.info-row{display:flex;font-size:13px}
+.info-row .il{color:var(--dim);min-width:90px;flex-shrink:0}
+.info-row .iv{color:var(--text)}
+
+/* Pay link */
+.pay-link-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  background:var(--red);
+  color:#fff;
+  font-size:15px;
+  font-weight:700;
+  font-family:inherit;
+  border:none;
+  cursor:pointer;
+  text-decoration:none;
+  margin-top:10px;
+  transition:opacity 0.2s;
+}
+.pay-link-btn:hover{opacity:0.9}
+
+/* Error / Loading */
+.state-box{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-height:50dvh;
+  text-align:center;
+  gap:12px;
+}
+.state-box .emoji{font-size:48px}
+.state-box h2{font-size:18px;font-weight:600}
+.state-box p{font-size:13px;color:var(--dim);max-width:300px}
+
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.deliv-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;
+}
+.deliv-badge.delivery{background:rgba(79,156,247,0.1);color:var(--blue)}
+.deliv-badge.retiro{background:rgba(255,255,255,0.05);color:var(--dim)}
+
+.note-box{
+  margin-top:10px;
+  padding:10px 14px;
+  border-radius:10px;
+  background:rgba(255,49,49,0.06);
+  border-left:3px solid var(--red);
+  font-size:13px;
+  color:rgba(255,255,255,0.8);
+}
+
+@media(max-width:380px){
+  header h1{font-size:19px}
+  .card{padding:16px}
+  .status-info .label{font-size:13px}
+}
+
+@media(min-width:768px){
+  body{padding:60px 24px 60px}
+  header{padding:0 0 32px}
+  header h1{font-size:26px}
+  .card{padding:24px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>🍕 Peppe's Pizza</h1>
+    <div class="order-id">Pedido <strong id="order-id-display">---</strong></div>
+  </header>
+
+  <div id="loading-state" class="state-box">
+    <div class="spinner"></div>
+    <p>Cargando tu pedido...</p>
+  </div>
+
+  <div id="error-state" class="state-box" style="display:none">
+    <div class="emoji">😕</div>
+    <h2>No encontramos tu pedido</h2>
+    <p id="error-msg">Revisa el link o contacta a Peppe's directamente por WhatsApp.</p>
+  </div>
+
+  <div id="order-content" style="display:none">
+    <!-- Status timeline -->
+    <div class="card" id="status-card">
+      <div class="card-title">Estado</div>
+      <div class="status-list" id="status-list"></div>
+    </div>
+
+    <!-- Payment info -->
+    <div class="card">
+      <div class="card-title">Pago</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span id="pay-badge" class="pay-badge"></span>
+        <span style="font-size:13px;color:var(--dim)" id="pay-method"></span>
+      </div>
+      <a id="pay-link-btn" class="pay-link-btn" style="display:none" target="_blank">🔗 Pagar ahora</a>
+    </div>
+
+    <!-- Driver info -->
+    <div class="card" id="driver-card" style="display:none">
+      <div class="card-title">🛵 Repartidor</div>
+      <div id="driver-info" style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div id="driver-name-display" style="font-size:15px;font-weight:600"></div>
+          <div id="driver-status-line" style="font-size:12px;color:var(--dim);margin-top:2px"></div>
+        </div>
+        <a id="driver-contact-link" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:10px;background:rgba(46,204,113,0.12);color:var(--green);text-decoration:none;font-size:13px;font-weight:600">📞 Contactar</a>
+      </div>
+    </div>
+
+    <!-- Order summary -->
+    <div class="card">
+      <div class="card-title">Tu pedido</div>
+      <div id="items-list"></div>
+      <div id="discount-row" class="disc-row" style="display:none"></div>
+      <div id="total-row" class="total-row"></div>
+    </div>
+
+    <!-- Delivery info -->
+    <div class="card">
+      <div class="card-title">Entrega</div>
+      <div class="info-grid">
+        <div class="info-row"><span class="il">Método</span><span class="iv"><span id="deliv-badge" class="deliv-badge"></span></span></div>
+        <div class="info-row" id="address-row"><span class="il">Dirección</span><span class="iv" id="address-val"></span></div>
+      </div>
+      <div id="note-area" class="note-box" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const params = new URLSearchParams(location.search);
+  const orderId = params.get('id');
+  const token = params.get('token');
+
+  const $ = id => document.getElementById(id);
+  const loadingEl = $('loading-state');
+  const errorEl = $('error-state');
+  const errorMsg = $('error-msg');
+  const contentEl = $('order-content');
+
+  if (!orderId || !token) { showError('Falta el ID del pedido o token de seguridad.'); return; }
+
+  $('order-id-display').textContent = '#' + orderId.slice(-5);
+
+  let pollTimer = null;
+  let lastStatus = '';
+  let _pollRetries = 0;
+  let _maxPollRetries = 5;
+  let _pollPaused = false;
+
+  function showError(msg) {
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'none';
+    errorEl.style.display = 'flex';
+    if (msg) errorMsg.textContent = msg;
+  }
+
+  function getStatusSteps(metodo) {
+    const steps = [
+      { key:'recibido', label:'Recibido', icon:'📥', desc:'Hemos recibido tu pedido' },
+      { key:'en_horno', label:'En horno', icon:'🔥', desc:'Estamos preparando tu pedido' }
+    ];
+    if (metodo === 'Retiro') {
+      steps.push({ key:'listo', label:'Listo para retirar', icon:'✅', desc:'Pasa a buscarlo por el local' });
+    } else {
+      steps.push({ key:'listo', label:'Listo', icon:'📦', desc:'Empacado y listo' });
+      steps.push({ key:'en_camino', label:'En camino', icon:'🛵', desc:'Tu pedido va hacia ti' });
+    }
+    steps.push({ key:'entregado', label:'Entregado', icon:'🏁', desc:'¡Disfruta tu pedido!' });
+    return steps;
+  }
+
+  function renderStatus(steps, currentStatus) {
+    const list = $('status-list');
+    let found = false;
+    list.innerHTML = steps.map(s => {
+      const done = !found && (
+        (s.key === currentStatus) ||
+        (steps.findIndex(x => x.key === currentStatus) > steps.findIndex(x => x.key === s.key))
+      );
+      if (done && s.key === currentStatus) found = true;
+      const isActive = s.key === currentStatus;
+      const cls = isActive ? 'status-item active' : done ? 'status-item done' : 'status-item';
+      const dotHtml = isActive ? '🔥' : done ? '✓' : '○';
+      const meta = isActive ? '<div class="desc">' + s.desc + '</div>' : '';
+      return `<div class="${cls}"><div class="status-dot">${dotHtml}</div><div class="status-info"><div class="label">${s.icon} ${s.label}</div>${meta}</div></div>`;
+    }).join('');
+  }
+
+  async function fetchOrder() {
+    try {
+      const res = await fetch('/api/get-order?id=' + encodeURIComponent(orderId) + '&token=' + encodeURIComponent(token));
+      if (res.status === 404) { showError('Este pedido no existe. Si crees que es un error, contáctanos por WhatsApp.'); return null; }
+      if (res.status === 403) { showError('Link de seguimiento inválido. Solicita uno nuevo en WhatsApp.'); return null; }
+      if (!res.ok) throw new Error('Error ' + res.status);
+      return await res.json();
+    } catch(e) {
+      console.warn('[track] fetch error:', e);
+      return null;
+    }
+  }
+
+  function renderOrder(order) {
+    // Status
+    const steps = getStatusSteps(order.metodo);
+    const currentOs = order.orderStatus || 'recibido';
+    renderStatus(steps, currentOs);
+
+    // Payment
+    const payBadge = $('pay-badge');
+    const ps = order.paymentStatus || 'pending';
+    if (ps === 'paid') { payBadge.className = 'pay-badge paid'; payBadge.textContent = '✅ Pagado'; }
+    else if (ps === 'failed') { payBadge.className = 'pay-badge failed'; payBadge.textContent = '❌ Fallido'; }
+    else { payBadge.className = 'pay-badge pending'; payBadge.textContent = '⏳ Pendiente'; }
+
+    $('pay-method').textContent = order.paymentMethod ? '· ' + order.paymentMethod : '';
+
+    const payLinkBtn = $('pay-link-btn');
+    if (order.paymentLink && ps !== 'paid') {
+      payLinkBtn.style.display = 'flex';
+      payLinkBtn.href = order.paymentLink;
+    } else {
+      payLinkBtn.style.display = 'none';
+    }
+
+    // Driver
+    const driverCard = $('driver-card');
+    if (order.driverName && (currentOs === 'en_camino' || currentOs === 'entregado')) {
+      driverCard.style.display = 'block';
+      $('driver-name-display').textContent = '🛵 ' + order.driverName;
+      $('driver-status-line').textContent = currentOs === 'entregado' ? 'Entregó tu pedido' : 'En camino hacia ti';
+      $('driver-contact-link').style.display = (currentOs === 'en_camino' && order.driverPhone) ? 'inline-flex' : 'none';
+      if (order.driverPhone) {
+        $('driver-contact-link').href = 'https://wa.me/' + order.driverPhone.replace(/\D/g, '');
+      }
+    } else {
+      driverCard.style.display = 'none';
+    }
+
+    // Items
+    const itemsList = $('items-list');
+    itemsList.innerHTML = (order.items || []).map(item => {
+      const name = item.name || 'Producto';
+      const size = item.size && item.size !== 'U' ? ' (' + item.size + ')' : '';
+      const qty = item.qty || 1;
+      const price = item.price || 0;
+      return `<div class="item-row"><span class="name"><span class="qty">${qty}x</span>${name}${size}</span><span class="price">$${price.toLocaleString()}</span></div>`;
+    }).join('');
+
+    // Discount
+    const discRow = $('discount-row');
+    if (order.discountAmount > 0) {
+      discRow.style.display = 'flex';
+      discRow.innerHTML = '<span>Descuento</span><span>-$' + order.discountAmount.toLocaleString() + '</span>';
+    } else {
+      discRow.style.display = 'none';
+    }
+
+    // Total
+    $('total-row').innerHTML = '<span>Total</span><span>$' + (order.total || 0).toLocaleString() + '</span>';
+
+    // Delivery
+    const isDelivery = order.metodo !== 'Retiro';
+    const delivBadge = $('deliv-badge');
+    delivBadge.className = 'deliv-badge ' + (isDelivery ? 'delivery' : 'retiro');
+    delivBadge.textContent = isDelivery ? '🛵 Delivery' : '📍 Retiro en local';
+
+    const addrRow = $('address-row');
+    const addrVal = $('address-val');
+    if (isDelivery && order.direccion) {
+      addrRow.style.display = 'flex';
+      addrVal.textContent = order.direccion;
+    } else if (!isDelivery) {
+      addrRow.style.display = 'flex';
+      addrVal.textContent = 'Retiro en local';
+    } else {
+      addrRow.style.display = 'none';
+    }
+
+    // Note
+    const noteArea = $('note-area');
+    if (order.nota) {
+      noteArea.style.display = 'block';
+      noteArea.textContent = '📝 ' + order.nota;
+    } else {
+      noteArea.style.display = 'none';
+    }
+  }
+
+  async function load() {
+    window.PeppeNotifications.requestPermission();
+    window.PeppeNotifications.registerSW('/sw.js').then(function (reg) {
+      if (!reg) return;
+      fetch('/api/vapid-public-key.js').then(function (r) { return r.json(); }).then(function (d) {
+        if (d.key) {
+          window.PeppeNotifications.setVapidKey(d.key);
+          window.PeppeNotifications.subscribePush().then(function (sub) {
+            if (sub) window.PeppeNotifications.saveSubscription(sub, 'order:' + orderId);
+          });
+        }
+      }).catch(function () {});
+    });
+
+    const order = await fetchOrder();
+    if (!order) return;
+    loadingEl.style.display = 'none';
+    errorEl.style.display = 'none';
+    contentEl.style.display = 'block';
+    renderOrder(order);
+    lastStatus = order.orderStatus || 'recibido';
+
+    // Poll for changes with backoff + retry limit
+    if (pollTimer) clearTimeout(pollTimer);
+    _pollRetries = 0;
+
+    function schedulePoll() {
+      if (_pollPaused) return;
+      var delay = Math.min(8000 * Math.pow(1.5, _pollRetries), 40000);
+      pollTimer = setTimeout(pollOnce, delay);
+    }
+
+    async function pollOnce() {
+      var updated = await fetchOrder();
+      if (updated) {
+        _pollRetries = 0;
+        var newStatus = updated.orderStatus || 'recibido';
+        if (newStatus !== lastStatus) {
+          lastStatus = newStatus;
+          window.PeppeNotifications.notify('Pedido #' + orderId.slice(-5), {
+            body: 'Tu pedido está ' + newStatus.replace('_', ' '),
+            tag: 'track-status-' + orderId
+          });
+        }
+        renderOrder(updated);
+        if (!_pollPaused) pollTimer = setTimeout(pollOnce, 8000);
+      } else {
+        _pollRetries++;
+        if (_pollRetries >= _maxPollRetries) {
+          console.warn('[track] Máximos reintentos alcanzados, deteniendo polling.');
+          return;
+        }
+        if (!_pollPaused) schedulePoll();
+      }
+    }
+
+    // Start first poll after initial load
+    if (!_pollPaused) pollTimer = setTimeout(pollOnce, 8000);
+
+    // Pause polling when tab hidden, resume when visible
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        _pollPaused = true;
+        if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+      } else {
+        _pollPaused = false;
+        if (!pollTimer && typeof pollOnce === 'function') {
+          _pollRetries = 0;
+          pollTimer = setTimeout(pollOnce, 2000);
+        }
+      }
+    });
+  }
+
+  load();
+
+  // Cleanup on unload
+  window.addEventListener('beforeunload', function () {
+    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+  });
+})();
+</script>
+</body>
+</html>

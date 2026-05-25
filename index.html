@@ -11,6 +11,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/img/pwa-icon-192.png" />
   <meta name="description" content="Pizza artesanal en Antofagasta. Delivery y retiro con masa de la casa, mozzarella real e ingredientes frescos. Pide online tu pizza familiar, lasaña casera y m&aacute;s. Paga con Mercado Pago." />
   <title>Peppe's Pizza | Pedido Online Antofagasta | Delivery Pizza Artesanal</title>
   <link rel="canonical" href="https://www.peppes.cl/" />
@@ -2565,6 +2567,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
   <script src="js/distanceUtils.js"></script>
+  <script src="js/notification-utils.js"></script>
   <script>
     const SUCCESS_SOUND = "https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3";
     const audioObj = new Audio(SUCCESS_SOUND);
@@ -2975,6 +2978,18 @@
         return;
       }
 
+      window.PeppeNotifications.registerSW('/sw.js').then(function (reg) {
+        if (!reg) return;
+        fetch('/api/vapid-public-key.js').then(function (r) { return r.json(); }).then(function (d) {
+          if (d.key) {
+            window.PeppeNotifications.setVapidKey(d.key);
+            window.PeppeNotifications.subscribePush().then(function (sub) {
+              if (sub) window.PeppeNotifications.saveSubscription(sub, 'order:' + savedOrderId);
+            });
+          }
+        }).catch(function () {});
+      });
+
       // Detener pollings previos
       if (activeOrderListener) clearInterval(activeOrderListener);
       activeOrderListener = null;
@@ -3005,13 +3020,18 @@
             const isFinal = estadosFinales.includes(String(order.estado || "").toLowerCase());
 
             // ✅ FIX: Si el estado cambió, hacer pulso en el botón flotante aunque la pantalla esté cerrada
-            if (lastKnownEstado && lastKnownEstado !== order.estado && btn) {
-              btn.classList.add("jump");
-              setTimeout(() => btn.classList.remove("jump"), 400);
-              // Si la pantalla estaba cerrada, volver a mostrarla al detectar cambio
+            if (lastKnownEstado && lastKnownEstado !== order.estado) {
+              if (btn) {
+                btn.classList.add("jump");
+                setTimeout(() => btn.classList.remove("jump"), 400);
+              }
               if (localStorage.getItem('peppes_view_status') === 'hidden') {
                 localStorage.setItem('peppes_view_status', 'visible');
               }
+              window.PeppeNotifications.notify('Peppe\'s Pizza', {
+                body: 'Tu pedido cambió a ' + (order.estado || '').replace(/_/g, ' '),
+                tag: 'status-' + savedOrderId
+              });
             }
             lastKnownEstado = order.estado;
 
@@ -4482,6 +4502,9 @@
 
       // Pantalla de cierre de tienda completa ha sido removida 
       // para permitir ver el sitio. Se bloquea el botón de confirmación en su lugar.
+
+      window.PeppeNotifications.requestPermission();
+      window.PeppeNotifications.registerSW('/sw.js');
 
       renderCategories();
       selectCategory("pizzas");

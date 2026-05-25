@@ -16,32 +16,25 @@ module.exports = async (req, res) => {
   }
 
   if (!token) {
-    return res.status(401).json({ error: 'Token de autenticación requerido' });
+    return res.status(401).json({ error: 'Token de autenticacion requerido' });
   }
 
   try {
-    console.log(`[get-order] Buscando pedido ${orderId} en orders/`);
     let order = await getFirebaseData(`orders/${orderId}`);
     let source = 'orders';
 
     if (!order) {
-      console.log(`[get-order] No encontrado en orders. Buscando en pending_orders/...`);
       order = await getFirebaseData(`pending_orders/${orderId}`);
       source = 'pending_orders';
     }
 
     if (!order) {
-      console.log(`[get-order] Pedido ${orderId} NO encontrado en orders ni pending_orders`);
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
 
-    // Validar token contra el auth_token del pedido
     if (!order.auth_token || order.auth_token !== token) {
-      console.log(`[get-order] Token invalido para pedido ${orderId}`);
       return res.status(403).json({ error: 'Token invalido' });
     }
-
-    console.log(`[get-order] Pedido ${orderId} encontrado en ${source} con estado: ${order.estado} paymentStatus: ${order.paymentStatus || 'N/A'}`);
 
     const paymentStatus = order.paymentStatus || null;
     const orderStatus = order.orderStatus || (
@@ -57,13 +50,26 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({
       id: orderId,
-      estado: order.estado,
-      orderStatus,
-      paymentStatus,
       cliente: order.cliente,
-      total: order.total,
+      telefono: order.telefono,
       metodo: order.metodo,
-      source: source,
+      direccion: order.direccion,
+      items: order.items || [],
+      subtotal: order.subtotal || 0,
+      deliveryCost: order.deliveryCost || 0,
+      discountAmount: order.discountAmount || 0,
+      total: order.total || 0,
+      paymentMethod: order.paymentMethod || null,
+      paymentStatus,
+      paymentLink: order.paymentLink || null,
+      orderStatus,
+      estado: order.estado,
+      incluyeCubiertos: order.incluyeCubiertos || false,
+      nota: order.nota || null,
+      timestamp: order.timestamp || null,
+      driverName: order.driverName || null,
+      driverPhone: order.driverPhone || null,
+      source
     });
 
   } catch (err) {
@@ -71,5 +77,3 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
-
-

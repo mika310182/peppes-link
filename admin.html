@@ -5,10 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex,nofollow">
+    <meta name="theme-color" content="#080808">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/img/pwa-icon-192.png">
     <title>Peppe's Pizza | Admin Panel</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-auth-compat.js"></script>
+    <script src="/js/notification-utils.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Titan+One&display=swap"
         rel="stylesheet">
@@ -25,6 +32,9 @@
             --glass: rgba(255, 255, 255, 0.03);
             --glass-border: rgba(255, 255, 255, 0.08);
             --sidebar-w: 260px;
+            --dim: #888888;
+            --card: #121212;
+            --radius: 14px;
         }
 
         * {
@@ -53,6 +63,7 @@
             display: flex;
             height: 100vh;
             overflow: hidden;
+            min-width: 320px;
         }
 
         /* Sidebar */
@@ -344,6 +355,56 @@
         }
 
 
+
+        /* Kitchen View */
+        #kitchen{position:relative}
+        .kitchen-grid{display:grid;grid-template-columns:1fr;gap:14px}
+        @media(min-width:768px){.kitchen-grid{grid-template-columns:1fr 1fr 1fr 1fr}}
+        .k-group{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
+        .k-group-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600}
+        .k-group-header .k-count{background:rgba(255,255,255,0.06);padding:2px 10px;border-radius:10px;font-size:12px}
+        .k-group-body{display:flex;flex-direction:column}
+        .k-card{padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s}
+        .k-card:last-child{border-bottom:none}
+        .k-card:hover{background:rgba(255,255,255,0.02)}
+        .k-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+        .k-card-id{font-size:13px;font-weight:700;color:var(--text)}
+        .k-card-cliente{font-size:12px;color:var(--dim);margin-top:1px}
+        .k-card-timer{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;padding:3px 10px;border-radius:8px}
+        .k-card-timer.normal{color:var(--green);background:rgba(46,204,113,0.08)}
+        .k-card-timer.warning{color:#f1c40f;background:rgba(241,196,15,0.1)}
+        .k-card-timer.overdue{color:#ff6b6b;background:rgba(255,70,70,0.1)}
+        .k-card-items{font-size:11px;color:var(--dim);line-height:1.5;margin-bottom:8px}
+        .k-card-items span{display:block}
+        .k-card-driver{margin-bottom:8px;font-size:12px;color:var(--green);display:flex;align-items:center;gap:6px}
+        .k-card-actions{display:flex;gap:6px}
+        .k-card-actions button{flex:1;padding:10px 8px;min-height:40px;border-radius:8px;border:none;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity 0.15s}
+        .k-card-actions button:hover{opacity:0.85}
+        .k-btn-next{background:var(--red);color:#fff}
+        .k-btn-contact{background:rgba(46,204,113,0.12);color:var(--green)}
+        .k-btn-detail{background:rgba(255,255,255,0.06);color:var(--dim)}
+        .k-btn-paid{background:rgba(46,204,113,0.12);color:var(--green);font-size:11px;padding:4px 8px;border-radius:6px;border:none;font-family:inherit;cursor:pointer}
+        .k-empty{padding:32px;text-align:center;color:var(--dim);font-size:13px}
+        .k-pay-indicator{display:inline-block;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:6px;vertical-align:middle}
+        .k-pay-indicator.pending{background:rgba(255,49,49,0.1);color:var(--red)}
+        /* Tablet / mounted display optimizations */
+        @media(min-width:1024px) and (orientation:landscape) {
+            .kitchen-grid { grid-template-columns: 1fr 1fr 1fr 1fr; gap: 18px; padding: 8px; }
+            .k-card { padding: 16px 18px; }
+            .k-card-id { font-size: 15px; }
+            .k-card-timer { font-size: 18px; padding: 4px 14px; }
+            .k-card-cliente { font-size: 14px; }
+            .k-card-items { font-size: 13px; }
+            .k-card-actions button { min-height: 48px; font-size: 14px; }
+        }
+        @media(min-width:1200px) {
+            .kitchen-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+        }
+        @media(display-mode:standalone) {
+            #kitchen { padding-top: 8px; }
+            .kitchen-grid { min-height: calc(100vh - 100px); }
+        }
+        /* end kitchen */
 
         /* Orders Feed */
         .order-card {
@@ -1315,6 +1376,347 @@
             }
         }
 
+        /* Operational KPI grid (6 columns) */
+        #analytics .ana-kpi-ops {
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        #analytics .ana-kpi-ops .ana-number {
+            font-size: 18px;
+        }
+
+        /* Intelligence card list */
+        #analytics .ana-intel-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 100px;
+            justify-content: center;
+        }
+
+        #analytics .ana-intel-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 4px;
+        }
+
+        #analytics .ana-intel-row .ana-intel-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.6);
+        }
+
+        #analytics .ana-intel-row .ana-intel-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        #analytics .ana-intel-row .ana-intel-value.green { color: var(--green); }
+        #analytics .ana-intel-row .ana-intel-value.red { color: #ff6b6b; }
+        #analytics .ana-intel-row .ana-intel-value.warn { color: #f1c40f; }
+
+        #analytics .ana-intel-sub {
+            font-size: 10px;
+            color: rgba(255,255,255,0.3);
+            padding: 0 4px;
+            margin-top: 4px;
+        }
+
+        /* Driver ranking inside intel */
+        #analytics .ana-driver-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px 4px;
+            font-size: 12px;
+        }
+
+        #analytics .ana-driver-row .ana-driver-name {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        #analytics .ana-driver-row .ana-driver-stat {
+            color: rgba(255,255,255,0.4);
+            font-size: 11px;
+        }
+
+        @media (max-width: 900px) {
+            #analytics .ana-kpi-ops {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            #analytics .ana-kpi-ops {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            #analytics .ana-kpi-ops .ana-number {
+                font-size: 16px;
+            }
+        }
+
+        /* ── Customers Section ── */
+        #customers .c-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        #customers .c-search {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: #fff;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        #customers .c-search:focus {
+            border-color: var(--red);
+        }
+
+        #customers .c-search::placeholder {
+            color: rgba(255,255,255,0.25);
+        }
+
+        #customers .c-sort {
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: rgba(255,255,255,0.7);
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        #customers .c-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        @media (min-width: 768px) {
+            #customers .c-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        #customers .c-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+
+        #customers .c-card:hover {
+            border-color: rgba(255,255,255,0.12);
+        }
+
+        #customers .c-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        #customers .c-card-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        #customers .c-card-vip {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(255,49,49,0.12);
+            color: var(--red);
+        }
+
+        #customers .c-card-phone {
+            font-size: 12px;
+            color: var(--dim);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        #customers .c-card-phone a {
+            color: var(--blue);
+            text-decoration: none;
+        }
+
+        #customers .c-card-stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 10px;
+        }
+
+        #customers .c-card-stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #customers .c-card-stat .val {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        #customers .c-card-stat .lbl {
+            font-size: 10px;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        #customers .c-card-prods {
+            font-size: 11px;
+            color: var(--dim);
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        #customers .c-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            color: rgba(255,255,255,0.25);
+        }
+
+        #customers .c-card-footer .last {
+            color: rgba(255,255,255,0.35);
+        }
+
+        #customers .c-card-footer .last.inactive {
+            color: #ff6b6b;
+        }
+
+        #customers .c-card-detail {
+            display: none;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        #customers .c-card-detail.open {
+            display: block;
+        }
+
+        #customers .c-order-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        #customers .c-order-row:last-child {
+            border-bottom: none;
+        }
+
+        #customers .c-retention-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        #customers .c-order-row .oid {
+            color: var(--dim);
+            font-weight: 600;
+        }
+
+        #customers .c-order-row .odate {
+            color: rgba(255,255,255,0.3);
+        }
+
+        #customers .c-order-row .ototal {
+            color: var(--green);
+            font-weight: 600;
+        }
+
+        #customers .c-empty {
+            padding: 48px;
+            text-align: center;
+            color: var(--dim);
+            font-size: 13px;
+        }
+
+        #customers .c-empty .emoji {
+            font-size: 32px;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        /* Customer summary in order modal */
+        .customer-summary {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 16px;
+        }
+
+        .customer-summary .cs-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(255,255,255,0.3);
+            margin-bottom: 10px;
+        }
+
+        .customer-summary .cs-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            padding: 4px 0;
+        }
+
+        .customer-summary .cs-row .cs-label {
+            color: rgba(255,255,255,0.4);
+        }
+
+        .customer-summary .cs-row .cs-value {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .customer-summary .cs-row .cs-value.green {
+            color: var(--green);
+        }
+
+        @media (max-width: 600px) {
+            #customers .c-card-stats {
+                gap: 12px;
+            }
+            #customers .c-card-stat .val {
+                font-size: 14px;
+            }
+        }
+
         /* ── Premium Coupon Modal ── */
         #modal-coupon .modal-content {
             max-width: 520px;
@@ -1678,19 +2080,403 @@
             }
         }
 
+        /* ── Offline Banner ── */
+        .offline-banner {
+            display: none; align-items: center; gap: 8px;
+            padding: 8px 16px; margin: 0;
+            font-size: 12px; font-weight: 500;
+            background: rgba(255,49,49,0.08);
+            border-bottom: 1px solid rgba(255,49,49,0.15);
+            color: var(--red);
+            position: sticky; top: 0; z-index: 100;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        }
+        .offline-banner.recon {
+            background: rgba(79,156,247,0.08);
+            border-bottom-color: rgba(79,156,247,0.15);
+            color: #4f9cf7;
+        }
+
+        /* ── Install Badge ── */
+        .install-badge {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 16px; margin: 8px 12px; border-radius: 12px;
+            font-size: 12px; font-weight: 500; color: var(--red);
+            cursor: pointer; transition: background 0.2s;
+            background: rgba(255,49,49,0.06);
+            border: 1px solid rgba(255,49,49,0.12);
+            user-select: none; -webkit-tap-highlight-color: transparent;
+        }
+        .install-badge:hover { background: rgba(255,49,49,0.12); }
+        .install-badge:active { transform: scale(0.97); }
+
         /* ── Responsive ── */
         @media (max-width: 900px) {
             .sidebar {
                 width: 70px;
             }
 
-            .nav-link span {
+            .nav-link span, .install-badge span {
                 display: none;
             }
 
             .brand {
                 font-size: 14px;
             }
+
+            .install-badge {
+                justify-content: center; padding: 8px; margin: 4px 8px;
+            }
+        }
+
+        /* === NEW ORDER MODAL === */
+        .modal-content.wide {
+            max-width: 780px;
+        }
+        .order-form-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .order-section {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 20px 24px;
+        }
+        .order-section h3 {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--red);
+            margin-bottom: 14px;
+        }
+        .order-section .field-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .order-section .field-row .field {
+            flex: 1;
+            min-width: 180px;
+        }
+        .order-section .field label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .order-section .field input,
+        .order-section .field select,
+        .order-section .field textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.04);
+            color: var(--text);
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border 0.2s;
+        }
+        .order-section .field input:focus,
+        .order-section .field select:focus,
+        .order-section .field textarea:focus {
+            border-color: var(--red);
+        }
+        .order-section .field textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .order-section .field input::placeholder,
+        .order-section .field textarea::placeholder {
+            color: rgba(255,255,255,0.2);
+        }
+        .order-section .field select option {
+            background: #151515;
+            color: #fff;
+        }
+        .radio-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03);
+            cursor: pointer;
+            font-size: 14px;
+            transition: border 0.2s, background 0.2s;
+        }
+        .radio-group label:hover {
+            border-color: rgba(255,49,49,0.4);
+        }
+        .radio-group input[type="radio"] {
+            accent-color: var(--red);
+            width: 16px;
+            height: 16px;
+        }
+        .checkbox-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+            transition: border 0.2s;
+        }
+        .checkbox-group label:hover {
+            border-color: rgba(255,255,255,0.15);
+        }
+        .checkbox-group input[type="checkbox"] {
+            accent-color: var(--red);
+        }
+        .order-totals {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .order-totals .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+        .order-totals .total-row.final {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+            margin-top: 4px;
+        }
+        .order-totals .total-row.final span:last-child {
+            color: var(--red);
+        }
+        .placeholder-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: rgba(255,49,49,0.15);
+            color: var(--red);
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        /* === PRODUCT ROWS === */
+        .product-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .product-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .product-row .item-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .product-row .item-info .item-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .product-row .item-info .item-meta {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        .product-row .item-price {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            white-space: nowrap;
+        }
+        .product-row .remove-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255,49,49,0.15);
+            color: var(--red);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+        .product-row .remove-btn:hover {
+            background: rgba(255,49,49,0.3);
+        }
+        .product-row .size-badge-sm {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.08);
+            color: var(--text-dim);
+            margin-left: 4px;
+        }
+        .empty-state {
+            padding: 20px;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 13px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.02);
+            border: 1px dashed var(--border);
+        }
+
+        /* === VALIDATION ERRORS === */
+        .validation-errors {
+            display: none;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: rgba(255,49,49,0.1);
+            border: 1px solid rgba(255,49,49,0.25);
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: var(--red);
+        }
+        .validation-errors.visible {
+            display: block;
+        }
+        .validation-errors p {
+            margin: 2px 0;
+        }
+
+        /* ── Product Search Picker ── */
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1a1a1a;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            max-height: 240px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            margin-top: 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        .search-results.visible {
+            display: block;
+        }
+        .search-results .result-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.1s;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .search-results .result-item:last-child {
+            border-bottom: none;
+        }
+        .search-results .result-item:hover,
+        .search-results .result-item.active {
+            background: rgba(255,49,49,0.1);
+        }
+        .search-results .result-item .result-name {
+            font-size: 14px;
+            color: #fff;
+            font-weight: 500;
+        }
+        .search-results .result-item .result-price {
+            font-size: 14px;
+            color: var(--green);
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .search-results .result-divider {
+            font-size: 10px;
+            color: var(--text-dim);
+            padding: 8px 14px 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.02);
+        }
+        .search-results .no-results {
+            padding: 20px;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+        .search-results .recent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .search-results .recent-header .recent-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .search-results .recent-header .recent-clear {
+            font-size: 10px;
+            color: var(--red);
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .search-results .recent-header .recent-clear:hover {
+            opacity: 0.8;
+        }
+
+        /* ── 320px+ Mobile Overrides ── */
+        @media (max-width: 400px) {
+            .stats-grid { grid-template-columns: 1fr; gap: 12px; }
+            .stat-card { padding: 16px; }
+            .modal-content { padding: 24px 18px; }
+        }
+        @media (max-width: 360px) {
+            .kitchen-grid { grid-template-columns: 1fr; }
+            #analytics .ana-kpi { grid-template-columns: 1fr 1fr; gap: 10px; }
+            #analytics .ana-kpi-ops { grid-template-columns: 1fr; }
+            .modal-content { padding: 20px 14px; border-radius: 14px; }
+            .modal-content.wide { padding: 20px 14px; }
+            .modal-actions { flex-direction: column; }
+            .modal-actions .btn { flex: 1; }
+            .order-section { padding: 14px 16px; }
+            .order-section .field-row { flex-direction: column; }
+            #customers .c-card-stats { flex-wrap: wrap; }
         }
     </style>
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-16493571935"></script>
@@ -1733,16 +2519,33 @@
             <div class="nav-link" onclick="showSection('orders', this)">
                 🛒 <span>Pedidos</span>
             </div>
+            <div class="nav-link" onclick="showSection('kitchen', this)">
+                🔥 <span>Cocina</span>
+            </div>
             <div class="nav-link" onclick="showSection('coupons', this)">
                 🏷️ <span>Cupones</span>
             </div>
             <div class="nav-link" onclick="showSection('analytics', this); loadAnalytics();">
                 📈 <span>Analytics</span>
             </div>
+            <div class="nav-link" onclick="showSection('customers', this); loadCustomers();">
+                👥 <span>Clientes</span>
+            </div>
         </nav>
+        <div id="install-prompt" class="install-badge" onclick="installApp()" style="display:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Instalar App</span>
+        </div>
     </aside>
 
     <main class="main">
+        <div id="offline-banner" class="offline-banner" style="display:none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.56 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+            <span>Sin conexión — los datos pueden no estar actualizados</span>
+        </div>
+        <div id="reconnecting-banner" class="offline-banner recon" style="display:none;">
+            <span>Reconectando...</span>
+        </div>
         <section id="dashboard" class="section active">
             <header class="header">
                 <div>
@@ -1750,6 +2553,7 @@
                     <p class="subtitle">Resumen operativo de la tienda</p>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="openModal('neworder')">➕ Nuevo Pedido</button>
                     <button class="btn btn-secondary" onclick="playNotificationSound()">🔔 Sonido</button>
                     <button class="btn btn-secondary" onclick="seedInventory()">🔄 Catálogo</button>
                     <button class="btn btn-secondary" onclick="openHoursModal()">⏱️ Horarios</button>
@@ -1845,6 +2649,17 @@
             </div>
         </section>
 
+        <section id="kitchen" class="section">
+            <header class="header">
+                <div>
+                    <h1>🔥 Cocina</h1>
+                    <p class="subtitle">Órdenes activas — preparación y despacho</p>
+                </div>
+                <button class="btn btn-secondary" id="btn-kitchen-refresh" onclick="renderKitchenView(allOrders)">🔄 Actualizar</button>
+            </header>
+            <div id="kitchen-view" style="min-height:200px;"><div class="k-empty">Cargando órdenes de cocina...</div></div>
+        </section>
+
         <section id="coupons" class="section">
             <header class="header">
                 <div>
@@ -1905,6 +2720,34 @@
             </div>
         </div>
 
+        <!-- Operational KPI row -->
+        <div class="ana-grid ana-kpi-ops">
+            <div class="ana-card" id="ana-avg-prep">
+                <div class="ana-kpi-top"><span class="ana-label">Prep Time (avg)</span><span class="ana-dot" style="background:#4f9cf7;"></span></div>
+                <div class="ana-number">—</div>
+            </div>
+            <div class="ana-card" id="ana-avg-oven">
+                <div class="ana-kpi-top"><span class="ana-label">Horno (avg)</span><span class="ana-dot" style="background:#e74c3c;"></span></div>
+                <div class="ana-number">—</div>
+            </div>
+            <div class="ana-card" id="ana-avg-delivery">
+                <div class="ana-kpi-top"><span class="ana-label">Delivery (avg)</span><span class="ana-dot" style="background:#2ecc71;"></span></div>
+                <div class="ana-number">—</div>
+            </div>
+            <div class="ana-card" id="ana-kitchen-load">
+                <div class="ana-kpi-top"><span class="ana-label">En Cocina</span><span class="ana-dot" style="background:#f39c12;"></span></div>
+                <div class="ana-number">0</div>
+            </div>
+            <div class="ana-card" id="ana-dispatch-waiting">
+                <div class="ana-kpi-top"><span class="ana-label">Espera Despacho</span><span class="ana-dot" style="background:#e74c3c;"></span></div>
+                <div class="ana-number">0</div>
+            </div>
+            <div class="ana-card" id="ana-overdue">
+                <div class="ana-kpi-top"><span class="ana-label">Atrasados</span><span class="ana-dot" style="background:#ff6b6b;"></span></div>
+                <div class="ana-number">0</div>
+            </div>
+        </div>
+
         <!-- Charts row 1 -->
         <div class="ana-grid ana-charts-2">
             <div class="ana-card">
@@ -1940,7 +2783,52 @@
                 <div id="ana-top-coupons" class="ana-coupon-list"><div class="ana-skeleton" id="sk-coupons"></div></div>
             </div>
         </div>
+
+        <!-- Operational Intelligence -->
+        <div class="ana-grid ana-charts-2">
+            <div class="ana-card">
+                <div class="ana-card-header"><span class="ana-label">🍳 Cocina</span></div>
+                <div id="ana-kitchen-intel" class="ana-intel-list"><div class="ana-skeleton" id="sk-kitchen"></div></div>
+            </div>
+            <div class="ana-card">
+                <div class="ana-card-header"><span class="ana-label">🛵 Delivery</span></div>
+                <div id="ana-delivery-intel" class="ana-intel-list"><div class="ana-skeleton" id="sk-delivery"></div></div>
+            </div>
+        </div>
+
+        <!-- Customer Intelligence -->
+        <div class="ana-grid ana-charts-2">
+            <div class="ana-card">
+                <div class="ana-card-header"><span class="ana-label">👥 Clientes</span></div>
+                <div id="ana-customers-intel" class="ana-intel-list"><div class="ana-skeleton" id="sk-customers"></div></div>
+            </div>
+            <div class="ana-card">
+                <div class="ana-card-header"><span class="ana-label">⭐ Lealtad</span></div>
+                <div id="ana-loyalty-intel" class="ana-intel-list"><div class="ana-skeleton" id="sk-loyalty"></div></div>
+            </div>
+        </div>
     </section>
+
+        <!-- CUSTOMERS SECTION -->
+        <section id="customers" class="section">
+            <header class="header">
+                <div>
+                    <h1>👥 Clientes</h1>
+                    <p class="subtitle">Perfiles derivados del historial de pedidos</p>
+                </div>
+                <button class="btn btn-secondary" onclick="loadCustomers()" style="gap:6px;">🔄 Actualizar</button>
+            </header>
+            <div class="c-controls">
+                <input type="text" class="c-search" id="c-search" placeholder="Buscar por nombre o teléfono..." oninput="filterCustomers(this.value)">
+                <select class="c-sort" id="c-sort" onchange="sortCustomers(this.value)">
+                    <option value="orders">📦 Más pedidos</option>
+                    <option value="spent">💰 Mayor gasto</option>
+                    <option value="recent">🕐 Más reciente</option>
+                    <option value="oldest">🕐 Menos reciente</option>
+                </select>
+            </div>
+            <div id="customers-view" class="c-grid"><div class="c-empty"><span class="emoji">📊</span>Cargando perfiles de clientes...</div></div>
+        </section>
     </main>
 
     <div id="modal-product" class="modal">
@@ -2111,10 +2999,38 @@
                 <button type="button" class="btn btn-secondary" onclick="closeModal('order')">Cerrar</button>
             </div>
             <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                <div id="recovery-actions" style="display:none; margin-bottom: 4px;">
+                    <p style="color: rgba(255,255,255,0.4); font-size: 11px; margin: 0 0 6px 0; text-align: center;">🔄 Recuperación</p>
+                    <button type="button" id="btn-resend-link" class="btn btn-full btn-secondary" style="display:none;" onclick="resendPaymentLink()">🔗 Reenviar Link de Pago</button>
+                    <button type="button" id="btn-send-reminder" class="btn btn-full btn-secondary" style="display:none;" onclick="sendPaymentReminder()">⏰ Recordatorio WhatsApp</button>
+                    <button type="button" id="btn-open-whatsapp" class="btn btn-full btn-secondary" style="display:none;" onclick="openWhatsAppChat()">💬 Abrir WhatsApp</button>
+                    <button type="button" id="btn-copy-payment-link" class="btn btn-full btn-secondary" style="display:none;" onclick="copyPaymentLink()">🔗 Copiar Link de Pago</button>
+                </div>
                 <button type="button" id="btn-mark-paid" class="btn btn-full btn-green" style="display:none;" onclick="markAsPaid()">💰 Marcar como Pagado</button>
                 <button type="button" class="btn btn-full btn-archive" onclick="archiveOrder()">🗂️ Archivar Pedido</button>
                 <p style="color: rgba(255,255,255,0.3); font-size: 11px; margin-top: 4px; text-align: center;">
                     Archivar mueve el pedido a archived_orders como respaldo antes de eliminar.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ASIGNAR REPARTIDOR -->
+    <div id="modal-driver" class="modal">
+        <div class="modal-content" style="max-width:400px;">
+            <h2>🛵 Asignar Repartidor</h2>
+            <p class="modal-subtitle">Ingresa los datos del repartidor para despachar este pedido.</p>
+            <div class="form-group">
+                <label>Nombre del repartidor</label>
+                <input type="text" id="driver-name" placeholder="Ej: Carlos" required>
+            </div>
+            <div class="form-group">
+                <label>Teléfono (con código país)</label>
+                <input type="tel" id="driver-phone" placeholder="Ej: 56912345678" required>
+            </div>
+            <input type="hidden" id="driver-order-id">
+            <div class="modal-actions">
+                <button type="button" class="btn btn-primary" onclick="saveDriverAssignment()">✅ Asignar y despachar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('driver')">Cancelar</button>
             </div>
         </div>
     </div>
@@ -2244,6 +3160,151 @@
         </div>
     </div>
 
+    <!-- MODAL NUEVO PEDIDO MANUAL -->
+    <div id="modal-neworder" class="modal">
+        <div class="modal-content wide">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                <h2>Nuevo Pedido Manual</h2>
+            </div>
+            <p style="color:var(--text-dim);font-size:13px;">Completa los datos para crear un pedido administrativo.</p>
+
+            <div id="no-validation" class="validation-errors"></div>
+
+            <div class="order-form-sections">
+
+                <!-- Cliente -->
+                <div class="order-section">
+                    <h3>Cliente</h3>
+                    <div class="field-row">
+                        <div class="field">
+                            <label>Nombre completo</label>
+                            <input type="text" id="no-cliente" placeholder="Ej: Juan Pérez" oninput="newOrderDraft.cliente=this.value">
+                        </div>
+                        <div class="field">
+                            <label>Teléfono</label>
+                            <input type="tel" id="no-telefono" placeholder="+56 9 XXXX XXXX" oninput="newOrderDraft.telefono=this.value">
+                        </div>
+                    </div>
+                    <div class="field-row" style="margin-top:12px;">
+                        <div class="field">
+                            <label>Dirección</label>
+                            <input type="text" id="no-direccion" placeholder="Calle, número, depto" oninput="newOrderDraft.direccion=this.value">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tipo de Entrega -->
+                <div class="order-section">
+                    <h3>Tipo de Entrega</h3>
+                    <div class="radio-group" id="no-delivery-type" onchange="newOrderDraft.metodo=document.querySelector('#no-delivery-type input:checked').nextSibling?.nodeValue?.trim()||document.querySelector('#no-delivery-type label:has(input:checked)')?.innerText?.trim();updateNewOrderTotals()">
+                        <label><input type="radio" name="delivery-type" value="Delivery" checked onchange="newOrderDraft.metodo='Delivery';updateNewOrderTotals()"> Delivery</label>
+                        <label><input type="radio" name="delivery-type" value="Retiro" onchange="newOrderDraft.metodo='Retiro';updateNewOrderTotals()"> Retiro en Local</label>
+                    </div>
+                </div>
+
+                <!-- Items Desechables -->
+                <div class="order-section">
+                    <h3>Items Desechables <span class="placeholder-badge">Próximamente</span></h3>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" onchange="newOrderDraft.desechables.platos=this.checked"> Platos</label>
+                        <label><input type="checkbox" onchange="newOrderDraft.desechables.servilletas=this.checked"> Servilletas</label>
+                        <label><input type="checkbox" onchange="newOrderDraft.desechables.cubiertos=this.checked"> Cubiertos</label>
+                        <label><input type="checkbox" onchange="newOrderDraft.desechables.salsas=this.checked"> Salsas</label>
+                    </div>
+                </div>
+
+                <!-- Productos -->
+                <div class="order-section">
+                    <h3>Productos</h3>
+                    <p style="color:var(--text-dim);font-size:13px;margin-bottom:12px;">Selecciona productos del inventario y añádelos al pedido.</p>
+                    <div class="field-row" id="no-add-product-area">
+                        <div class="field" style="min-width:160px;flex:2;position:relative;">
+                            <label>Producto</label>
+                            <input type="text" id="no-product-search" placeholder="Buscar producto..." autocomplete="off">
+                            <input type="hidden" id="no-product-selected" value="">
+                            <div id="no-product-results" class="search-results"></div>
+                        </div>
+                        <div class="field" style="max-width:76px;flex:0 0 76px;">
+                            <label>Cant.</label>
+                            <input type="number" id="no-product-qty" value="1" min="1">
+                        </div>
+                        <div class="field" style="max-width:110px;flex:0 0 110px;">
+                            <label>Talla</label>
+                            <select id="no-product-size">
+                                <option value="U">Único</option>
+                            </select>
+                        </div>
+                        <div style="display:flex;align-items:flex-end;padding-bottom:4px;">
+                            <button type="button" class="btn btn-primary" style="padding:10px 18px;font-size:13px;" onclick="addNewOrderProduct()">+ Añadir</button>
+                        </div>
+                    </div>
+                    <div id="no-product-list"></div>
+                </div>
+
+                <!-- Extras -->
+                <div class="order-section">
+                    <h3>Extras</h3>
+                    <p style="color:var(--text-dim);font-size:13px;margin-bottom:12px;">Extras o ingredientes adicionales para el pedido.</p>
+                    <div class="checkbox-group" id="no-extras-list"></div>
+                </div>
+
+                <!-- Método de Pago -->
+                <div class="order-section">
+                    <h3>Método de Pago</h3>
+                    <div class="radio-group">
+                        <label><input type="radio" name="payment-method" value="Mercado Pago" checked onchange="newOrderDraft.paymentMethod=this.value"> Mercado Pago</label>
+                        <label><input type="radio" name="payment-method" value="Transferencia" onchange="newOrderDraft.paymentMethod=this.value"> Transferencia</label>
+                        <label><input type="radio" name="payment-method" value="Efectivo" onchange="newOrderDraft.paymentMethod=this.value"> Efectivo</label>
+                        <label><input type="radio" name="payment-method" value="Otro" onchange="newOrderDraft.paymentMethod=this.value"> Otro</label>
+                    </div>
+                </div>
+
+                <!-- Estado -->
+                <div class="order-section">
+                    <h3>Estado</h3>
+                    <div class="field-row">
+                        <div class="field">
+                            <label>Estado de Pago</label>
+                            <select id="no-payment-status" onchange="newOrderDraft.paymentStatus=this.value">
+                                <option value="pending">Pendiente</option>
+                                <option value="approved">Pagado</option>
+                                <option value="rejected">Rechazado</option>
+                                <option value="refunded">Reembolsado</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Estado del Pedido</label>
+                            <select id="no-order-status" onchange="newOrderDraft.orderStatus=this.value">
+                                <option value="recibido">📥 Recibido</option>
+                                <option value="en_horno">🔥 En horno</option>
+                                <option value="listo">✅ Listo</option>
+                                <option value="en_camino">🛵 En camino</option>
+                                <option value="entregado">🏁 Entregado</option>
+                                <option value="cancelado">❌ Cancelado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Totales -->
+                <div class="order-section">
+                    <h3>Totales</h3>
+                    <div class="order-totals">
+                        <div class="total-row"><span>Subtotal</span><span id="no-total-subtotal">$0</span></div>
+                        <div class="total-row"><span>Delivery</span><span id="no-total-delivery">$0</span></div>
+                        <div class="total-row"><span>Descuento</span><span id="no-total-discount">$0</span></div>
+                        <div class="total-row final"><span>Total</span><span id="no-total-final">$0</span></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-actions" style="margin-top:8px;">
+                <button type="button" class="btn btn-primary" style="flex:1;" onclick="saveNewOrder()" id="no-btn-save">Crear Pedido</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('neworder')">Cancelar</button>
+            </div>
+        </div>
+    </div>
     <script>
         // FIREBASE V8 CONFIG
         const firebaseConfig = {
@@ -2280,7 +3341,31 @@
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             if (el) el.classList.add('active');
+            if (id === 'kitchen') {
+                renderKitchenView(allOrders);
+                startKitchenTimer();
+            } else {
+                if (_kitchenTimer) { clearInterval(_kitchenTimer); _kitchenTimer = null; }
+            }
         }
+
+        function navigateToSection(section) {
+            var map = ['dashboard','inventory','extras','orders','kitchen','coupons','analytics','customers'];
+            var idx = map.indexOf(section);
+            if (idx >= 0) {
+                var links = document.querySelectorAll('.nav-link');
+                if (links[idx]) showSection(section, links[idx]);
+            }
+            if (section === 'neworder') {
+                navigateToSection('orders');
+                setTimeout(function () { openModal('neworder'); }, 100);
+            }
+        }
+
+        window.addEventListener('hashchange', function () {
+            var h = window.location.hash.replace('#', '');
+            if (h) navigateToSection(h);
+        });
 
         function updateDate() {
             const now = new Date();
@@ -2294,6 +3379,41 @@
         let fullExtras = [];
         let allOrders = [];
         let isFirstLoad = true;
+        let _selectedProductId = '';
+        let _recentProducts = [];
+        let _notifiedOrders = new Set();
+        let _notifiedPayments = new Set();
+        let _deferredPrompt = null;
+        let _listenersInitialized = false;
+
+        window.addEventListener('beforeinstallprompt', function (e) {
+            e.preventDefault();
+            _deferredPrompt = e;
+            var el = document.getElementById('install-prompt');
+            if (el && !localStorage.getItem('peppes_install_dismissed')) {
+                el.style.display = 'flex';
+            }
+        });
+
+        window.addEventListener('appinstalled', function () {
+            _deferredPrompt = null;
+            var el = document.getElementById('install-prompt');
+            if (el) el.style.display = 'none';
+            localStorage.setItem('peppes_install_dismissed', 'true');
+        });
+
+        function installApp() {
+            if (!_deferredPrompt) return;
+            _deferredPrompt.prompt();
+            _deferredPrompt.userChoice.then(function (choice) {
+                if (choice.outcome === 'dismissed') {
+                    localStorage.setItem('peppes_install_dismissed', 'true');
+                }
+                _deferredPrompt = null;
+                var el = document.getElementById('install-prompt');
+                if (el) el.style.display = 'none';
+            });
+        }
 
         // AUTHENTICATION
         const auth = firebase.auth();
@@ -2325,25 +3445,52 @@
         }
 
         // Listen for Auth State Changes (The "Real" checkAuth)
+        function detachAllListeners() {
+            if (typeof db === 'undefined') return;
+            db.ref('inventory_clean').off();
+            db.ref('extras').off();
+            db.ref('orders').off();
+            db.ref('pending_orders').off();
+            db.ref('store_settings/coupons').off();
+            _listenersInitialized = false;
+        }
+
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // User is signed in.
                 console.log("✅ Admin Autenticado:", user.email);
                 document.getElementById('login-overlay').style.display = 'none';
                 initApp();
             } else {
-                // No user is signed in.
                 console.log("🔒 Sesión cerrada. Mostrando login.");
                 document.getElementById('login-overlay').style.display = 'flex';
-                // Reset internal arrays to prevent ghost data
-                fullInventory = [];
-                fullExtras = [];
-                allOrders = [];
+                detachAllListeners();
+                if (_kitchenTimer) { clearInterval(_kitchenTimer); _kitchenTimer = null; }
+                fullInventory = []; fullExtras = []; allOrders = [];
+                isFirstLoad = true;
+                _notifiedOrders = new Set();
+                _notifiedPayments = new Set();
             }
         });
 
         async function initApp() {
+            if (_listenersInitialized) return;
+            _listenersInitialized = true;
             console.log("🚀 Inicializando Admin Panel seguro...");
+
+            window.PeppeNotifications.requestPermission();
+            window.PeppeNotifications.registerSW('/sw.js').then(function (reg) {
+                if (!reg) return;
+                fetch('/api/vapid-public-key.js').then(function (r) { return r.json(); }).then(function (d) {
+                    if (d.key) {
+                        window.PeppeNotifications.setVapidKey(d.key);
+                        window.PeppeNotifications.subscribePush().then(function (sub) {
+                            if (sub) window.PeppeNotifications.saveSubscription(sub, 'admin');
+                        });
+                    }
+                }).catch(function () {});
+            });
+
+            initProductSearch();
 
             // Inicializar Listeners Realtime (Now authorized)
             fetchInventory();
@@ -2352,6 +3499,25 @@
             fetchCoupons();
 
             updateDate();
+
+            var hash = window.location.hash.replace('#', '');
+            if (hash) setTimeout(function () { navigateToSection(hash); }, 200);
+
+            initOfflineDetection();
+        }
+
+        function initOfflineDetection() {
+            var ob = document.getElementById('offline-banner');
+            var rb = document.getElementById('reconnecting-banner');
+            function showOffline() { if (ob) ob.style.display = 'flex'; if (rb) rb.style.display = 'none'; }
+            function showReconnect() { if (ob) ob.style.display = 'none'; if (rb) rb.style.display = 'flex'; }
+            function hideAll() { if (ob) ob.style.display = 'none'; if (rb) rb.style.display = 'none'; }
+            if (!navigator.onLine) showOffline();
+            window.addEventListener('offline', showOffline);
+            window.addEventListener('online', function () {
+                showReconnect();
+                setTimeout(hideAll, 2000);
+            });
         }
 
 
@@ -2479,6 +3645,10 @@
                     allOrders.unshift(newOrder);
                     if (allOrders.length > 50) allOrders.pop();
                     playNotificationSound();
+                    window.PeppeNotifications.notify('Nuevo pedido #' + newOrder.id.slice(-5), {
+                        body: '$' + (newOrder.total || 0).toLocaleString(),
+                        tag: 'new-order-' + newOrder.id
+                    });
                     renderOrders(allOrders);
                     updateDashboardStats();
                 }
@@ -2494,6 +3664,10 @@
                     allOrders.unshift(newOrder);
                     if (allOrders.length > 50) allOrders.pop();
                     playNotificationSound();
+                    window.PeppeNotifications.notify('Nuevo pedido #' + newOrder.id.slice(-5), {
+                        body: '$' + (newOrder.total || 0).toLocaleString(),
+                        tag: 'new-order-' + newOrder.id
+                    });
                     renderOrders(allOrders);
                     updateDashboardStats();
                 }
@@ -2510,13 +3684,29 @@
                 }
                 renderOrders(allOrders);
                 updateDashboardStats();
+                if (derivePaymentStatus(updatedOrder) === 'paid' && !_notifiedPayments.has(updatedOrder.id)) {
+                    _notifiedPayments.add(updatedOrder.id);
+                    window.PeppeNotifications.notify('Pago confirmado', {
+                        body: 'Pedido #' + updatedOrder.id.slice(-5) + ' — $' + (updatedOrder.total || 0).toLocaleString(),
+                        tag: 'paid-' + updatedOrder.id
+                    });
+                }
             });
 
-            // Fase 5: Cuando pending_orders se elimina (promovido), quitarlo del feed
+            // Fase 5: Cuando pending_orders se elimina (promovido), limpia el feed y refresca
             db.ref('pending_orders').on('child_removed', snap => {
                 allOrders = allOrders.filter(o => o.id !== snap.key);
                 renderOrders(allOrders);
                 updateDashboardStats();
+                db.ref('orders/' + snap.key).once('value').then(s => {
+                    const p = s.val();
+                    if (p && !allOrders.some(o => o.id === snap.key)) {
+                        allOrders.unshift({ id: snap.key, ...p });
+                        if (allOrders.length > 50) allOrders.pop();
+                        renderOrders(allOrders);
+                        updateDashboardStats();
+                    }
+                });
             });
 
         }
@@ -2666,7 +3856,19 @@
                 const os = deriveOrderStatus(o);
                 const isNewOrder = ps === 'paid' && os === 'recibido';
                 const badgeClass = ps === 'paid' ? getStatusClass(os) : getStatusClass(ps);
-                const badgeLabel = ps !== 'paid' ? getPaymentStatusLabel(ps) : getOrderStatusLabel(os);
+                let badgeLabel;
+                if (ps !== 'paid') {
+                    const method = (o.paymentMethod || '').toLowerCase();
+                    if (method === 'mercado pago' && o.paymentLink) {
+                        badgeLabel = '⏳ Link enviado';
+                    } else if (method && method !== 'mercado pago') {
+                        badgeLabel = `⏳ Pend. — ${o.paymentMethod}`;
+                    } else {
+                        badgeLabel = getPaymentStatusLabel(ps);
+                    }
+                } else {
+                    badgeLabel = getOrderStatusLabel(os);
+                }
                 return `
                 <div class="order-card" onclick="manageOrder('${o.id}')" style="cursor: pointer;">
                     <div class="order-info">
@@ -2744,11 +3946,422 @@
                 document.getElementById('p-id').disabled = false;
                 document.getElementById('btn-delete-prod').style.display = 'none';
                 document.getElementById('modal-title').innerText = "Nuevo Producto";
-                // Mostrar settings para la categoría por defecto (Pizzas)
                 toggleNewCat(document.getElementById('p-cat').value);
+            } else if (type === 'neworder') {
+                openNewOrderModal();
             } else {
                 document.getElementById('form-extra').reset();
                 document.getElementById('e-edit-id').value = "";
+            }
+        }
+
+        /* ── New Order Draft System ── */
+        const newOrderDraft = {
+            cliente: '', telefono: '', direccion: '',
+            metodo: 'Delivery',
+            desechables: { platos: false, servilletas: false, cubiertos: false, salsas: false },
+            items: [],
+            extras: [],
+            paymentMethod: 'Mercado Pago',
+            paymentStatus: 'pending',
+            orderStatus: 'recibido',
+            deliveryCost: 0
+        };
+
+        function initNewOrderDraft() {
+            newOrderDraft.cliente = '';
+            newOrderDraft.telefono = '';
+            newOrderDraft.direccion = '';
+            newOrderDraft.metodo = 'Delivery';
+            newOrderDraft.desechables = { platos: false, servilletas: false, cubiertos: false, salsas: false };
+            newOrderDraft.items = [];
+            newOrderDraft.extras = [];
+            newOrderDraft.paymentMethod = 'Mercado Pago';
+            newOrderDraft.paymentStatus = 'pending';
+            newOrderDraft.orderStatus = 'recibido';
+            newOrderDraft.deliveryCost = 0;
+        }
+
+        function getProductPrice(product, size) {
+            if (!product || !product.prices) return 0;
+            if (size === 'P' || size === 'M') return product.prices[size] || product.prices.U || product.prices.P || 0;
+            if (size === 'G') return product.prices.G || product.prices.U || 0;
+            return product.prices.U || product.prices.P || 0;
+        }
+
+        function getSizeLabel(size) {
+            return { P: 'Personal', M: 'Mediana', G: 'Grande', U: 'Único' }[size] || size;
+        }
+
+        function updateNewOrderSizeOptions(productId) {
+            const sizeSel = document.getElementById('no-product-size');
+            if (!sizeSel) return;
+            const pid = productId || document.getElementById('no-product-selected').value;
+            const product = (fullInventory || []).find(p => p.id === pid);
+            const isPizza = product && product.category === 'pizzas';
+            const hasMultiSize = product && product.prices && (product.prices.P || product.prices.M || product.prices.G);
+            sizeSel.innerHTML = '';
+            if (isPizza && hasMultiSize) {
+                sizeSel.innerHTML = '<option value="P">Personal</option><option value="M">Mediana</option><option value="G">Grande</option>';
+            } else {
+                sizeSel.innerHTML = '<option value="U">Único</option>';
+            }
+        }
+
+        function onProductSearchInput(value) {
+            const q = value.trim().toLowerCase();
+            if (!q) {
+                document.getElementById('no-product-selected').value = '';
+                _selectedProductId = '';
+                showRecentProducts();
+                return;
+            }
+            const filtered = (fullInventory || []).filter(p => p.available && p.name.toLowerCase().includes(q));
+            renderProductResults(filtered, q);
+        }
+
+        function renderProductResults(products, query) {
+            const container = document.getElementById('no-product-results');
+            if (!container) return;
+            if (products.length === 0) {
+                container.innerHTML = '<div class="no-results">Sin resultados</div>';
+                container.classList.add('visible');
+                return;
+            }
+            const grouped = {};
+            const catLabels = { pizzas: 'Pizzas', lasanas: 'Lasañas', pastas: 'Pastas', antojos: 'Antojos', ens: 'Ensaladas', postres: 'Postres', bebidas: 'Bebidas', promo: 'Promociones' };
+            products.forEach(p => {
+                if (!grouped[p.category]) grouped[p.category] = [];
+                grouped[p.category].push(p);
+            });
+            let html = '';
+            Object.keys(grouped).forEach(cat => {
+                if (html) html += `<div class="result-divider">${catLabels[cat] || cat}</div>`;
+                grouped[cat].forEach(p => {
+                    const price = p.prices?.U || p.prices?.P || 0;
+                    html += `<div class="result-item" onclick="selectProduct('${p.id}')"><span class="result-name">${p.name}</span><span class="result-price">$${price.toLocaleString()}</span></div>`;
+                });
+            });
+            container.innerHTML = html;
+            container.classList.add('visible');
+        }
+
+        function showRecentProducts() {
+            const container = document.getElementById('no-product-results');
+            if (!container || _recentProducts.length === 0) return;
+            const products = _recentProducts.map(id => (fullInventory || []).find(p => p.id === id)).filter(Boolean);
+            if (products.length === 0) return;
+            let html = `<div class="result-divider recent-header"><span class="recent-label">Recientes</span><span class="recent-clear" onclick="_recentProducts=[];hideResults()">Limpiar</span></div>`;
+            products.forEach(p => {
+                const price = p.prices?.U || p.prices?.P || 0;
+                html += `<div class="result-item" onclick="selectProduct('${p.id}')"><span class="result-name">${p.name}</span><span class="result-price">$${price.toLocaleString()}</span></div>`;
+            });
+            container.innerHTML = html;
+            container.classList.add('visible');
+        }
+
+        function selectProduct(productId) {
+            const product = (fullInventory || []).find(p => p.id === productId);
+            if (!product) return;
+            _selectedProductId = productId;
+            document.getElementById('no-product-selected').value = productId;
+            document.getElementById('no-product-search').value = product.name;
+            updateNewOrderSizeOptions(productId);
+            hideResults();
+        }
+
+        function hideResults() {
+            const container = document.getElementById('no-product-results');
+            if (container) container.classList.remove('visible');
+        }
+
+        function addNewOrderProduct() {
+            const pid = document.getElementById('no-product-selected').value;
+            const qtyInp = document.getElementById('no-product-qty');
+            const sizeSel = document.getElementById('no-product-size');
+            if (!pid || !qtyInp || !sizeSel) return;
+            const product = (fullInventory || []).find(p => p.id === pid);
+            if (!product) return;
+            const qty = parseInt(qtyInp.value) || 1;
+            const size = sizeSel.value;
+            const unitPrice = getProductPrice(product, size);
+            newOrderDraft.items.push({
+                productId: pid,
+                name: product.name,
+                category: product.category,
+                size: size,
+                qty: qty,
+                unitPrice: unitPrice,
+                lineTotal: qty * unitPrice
+            });
+            _recentProducts = [pid, ..._recentProducts.filter(id => id !== pid)].slice(0, 5);
+            document.getElementById('no-product-selected').value = '';
+            document.getElementById('no-product-search').value = '';
+            _selectedProductId = '';
+            qtyInp.value = '1';
+            updateNewOrderSizeOptions();
+            renderNewOrderProducts();
+            updateNewOrderTotals();
+            document.getElementById('no-product-search').focus();
+        }
+
+        function removeNewOrderProduct(idx) {
+            newOrderDraft.items.splice(idx, 1);
+            renderNewOrderProducts();
+            updateNewOrderTotals();
+        }
+
+        function renderNewOrderProducts() {
+            const list = document.getElementById('no-product-list');
+            if (!list) return;
+            if (newOrderDraft.items.length === 0) {
+                list.innerHTML = '<div class="empty-state">No hay productos añadidos aún.</div>';
+                return;
+            }
+            list.innerHTML = newOrderDraft.items.map((item, i) => `
+                <div class="product-row">
+                    <div class="item-info">
+                        <div class="item-name">${item.qty}x ${item.name} <span class="size-badge-sm">${getSizeLabel(item.size)}</span></div>
+                        <div class="item-meta">$${item.unitPrice.toLocaleString()} c/u</div>
+                    </div>
+                    <div class="item-price">$${item.lineTotal.toLocaleString()}</div>
+                    <button type="button" class="remove-btn" onclick="removeNewOrderProduct(${i})" title="Eliminar">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function populateNewOrderExtras() {
+            const list = document.getElementById('no-extras-list');
+            if (!list) return;
+            (fullExtras || []).forEach(e => {
+                if (!e.available) return;
+                const label = document.createElement('label');
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.value = e.id;
+                cb.onchange = function () {
+                    if (this.checked) {
+                        if (!newOrderDraft.extras.includes(e.id)) newOrderDraft.extras.push(e.id);
+                    } else {
+                        newOrderDraft.extras = newOrderDraft.extras.filter(id => id !== e.id);
+                    }
+                    updateNewOrderTotals();
+                };
+                label.appendChild(cb);
+                const priceShow = e.pm || e.price || 0;
+                label.appendChild(document.createTextNode(` ${e.name} (+$${priceShow.toLocaleString()})`));
+                list.appendChild(label);
+            });
+        }
+
+        function updateNewOrderTotals() {
+            const subtotal = newOrderDraft.items.reduce((sum, item) => sum + item.lineTotal, 0);
+            const extraCost = newOrderDraft.extras.reduce((sum, eid) => {
+                const ex = (fullExtras || []).find(e => e.id === eid);
+                return sum + (ex ? (ex.pm || ex.price || 0) : 0);
+            }, 0);
+            const totalExtras = extraCost;
+            newOrderDraft.deliveryCost = newOrderDraft.metodo === 'Delivery' ? 2000 : 0;
+            const delivery = newOrderDraft.deliveryCost;
+            const discount = 0;
+            const total = subtotal + totalExtras + delivery - discount;
+
+            document.getElementById('no-total-subtotal').textContent = '$' + (subtotal + totalExtras).toLocaleString();
+            document.getElementById('no-total-delivery').textContent = '$' + delivery.toLocaleString();
+            document.getElementById('no-total-discount').textContent = '$' + discount.toLocaleString();
+            document.getElementById('no-total-final').textContent = '$' + total.toLocaleString();
+        }
+
+        function openNewOrderModal() {
+            initNewOrderDraft();
+            document.getElementById('no-cliente').value = '';
+            document.getElementById('no-telefono').value = '';
+            document.getElementById('no-direccion').value = '';
+            document.querySelector('#no-delivery-type input[value="Delivery"]').checked = true;
+            document.querySelector('#no-delivery-type input[value="Retiro"]').checked = false;
+            document.querySelector('input[name="payment-method"][value="Mercado Pago"]').checked = true;
+            document.getElementById('no-payment-status').value = 'pending';
+            document.getElementById('no-order-status').value = 'recibido';
+            document.getElementById('no-extras-list').innerHTML = '';
+            document.getElementById('no-product-search').value = '';
+            document.getElementById('no-product-selected').value = '';
+            _selectedProductId = '';
+            hideResults();
+            updateNewOrderSizeOptions();
+            populateNewOrderExtras();
+            renderNewOrderProducts();
+            updateNewOrderTotals();
+        }
+
+        /* ── Firebase Persistence ── */
+        function generateAuthToken() {
+            const bytes = new Uint8Array(12);
+            crypto.getRandomValues(bytes);
+            return Array.from(bytes, b => b.toString(36).padStart(2, '0')).join('');
+        }
+
+        async function generateOrderId() {
+            const counterRef = db.ref('order_counter');
+            const { snapshot } = await counterRef.transaction(v => (v || 0) + 1);
+            const counter = snapshot.val();
+            const randBytes = new Uint8Array(4);
+            crypto.getRandomValues(randBytes);
+            const suffix = Array.from(randBytes, b => b.toString(36)).join('');
+            return "PP-" + String(counter).padStart(4, '0') + "-" + suffix;
+        }
+
+        function validateNewOrderDraft() {
+            const errors = [];
+            if (!newOrderDraft.cliente || !newOrderDraft.cliente.trim()) errors.push("El nombre del cliente es obligatorio.");
+            if (!newOrderDraft.telefono || !newOrderDraft.telefono.trim()) errors.push("El teléfono del cliente es obligatorio.");
+            if (!newOrderDraft.items || newOrderDraft.items.length === 0) errors.push("Debes agregar al menos un producto al pedido.");
+            return errors;
+        }
+
+        function showValidationErrors(errors) {
+            const el = document.getElementById('no-validation');
+            if (!el) return;
+            if (errors.length === 0) {
+                el.classList.remove('visible');
+                el.innerHTML = '';
+                return;
+            }
+            el.classList.add('visible');
+            el.innerHTML = errors.map(e => `<p>⚠️ ${e}</p>`).join('');
+        }
+
+        function normalizeNewOrderDraft(orderId, authToken) {
+            const productsTotal = newOrderDraft.items.reduce((s, i) => s + i.lineTotal, 0);
+            const extraCost = newOrderDraft.extras.reduce((sum, eid) => {
+                const ex = (fullExtras || []).find(e => e.id === eid);
+                return sum + (ex ? (ex.pm || ex.price || 0) : 0);
+            }, 0);
+            const subtotal = productsTotal + extraCost;
+            const deliveryCost = newOrderDraft.metodo === 'Delivery' ? 2000 : 0;
+            const discount = 0;
+            const total = subtotal + deliveryCost - discount;
+
+            const isPaid = newOrderDraft.paymentStatus === 'approved';
+
+            const orderItems = newOrderDraft.items.map(item => {
+                const product = (fullInventory || []).find(p => p.id === item.productId);
+                return {
+                    id: item.productId,
+                    name: item.name,
+                    size: item.size,
+                    img: product ? (product.img || '') : '',
+                    qty: item.qty,
+                    productId: item.productId,
+                    categoryId: item.category,
+                    selectedExtrasIds: [],
+                    price: item.lineTotal,
+                    unit_price: item.unitPrice
+                };
+            });
+
+            if (extraCost > 0) {
+                orderItems.push({
+                    id: '_extras',
+                    name: 'Extras',
+                    size: 'U',
+                    img: '',
+                    qty: 1,
+                    productId: '_extras',
+                    categoryId: 'extras',
+                    selectedExtrasIds: newOrderDraft.extras,
+                    price: extraCost,
+                    unit_price: extraCost
+                });
+            }
+
+            return {
+                id: orderId,
+                cliente: (newOrderDraft.cliente || '').trim(),
+                telefono: (newOrderDraft.telefono || '').trim(),
+                metodo: newOrderDraft.metodo,
+                direccion: (newOrderDraft.direccion || (newOrderDraft.metodo === 'Retiro' ? 'Retiro en local' : '')).trim() || 'Sin dirección',
+                glink: null,
+                coords: null,
+                distanceKm: null,
+                nota: '',
+                items: orderItems,
+                subtotal: subtotal,
+                deliveryCost: deliveryCost,
+                cutleryFee: 0,
+                discountAmount: 0,
+                total: total,
+                descuento: null,
+                incluyeCubiertos: newOrderDraft.desechables.cubiertos,
+                adminCreated: true,
+                paymentMethod: newOrderDraft.paymentMethod || 'Mercado Pago',
+                auth_token: authToken,
+                estado: isPaid ? "pendiente" : "pago_pendiente",
+                paymentStatus: isPaid ? "paid" : "pending",
+                orderStatus: newOrderDraft.orderStatus || "recibido",
+                _statusChangedAt: Date.now(),
+                paymentLinkSentAt: null,
+                reminderSentAt: null,
+                _v: 2,
+                timestamp: Date.now(),
+                fecha: new Date().toLocaleString('es-CL')
+            };
+        }
+
+        async function saveNewOrder() {
+            const btn = document.getElementById('no-btn-save');
+            const errors = validateNewOrderDraft();
+            showValidationErrors(errors);
+            if (errors.length > 0) return;
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Creando...';
+
+            try {
+                const orderId = await generateOrderId();
+                const authToken = generateAuthToken();
+                const order = normalizeNewOrderDraft(orderId, authToken);
+
+                await db.ref('pending_orders/' + orderId).set(order);
+
+                const isMP = (order.paymentMethod || '').toLowerCase() === 'mercado pago';
+                let paymentLink = '';
+
+                if (isMP) {
+                    try {
+                        const mpRes = await fetch('/api/generate-payment-link', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                orderId,
+                                items: order.items || [],
+                                deliveryCost: order.metodo === 'Despacho' ? (order.deliveryCost || 0) : 0,
+                                authToken
+                            })
+                        });
+                        if (mpRes.ok) {
+                            const mpData = await mpRes.json();
+                            paymentLink = mpData.init_point || '';
+                            if (paymentLink) {
+                                await db.ref('pending_orders/' + orderId).update({ paymentLink, preferenceId: mpData.preference_id || '', paymentLinkSentAt: Date.now() });
+                            }
+                        } else {
+                            console.warn('[saveNewOrder] generate-payment-link returned', mpRes.status);
+                        }
+                    } catch (mpErr) {
+                        console.warn('[saveNewOrder] generate-payment-link error:', mpErr);
+                    }
+                }
+
+                notifyOrderState(order, 'payment_pending', { paymentLink });
+
+                closeModal('neworder');
+                const linkMsg = paymentLink ? ' con link de pago' : '';
+                alert(`✅ Pedido #${orderId.slice(-5)} creado exitosamente${linkMsg}.`);
+            } catch (e) {
+                alert("❌ Error al crear pedido: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Crear Pedido';
             }
         }
 
@@ -3118,7 +4731,19 @@
             // Mostrar badge de pago arriba del modal
             const paymentBadge = document.getElementById('payment-status-badge');
             if (paymentBadge) {
-                paymentBadge.innerHTML = `<span class="order-status ${getStatusClass(ps)}" style="font-size:14px;padding:8px 16px;display:inline-block;">${getPaymentStatusLabel(ps)}</span>`;
+                let badgeExtra = '';
+                if (ps === 'pending') {
+                    const method = (order.paymentMethod || '').toLowerCase();
+                    if (method === 'mercado pago') {
+                        badgeExtra = order.paymentLink ? ' · Link enviado' : ' · Sin link';
+                    } else if (method) {
+                        badgeExtra = ` · ${order.paymentMethod}`;
+                    }
+                    if (order.reminderSentAt) {
+                        badgeExtra += ' · Recordatorio enviado';
+                    }
+                }
+                paymentBadge.innerHTML = `<span class="order-status ${getStatusClass(ps)}" style="font-size:14px;padding:8px 16px;display:inline-block;">${getPaymentStatusLabel(ps)}${badgeExtra}</span>`;
                 paymentBadge.style.display = 'block';
             }
 
@@ -3126,6 +4751,37 @@
             const markPaidBtn = document.getElementById('btn-mark-paid');
             if (markPaidBtn) {
                 markPaidBtn.style.display = (ps === 'pending') ? 'block' : 'none';
+            }
+
+            // Mostrar/ocultar botón "Copiar Link de Pago"
+            const copyLinkBtn = document.getElementById('btn-copy-payment-link');
+            if (copyLinkBtn) {
+                copyLinkBtn.style.display = order.paymentLink ? 'block' : 'none';
+            }
+
+            // Mostrar/ocultar sección de recuperación
+            const recoverySection = document.getElementById('recovery-actions');
+            const isPending = ps === 'pending';
+            if (recoverySection) {
+                recoverySection.style.display = (isPending || order.paymentLink) ? 'block' : 'none';
+            }
+
+            // "Reenviar Link de Pago" — visible solo si hay paymentLink y está pendiente
+            const resendBtn = document.getElementById('btn-resend-link');
+            if (resendBtn) {
+                resendBtn.style.display = (order.paymentLink && isPending) ? 'block' : 'none';
+            }
+
+            // "Recordatorio WhatsApp" — visible solo si está pendiente de pago
+            const reminderBtn = document.getElementById('btn-send-reminder');
+            if (reminderBtn) {
+                reminderBtn.style.display = isPending ? 'block' : 'none';
+            }
+
+            // "Abrir WhatsApp" — visible si hay teléfono
+            const waBtn = document.getElementById('btn-open-whatsapp');
+            if (waBtn) {
+                waBtn.style.display = order.telefono ? 'block' : 'none';
             }
 
             // Actualizar opciones del select para orderStatus
@@ -3177,13 +4833,16 @@
                 </div>`;
             }).join('');
 
+            const customerSummary = getCustomerSummary(normalizePhoneLocal(order.telefono || ''));
             document.getElementById('order-details-area').innerHTML = `
+                ${customerSummary}
                 <div style="background: #1a1a1a; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
                     <p><strong>Cliente:</strong> ${order.cliente || 'Desconocido'}</p>
                     <p><strong>Teléfono:</strong> <a href="tel:${order.telefono}" style="color: var(--blue); text-decoration: none;">📞 ${order.telefono || 'N/A'}</a></p>
-                    <p><strong>Método:</strong> ${order.metodo || 'No especificado'}</p>
+                    <p><strong>Método:</strong> ${order.metodo || 'No especificado'}${order.paymentMethod ? ` · Pago: ${order.paymentMethod}` : ''}</p>
                     <p><strong>Dirección:</strong> ${order.direccion || 'N/A'}</p>
                     ${order.distanceKm ? `<p><strong>Distancia:</strong> ${order.distanceKm.toFixed(1)} km (Tramo: ${getDeliveryRange(order.distanceKm) || 'N/A'})</p>` : ''}
+            ${order.paymentLink ? `<p style="margin-top: 8px;"><strong>🔗 Link de pago:</strong> <a href="${order.paymentLink}" target="_blank" style="color: var(--blue); word-break: break-all;">${order.paymentLink}</a></p>` : ''}
             ${order.incluyeCubiertos ? `<p style="color: var(--green); font-weight: 700; margin-top: 5px;">🍴 SOLICITA CUBIERTOS (+$500)</p>` : ''}
             ${order.nota ? `<p style="margin-top: 10px; padding: 10px; background: rgba(255, 49, 49, 0.1); border-left: 3px solid var(--red); color: white;"><strong>Nota:</strong> ${order.nota}</p>` : ''}
         </div>
@@ -3216,25 +4875,36 @@
             openModal('order');
         }
 
+        async function setOrderStatus(id, newOs) {
+            let ref = `orders/${id}`;
+            let snap = await db.ref(ref).once('value');
+            if (!snap.val()) {
+                ref = `pending_orders/${id}`;
+                snap = await db.ref(ref).once('value');
+            }
+            const order = snap.val();
+            if (!order) throw new Error('Pedido no encontrado');
+
+            const now = Date.now();
+            const timestamps = order._statusTimestamps || {};
+            timestamps[newOs] = now;
+
+            const updateData = { orderStatus: newOs, _statusChangedAt: now, _statusTimestamps: timestamps };
+            if (newOs === 'en_horno') updateData.estado = 'cocinando';
+            else if (newOs === 'en_camino') updateData.estado = 'en camino';
+            else updateData.estado = newOs;
+            await db.ref(ref).update(updateData);
+
+            const waTypes = { en_horno: 'en_horno', listo: 'listo', en_camino: 'en_camino', entregado: 'entregado' };
+            const waType = waTypes[newOs];
+            if (waType) notifyOrderState({ id, ...order, _statusTimestamps: timestamps }, waType);
+        }
+
         async function updateOrderStatus() {
             const id = document.getElementById('manage-order-id').value;
             const newOs = document.getElementById('order-status-select').value;
-
             try {
-                let ref = `orders/${id}`;
-                let snap = await db.ref(ref).once('value');
-                if (!snap.val()) {
-                    ref = `pending_orders/${id}`;
-                    snap = await db.ref(ref).once('value');
-                }
-                const order = snap.val();
-                if (order) {
-                    const updateData = { orderStatus: newOs };
-                    if (newOs === 'en_horno') updateData.estado = 'cocinando';
-                    else if (newOs === 'en_camino') updateData.estado = 'en camino';
-                    else updateData.estado = newOs;
-                    await db.ref(ref).update(updateData);
-                }
+                await setOrderStatus(id, newOs);
                 closeModal('order');
             } catch (e) {
                 alert("❌ Error: " + e.message);
@@ -3311,11 +4981,16 @@
                     return;
                 }
 
+                const paidAt = Date.now();
+                const timestamps = order._statusTimestamps || {};
+                timestamps.recibido = paidAt;
+
                 const paidData = {
                     paymentStatus: "paid",
-                    paidAt: Date.now(),
+                    paidAt,
                     orderStatus: "recibido",
-                    estado: "pendiente"
+                    estado: "pendiente",
+                    _statusTimestamps: timestamps
                 };
 
                 // Si está en pending_orders, promover a orders y eliminar de pending
@@ -3335,11 +5010,62 @@
                     await consumeCouponLocal(couponInfo.code, order.telefono || '', id);
                 }
 
+                notifyOrderState({ id, ...order }, 'payment_confirmed');
+
                 closeModal('order');
                 alert(`✅ Pedido #${id.slice(-5)} marcado como pagado.`);
             } catch (e) {
                 alert("❌ Error al marcar como pagado: " + e.message);
             }
+        }
+
+        function copyPaymentLink() {
+            const id = document.getElementById('manage-order-id').value;
+            const order = allOrders.find(o => o.id === id);
+            if (!order || !order.paymentLink) return;
+            navigator.clipboard.writeText(order.paymentLink).then(() => {
+                const btn = document.getElementById('btn-copy-payment-link');
+                const orig = btn.innerHTML;
+                btn.innerHTML = '✅ Link copiado';
+                setTimeout(() => { btn.innerHTML = orig; }, 2000);
+            }).catch(() => alert('No se pudo copiar el link'));
+        }
+
+        function resendPaymentLink() {
+            const id = document.getElementById('manage-order-id').value;
+            const order = allOrders.find(o => o.id === id);
+            if (!order || !order.paymentLink) return;
+            const dedupKey = `${order.id}:payment_pending`;
+            _notified.delete(dedupKey);
+            notifyOrderState(order, 'payment_pending', { paymentLink: order.paymentLink });
+            db.ref(`pending_orders/${id}`).update({ reminderSentAt: Date.now() }).catch(() => {});
+            const btn = document.getElementById('btn-resend-link');
+            const orig = btn.innerHTML;
+            btn.innerHTML = '✅ Link reenviado';
+            setTimeout(() => { btn.innerHTML = orig; }, 2000);
+        }
+
+        function sendPaymentReminder() {
+            const id = document.getElementById('manage-order-id').value;
+            const order = allOrders.find(o => o.id === id);
+            if (!order) return;
+            const dedupKey = `${order.id}:payment_reminder`;
+            _notified.delete(dedupKey);
+            notifyOrderState(order, 'payment_reminder', { paymentLink: order.paymentLink || '' });
+            db.ref(`pending_orders/${id}`).update({ reminderSentAt: Date.now() }).catch(() => {});
+            const btn = document.getElementById('btn-send-reminder');
+            const orig = btn.innerHTML;
+            btn.innerHTML = '✅ Recordatorio enviado';
+            setTimeout(() => { btn.innerHTML = orig; }, 2000);
+        }
+
+        function openWhatsAppChat() {
+            const id = document.getElementById('manage-order-id').value;
+            const order = allOrders.find(o => o.id === id);
+            if (!order || !order.telefono) return;
+            const phone = normalizePhoneForWa(order.telefono);
+            if (!phone) return;
+            window.open(`https://wa.me/${phone}`, '_blank');
         }
 
         async function archiveOrder() {
@@ -3622,6 +5348,27 @@
         // ── Analytics ──
         let anaCharts = {};
 
+        function fmtDuration(ms) {
+            if (ms == null || isNaN(ms)) return '—';
+            const min = Math.floor(ms / 60000);
+            if (min < 1) return '< 1 min';
+            if (min < 60) return `${min} min`;
+            const h = Math.floor(min / 60);
+            return `${h}h ${min % 60}m`;
+        }
+
+        function calcAvgDuration(orders, fromStatus, toStatus) {
+            const times = [];
+            orders.forEach(o => {
+                const ts = o._statusTimestamps;
+                if (ts && ts[fromStatus] && ts[toStatus]) {
+                    times.push(ts[toStatus] - ts[fromStatus]);
+                }
+            });
+            if (!times.length) return null;
+            return Math.round(times.reduce((a, b) => a + b, 0) / times.length);
+        }
+
         function loadAnalytics() {
             const ordersRef = db.ref('orders');
             const pendingRef = db.ref('pending_orders');
@@ -3678,6 +5425,227 @@
             document.getElementById('ana-orders-total').querySelector('.ana-number').textContent = completed;
             document.getElementById('ana-avg-ticket').querySelector('.ana-number').textContent = '$' + avgTicket.toLocaleString('es-CL');
 
+            // ── Operational Metrics ──
+            const todayPaid = paid.filter(o => (o.timestamp || 0) >= todayStart.getTime());
+            const now = Date.now();
+
+            // SLA averages from _statusTimestamps
+            const avgPrep = calcAvgDuration(todayPaid, 'recibido', 'en_horno');
+            const avgOven = calcAvgDuration(todayPaid, 'en_horno', 'listo');
+            const avgDelivery = calcAvgDuration(todayPaid, 'en_camino', 'entregado');
+
+            document.getElementById('ana-avg-prep').querySelector('.ana-number').textContent = fmtDuration(avgPrep);
+            document.getElementById('ana-avg-oven').querySelector('.ana-number').textContent = fmtDuration(avgOven);
+            document.getElementById('ana-avg-delivery').querySelector('.ana-number').textContent = fmtDuration(avgDelivery);
+
+            // Kitchen load (active orders in recibido + en_horno)
+            const inKitchen = orders.filter(o => {
+                const os = deriveOrderStatus(o);
+                return os === 'recibido' || os === 'en_horno';
+            }).length;
+            document.getElementById('ana-kitchen-load').querySelector('.ana-number').textContent = inKitchen;
+
+            // Dispatch waiting (listo delivery without driver)
+            const dispatchWaiting = orders.filter(o => {
+                const os = deriveOrderStatus(o);
+                return os === 'listo' && (o.metodo || '').toLowerCase() === 'delivery' && !o.driverName;
+            }).length;
+            document.getElementById('ana-dispatch-waiting').querySelector('.ana-number').textContent = dispatchWaiting;
+
+            // Overdue orders
+            const OVERDUE = { recibido: 20, en_horno: 15, listo: 10, en_camino: 30 };
+            const overdue = orders.filter(o => {
+                const os = deriveOrderStatus(o);
+                if (os === 'entregado' || os === 'cancelado') return false;
+                const refTime = o._statusChangedAt || o.timestamp || now;
+                const elapsed = (now - refTime) / 60000;
+                let threshold = OVERDUE[os] || 20;
+                if (os === 'listo' && (o.metodo || '').toLowerCase() !== 'delivery') threshold = 15;
+                return elapsed > threshold;
+            }).length;
+            document.getElementById('ana-overdue').querySelector('.ana-number').textContent = overdue;
+
+            // ── Kitchen Intelligence ──
+            const activeKitchen = orders.filter(o => {
+                const os = deriveOrderStatus(o);
+                return os === 'recibido' || os === 'en_horno' || os === 'listo';
+            });
+            const recibidoCount = activeKitchen.filter(o => deriveOrderStatus(o) === 'recibido').length;
+            const hornoCount = activeKitchen.filter(o => deriveOrderStatus(o) === 'en_horno').length;
+            const listoCount = activeKitchen.filter(o => deriveOrderStatus(o) === 'listo').length;
+            const delayedKitchen = orders.filter(o => {
+                const os = deriveOrderStatus(o);
+                if (os !== 'recibido' && os !== 'en_horno') return false;
+                const refTime = o._statusChangedAt || o.timestamp || now;
+                const elapsed = (now - refTime) / 60000;
+                return elapsed > (os === 'recibido' ? 20 : 15);
+            }).length;
+
+            // Peak prep hours (from today's orders)
+            const prepHourCount = {};
+            todayPaid.forEach(o => {
+                const ts = o._statusTimestamps;
+                if (ts && ts.recibido) {
+                    const h = new Date(ts.recibido).getHours();
+                    prepHourCount[h] = (prepHourCount[h] || 0) + 1;
+                }
+            });
+            const peakPrepHours = Object.entries(prepHourCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(([h]) => `${h}:00`)
+                .join(', ') || '—';
+
+            const kitchenIntel = document.getElementById('ana-kitchen-intel');
+            if (kitchenIntel) {
+                kitchenIntel.innerHTML = `
+                    <div class="ana-intel-row">
+                        <span class="ana-intel-label">Carga activa</span>
+                        <span class="ana-intel-value">${recibidoCount} recibidos · ${hornoCount} en horno · ${listoCount} listos</span>
+                    </div>
+                    <div class="ana-intel-row">
+                        <span class="ana-intel-label">Preparación (avg)</span>
+                        <span class="ana-intel-value">${fmtDuration(avgPrep)}</span>
+                    </div>
+                    <div class="ana-intel-row">
+                        <span class="ana-intel-label">Horno (avg)</span>
+                        <span class="ana-intel-value">${fmtDuration(avgOven)}</span>
+                    </div>
+                    <div class="ana-intel-row">
+                        <span class="ana-intel-label">Atrasados</span>
+                        <span class="ana-intel-value ${delayedKitchen > 0 ? 'red' : 'green'}">${delayedKitchen > 0 ? delayedKitchen + ' ⚠️' : '0 ✅'}</span>
+                    </div>
+                    <div class="ana-intel-row">
+                        <span class="ana-intel-label">Horas pico prep</span>
+                        <span class="ana-intel-value">${peakPrepHours}</span>
+                    </div>
+                `;
+            }
+
+            // ── Delivery Intelligence ──
+            const deliveredToday = todayPaid.filter(o => deriveOrderStatus(o) === 'entregado');
+            const delayedDeliveries = deliveredToday.filter(o => {
+                const ts = o._statusTimestamps;
+                if (ts && ts.en_camino && ts.entregado) {
+                    return (ts.entregado - ts.en_camino) > 30 * 60000;
+                }
+                return false;
+            }).length;
+
+            // Driver stats
+            const driverStats = {};
+            orders.forEach(o => {
+                if (o.driverName && o.driverAssignedAt && deriveOrderStatus(o) === 'entregado') {
+                    const name = o.driverName;
+                    if (!driverStats[name]) driverStats[name] = { deliveries: 0, totalTime: 0 };
+                    driverStats[name].deliveries++;
+                    const ts = o._statusTimestamps;
+                    if (ts && ts.entregado) {
+                        driverStats[name].totalTime += ts.entregado - o.driverAssignedAt;
+                    }
+                }
+            });
+            const topDrivers = Object.entries(driverStats)
+                .map(([name, s]) => ({ name, deliveries: s.deliveries, avgTime: s.deliveries ? Math.round(s.totalTime / s.deliveries) : 0 }))
+                .sort((a, b) => b.deliveries - a.deliveries)
+                .slice(0, 5);
+
+            const avgDeliveryFull = calcAvgDuration(deliveredToday, 'en_camino', 'entregado');
+
+            const deliveryIntel = document.getElementById('ana-delivery-intel');
+            if (deliveryIntel) {
+                let driversHtml = '';
+                if (topDrivers.length > 0) {
+                    driversHtml = '<div class="ana-intel-sub">Repartidores activos</div>' +
+                        topDrivers.map(d => `
+                            <div class="ana-driver-row">
+                                <span class="ana-driver-name">🛵 ${d.name}</span>
+                                <span class="ana-driver-stat">${d.deliveries} entregas · ${fmtDuration(d.avgTime)} avg</span>
+                            </div>
+                        `).join('');
+                } else {
+                    driversHtml = '<div class="ana-intel-sub">Sin datos de repartidores hoy</div>';
+                }
+
+                deliveryIntel.innerHTML = `
+                    <div class="ana-intel-row">
+                        <span class="ana-intel-label">Delivery (avg)</span>
+                        <span class="ana-intel-value">${fmtDuration(avgDeliveryFull)}</span>
+                    </div>
+                    <div class="ana-intel-row">
+                        <span class="ana-intel-label">Entregas hoy</span>
+                        <span class="ana-intel-value">${deliveredToday.length}</span>
+                    </div>
+                    <div class="ana-intel-row">
+                        <span class="ana-intel-label">Demorados</span>
+                        <span class="ana-intel-value ${delayedDeliveries > 0 ? 'red' : 'green'}">${delayedDeliveries > 0 ? delayedDeliveries + ' ⚠️' : '0 ✅'}</span>
+                    </div>
+                    <div class="ana-intel-row">
+                        <span class="ana-intel-label">Espera despacho</span>
+                        <span class="ana-intel-value ${dispatchWaiting > 0 ? 'warn' : 'green'}">${dispatchWaiting}</span>
+                    </div>
+                    ${driversHtml}
+                `;
+            }
+
+            // ── Customer Retention Metrics ──
+            const customerProfiles = deriveCustomerProfiles(orders);
+            const totalCustomers = customerProfiles.length;
+            const repeatCustomers = customerProfiles.filter(p => p.isRepeat).length;
+            const vipCustomers = customerProfiles.filter(p => p.isVip).length;
+            const inactiveCustomers = customerProfiles.filter(p => p.isInactive).length;
+            const avgOrdersPerCust = totalCustomers ? Math.round(paid.length / totalCustomers * 10) / 10 : 0;
+
+            const customersIntel = document.getElementById('ana-customers-intel');
+            if (customersIntel) {
+                customersIntel.innerHTML = `
+                    <div class="ana-intel-row">
+                        <span class="ana-intel-label">Total clientes</span>
+                        <span class="ana-intel-value">${totalCustomers}</span>
+                    </div>
+                    <div class="ana-intel-row">
+                        <span class="ana-intel-label">Recurrentes (2+ pedidos)</span>
+                        <span class="ana-intel-value">${repeatCustomers} · ${totalCustomers ? Math.round(repeatCustomers / totalCustomers * 100) : 0}%</span>
+                    </div>
+                    <div class="ana-intel-row">
+                        <span class="ana-intel-label">Pedidos por cliente (avg)</span>
+                        <span class="ana-intel-value">${avgOrdersPerCust}</span>
+                    </div>
+                    <div class="ana-intel-row">
+                        <span class="ana-intel-label">Inactivos (+30 días)</span>
+                        <span class="ana-intel-value ${inactiveCustomers > 0 ? 'warn' : 'green'}">${inactiveCustomers}</span>
+                    </div>
+                `;
+            }
+
+            const loyaltyIntel = document.getElementById('ana-loyalty-intel');
+            if (loyaltyIntel) {
+                const topVips = customerProfiles.filter(p => p.isVip).sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 5);
+                const vipHtml = topVips.length
+                    ? '<div class="ana-intel-sub">Top clientes</div>' +
+                      topVips.map(p => `
+                        <div class="ana-driver-row">
+                            <span class="ana-driver-name">⭐ ${p.cliente}</span>
+                            <span class="ana-driver-stat">${p.totalOrders} pedidos · $${(p.totalSpent || 0).toLocaleString()}</span>
+                        </div>`).join('')
+                    : '<div class="ana-intel-sub">Sin datos de lealtad aún</div>';
+
+                loyaltyIntel.innerHTML = `
+                    <div class="ana-intel-row">
+                        <span class="ana-intel-label">Clientes VIP</span>
+                        <span class="ana-intel-value">${vipCustomers}</span>
+                    </div>
+                    <div class="ana-intel-row">
+                        <span class="ana-intel-label">Tasa retención</span>
+                        <span class="ana-intel-value">${totalCustomers ? Math.round(repeatCustomers / totalCustomers * 100) : 0}%</span>
+                    </div>
+                    ${vipHtml}
+                `;
+            }
+
+            // Remove skeletons for op + customer cards
+            document.querySelectorAll('#ana-kitchen-intel .ana-skeleton, #ana-delivery-intel .ana-skeleton, #ana-customers-intel .ana-skeleton, #ana-loyalty-intel .ana-skeleton').forEach(el => el.remove());
+
             // Daily sales for chart (7 days)
             const dailyLabels = [];
             const dailyData = [];
@@ -3721,14 +5689,15 @@
             }
 
             // Payment methods
-            const mp = paid.filter(o => {
+            const getOrderPaymentMethod = (o) => {
+                if (o.adminCreated && o.paymentMethod) return o.paymentMethod.toLowerCase();
                 const m = (o.metodo || '').toLowerCase();
-                return m === 'mercadopago' || m === 'mp' || m === 'tarjeta';
-            }).length;
-            const transfer = paid.filter(o => {
-                const m = (o.metodo || '').toLowerCase();
-                return m === 'transferencia' || m === 'transfer' || m === 'efectivo';
-            }).length;
+                if (m === 'mercadopago' || m === 'mp' || m === 'tarjeta') return 'mercadopago';
+                if (m === 'transferencia' || m === 'transfer' || m === 'efectivo') return 'transferencia';
+                return 'otro';
+            };
+            const mp = paid.filter(o => getOrderPaymentMethod(o) === 'mercadopago').length;
+            const transfer = paid.filter(o => getOrderPaymentMethod(o) === 'transferencia' || getOrderPaymentMethod(o) === 'efectivo').length;
             const unknownPay = paid.length - mp - transfer;
 
             // Top coupons
@@ -3882,6 +5851,800 @@
                     </div>`).join('')
                 : '<div style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;">Sin cupones usados</div>';
             document.getElementById('ana-top-coupons').innerHTML = couponHtml;
+        }
+
+        /* ── Centralized WhatsApp Messaging ── */
+        function normalizePhoneForWa(phone) {
+            if (!phone) return '';
+            const digits = phone.replace(/\D/g, '');
+            if (digits.startsWith('56') && digits.length >= 11) return digits;
+            if (digits.startsWith('9') && digits.length === 9) return '56' + digits;
+            if (digits.startsWith('0') && digits.length === 10) return '56' + digits.slice(1);
+            return digits;
+        }
+
+        function buildOrderCreatedMessage(order) {
+            const itemsList = (order.items || []).map(item => {
+                return `• ${item.qty}x ${item.name}${item.size && item.size !== 'U' ? ` (${getSizeLabel(item.size)})` : ''}`;
+            }).join('\n');
+
+            const paymentLabel = order.paymentMethod || 'Pendiente';
+            const paymentStatusLabel = order.paymentStatus === 'paid' ? '✅ Pagado' : '⏳ Pendiente';
+            const deliveryLine = order.direccion && order.metodo !== 'Retiro'
+                ? `📍 *Dirección:* ${order.direccion}`
+                : '📍 *Retiro en local*';
+
+            return `🍕 *Peppe's Pizza — Pedido Confirmado*
+
+Hola *${order.cliente}*! Recibimos tu pedido y ya estamos preparándolo.
+
+🆔 Pedido: #${order.id ? order.id.slice(-5) : '---'}
+${deliveryLine}
+💳 Pago: ${paymentLabel} — ${paymentStatusLabel}
+
+📋 *Tu pedido:*
+${itemsList}
+
+💰 *Total: $${(order.total || 0).toLocaleString()}*
+
+¡Gracias por preferir Peppe's! 🔴`;
+        }
+
+        function buildPaymentPendingMessage(order, paymentLink) {
+            const itemsList = (order.items || []).map(item => {
+                return `• ${item.qty}x ${item.name}${item.size && item.size !== 'U' ? ` (${getSizeLabel(item.size)})` : ''}`;
+            }).join('\n');
+
+            const paymentLabel = order.paymentMethod || 'Pendiente';
+            const deliveryLine = order.direccion && order.metodo !== 'Retiro'
+                ? `📍 *Dirección:* ${order.direccion}`
+                : '📍 *Retiro en local*';
+
+            const paymentSection = paymentLink
+                ? `🔗 *Link de pago:* ${paymentLink}\n\nAl realizar el pago se confirmará tu pedido automáticamente.`
+                : `El pago quedó registrado como *${paymentLabel.toLowerCase()}* y lo confirmaremos cuando lo recibamos.`;
+
+            return `🍕 *Peppe's Pizza — Pedido Pendiente*
+
+Hola *${order.cliente}*! Recibimos tu pedido, está agendado y en espera de pago.
+
+🆔 Pedido: #${order.id ? order.id.slice(-5) : '---'}
+${deliveryLine}
+💳 *Método:* ${paymentLabel}
+
+📋 *Tu pedido:*
+${itemsList}
+
+💰 *Total: $${(order.total || 0).toLocaleString()}*
+
+${paymentSection}
+
+Ante cualquier consulta, responder este mensaje. ¡Gracias por preferir Peppe's! 🔴`;
+        }
+
+        function buildPaymentReminderMessage(order, paymentLink) {
+            const deliveryLine = order.direccion && order.metodo !== 'Retiro'
+                ? `*Dirección:* ${order.direccion}`
+                : '*Retiro en local*';
+
+            const linkLine = paymentLink
+                ? `🔗 Acá tienes el link de pago por si lo necesitas:\n${paymentLink}\n\nAl pagar se confirma tu pedido al tiro.`
+                : `El pago está pendiente como *${(order.paymentMethod || 'pendiente').toLowerCase()}*.`;
+
+            return `🍕 *Peppe's Pizza — Recordatorio*
+
+Hola de nuevo *${order.cliente}*! ✋ Solo pasaba a recordarte que tu pedido #${order.id ? order.id.slice(-5) : '---'} está listo, esperando el pago para que empecemos a prepararlo.
+
+${deliveryLine}
+💳 *Método:* ${order.paymentMethod || 'Pendiente'}
+
+💰 *Total: $${(order.total || 0).toLocaleString()}*
+
+${linkLine}
+
+Si tienes cualquier duda, responde este mensaje. Estamos acá para ayudarte. 🔴`;
+        }
+
+        function buildTrackingLink(order) {
+            const rawUrl = window.location.origin || 'https://www.peppes.cl';
+            const baseUrl = rawUrl.replace(/\/+$/, '');
+            const token = order.auth_token || '';
+            return `${baseUrl}/track.html?id=${encodeURIComponent(order.id)}&token=${encodeURIComponent(token)}`;
+        }
+
+        function buildEnHornoMessage(order) {
+            const link = buildTrackingLink(order);
+            const deliveryLine = order.direccion && order.metodo !== 'Retiro'
+                ? `*Dirección:* ${order.direccion}`
+                : '*Retiro en local*';
+            return `🍕 *Peppe's Pizza — ¡Al horno!*
+
+Hola *${order.cliente}*! 🔥 Tu pedido #${order.id ? order.id.slice(-5) : '---'} ya está en el horno. En un rato estará listo.
+
+${deliveryLine}
+💳 *Total:* $${(order.total || 0).toLocaleString()}
+
+📍 Acá puedes ver el estado en tiempo real:
+${link}
+
+Si tienes cualquier duda, responde este mensaje. 🔴`;
+        }
+
+        function buildListoMessage(order) {
+            const link = buildTrackingLink(order);
+            const isRetiro = order.metodo === 'Retiro';
+            const readyLine = isRetiro
+                ? 'Ya puedes pasar a retirarlo por nuestro local.'
+                : 'Ya está empacado y en camino a ti.';
+            const deliveryLine = order.direccion && order.metodo !== 'Retiro'
+                ? `*Dirección:* ${order.direccion}`
+                : '*Retiro en local*';
+            return `🍕 *Peppe's Pizza — ¡Listo!*
+
+Hola *${order.cliente}*! ✅ Tu pedido #${order.id ? order.id.slice(-5) : '---'} está listo. ${readyLine}
+
+${deliveryLine}
+💳 *Total:* $${(order.total || 0).toLocaleString()}
+
+📍 Acá puedes ver el estado en tiempo real:
+${link}
+
+¡Gracias por preferir Peppe's! 🔴`;
+        }
+
+        function buildEnCaminoMessage(order) {
+            const link = buildTrackingLink(order);
+            const driverLine = order.driverName
+                ? `🛵 *Repartidor:* ${order.driverName}\n`
+                : '';
+            return `🍕 *Peppe's Pizza — ¡En camino!*
+
+Hola *${order.cliente}*! 🛵 Tu pedido #${order.id ? order.id.slice(-5) : '---'} va en camino a *${order.direccion || 'tu dirección'}*.
+
+${driverLine}💳 *Total:* $${(order.total || 0).toLocaleString()}
+
+📍 Acá puedes ver el estado en tiempo real:
+${link}
+
+Si tienes cualquier duda, responde este mensaje. 🔴`;
+        }
+
+        function buildEntregadoMessage(order) {
+            return `🍕 *Peppe's Pizza — ¡Entregado!*
+
+Hola *${order.cliente}*! 🏁 Tu pedido #${order.id ? order.id.slice(-5) : '---'} fue entregado. ¡Esperamos que lo disfrutes!
+
+💳 *Total:* $${(order.total || 0).toLocaleString()}
+
+Cualquier cosa, no dudes en escribirnos. ¡Gracias por preferir Peppe's! 🔴`;
+        }
+
+        function buildPaymentConfirmedMessage(order) {
+            const link = buildTrackingLink(order);
+            const deliveryLine = order.direccion && order.metodo !== 'Retiro'
+                ? `*Dirección:* ${order.direccion}`
+                : '*Retiro en local*';
+            const itemsList = (order.items || []).map(item => {
+                return `• ${item.qty}x ${item.name}${item.size && item.size !== 'U' ? ` (${getSizeLabel(item.size)})` : ''}`;
+            }).join('\n');
+            return `🍕 *Peppe's Pizza — Pago Confirmado*
+
+Hola *${order.cliente}*! ✅ Recibimos tu pago y tu pedido #${order.id ? order.id.slice(-5) : '---'} ya está en preparación.
+
+${deliveryLine}
+💳 *Método:* ${order.paymentMethod || 'Transferencia'}
+
+📋 *Tu pedido:*
+${itemsList}
+
+💰 *Total: $${(order.total || 0).toLocaleString()}*
+
+📍 Seguimiento en vivo:
+${link}
+
+¡Gracias por preferir Peppe's! 🔴`;
+        }
+
+        function buildTrackingLinkMessage(order) {
+            const link = buildTrackingLink(order);
+            return `🍕 *Peppe's Pizza — Seguimiento*
+
+Hola *${order.cliente}*! Acá puedes ver el estado de tu pedido #${order.id ? order.id.slice(-5) : '---'} en tiempo real:
+
+📍 ${link}
+
+Cualquier duda, responde este mensaje. 🔴`;
+        }
+
+        /* ── Retention Message Builders ── */
+        function buildRetentionComebackMessage(order, profile) {
+            const favs = profile?.favoriteProducts?.length ? profile.favoriteProducts.slice(0, 2).join(' o ') : 'algo rico';
+            return `🍕 *Peppe's Pizza — ¿Otra vez?*
+
+Hola *${order.cliente}*! 🔥 Hace un tiempo no te vemos por acá y queríamos saludarte.
+
+Sabemos que te gusta ${favs} — ¿te animas a repetir? 😄
+
+Abre el chat y te ayudamos con tu pedido. 🔴`;
+        }
+
+        function buildRetentionInactiveMessage(order, profile) {
+            return `🍕 *Peppe's Pizza — Te extrañamos*
+
+Hola *${order.cliente}*! 🫶 Ha pasado un tiempo desde tu último pedido y queríamos ver cómo estás.
+
+Tenemos novedades en el menú que te pueden gustar. ¿Qué dices?
+
+Escríbenos y te contamos. 🔴`;
+        }
+
+        function buildRetentionReorderMessage(order, profile) {
+            const items = profile?.lastOrderItems?.slice(0, 3).map(i => `${i.qty || 1}x ${i.name || ''}`).join(', ') || 'tu pedido anterior';
+            return `🍕 *Peppe's Pizza — Repetir pedido*
+
+Hola *${order.cliente}*! 🛵 La última vez pediste:
+
+${items}
+
+¿Quieres lo mismo? Te lo preparamos. Responde este mensaje y lo gestionamos. 🔴`;
+        }
+
+        function buildWhatsAppMessage(order, type, paymentLink) {
+            switch (type) {
+                case 'order_created': return buildOrderCreatedMessage(order);
+                case 'payment_pending': return buildPaymentPendingMessage(order, paymentLink);
+                case 'payment_reminder': return buildPaymentReminderMessage(order, paymentLink);
+                case 'tracking_link': return buildTrackingLinkMessage(order);
+                case 'en_horno': return buildEnHornoMessage(order);
+                case 'listo': return buildListoMessage(order);
+                case 'en_camino': return buildEnCaminoMessage(order);
+                case 'entregado': return buildEntregadoMessage(order);
+                case 'payment_confirmed': return buildPaymentConfirmedMessage(order);
+                case 'retention_comeback': return buildRetentionComebackMessage(order);
+                case 'retention_inactive': return buildRetentionInactiveMessage(order);
+                case 'retention_reorder': return buildRetentionReorderMessage(order);
+                default: return null;
+            }
+        }
+
+        function sendOrderWhatsAppMessage(order, type, paymentLink) {
+            const msg = buildWhatsAppMessage(order, type, paymentLink);
+            if (!msg) return;
+            const phone = normalizePhoneForWa(order.telefono);
+            if (!phone) return;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        /* ── Kitchen Queue ── */
+        let _kitchenTimer = null;
+
+        function formatElapsed(ms) {
+            const min = Math.floor(ms / 60000);
+            if (min < 1) return '< 1 min';
+            if (min < 60) return `${min} min`;
+            const h = Math.floor(min / 60);
+            return `${h}h ${min % 60}m`;
+        }
+
+        function getSLAClass(ms) {
+            const min = ms / 60000;
+            if (min < 10) return 'normal';
+            if (min < 20) return 'warning';
+            return 'overdue';
+        }
+
+        function getKitchenNextAction(os, metodo) {
+            const map = {
+                recibido: { label: '🔥 Cocinar', next: 'en_horno' },
+                en_horno: { label: '✅ Listo', next: 'listo' }
+            };
+            if (metodo === 'Retiro') {
+                map.listo = { label: '🏁 Entregar', next: 'entregado' };
+            } else {
+                map.en_camino = { label: '🏁 Entregar', next: 'entregado' };
+            }
+            return map[os] || null;
+        }
+
+        function renderKitchenView(orders) {
+            const container = document.getElementById('kitchen-view');
+            if (!container) return;
+
+            const statuses = ['recibido', 'en_horno', 'listo', 'en_camino'];
+            const labels = { recibido: '📥 Recibidos', en_horno: '🔥 En Horno', listo: '✅ Listos', en_camino: '🛵 En Camino' };
+            const groups = { recibido: [], en_horno: [], listo: [], en_camino: [] };
+
+            (orders || []).forEach(o => {
+                const os = deriveOrderStatus(o);
+                if (groups[os]) groups[os].push(o);
+            });
+
+            const now = Date.now();
+            let hasOrders = false;
+            const gridHtml = statuses.map(s => {
+                const group = groups[s].sort((a, b) => (a._statusChangedAt || a.timestamp || 0) - (b._statusChangedAt || b.timestamp || 0));
+                if (group.length > 0) hasOrders = true;
+
+                const cardsHtml = group.map(o => {
+                    const refTime = o._statusChangedAt || o.timestamp || now;
+                    const elapsed = now - refTime;
+                    const sla = getSLAClass(elapsed);
+                    const timer = formatElapsed(elapsed);
+                    const ps = derivePaymentStatus(o);
+                    const payBadge = ps === 'pending' ? '<span class="k-pay-indicator pending">⏳ Pendiente</span>' : '';
+                    const isRetiro = o.metodo === 'Retiro';
+                    const items = (o.items || []).slice(0, 3).map(i => `${i.qty || 1}x ${i.name || 'Producto'}${i.size && i.size !== 'U' ? ' (' + i.size + ')' : ''}`).join('<br>');
+                    const extraItems = (o.items || []).length > 3 ? `<span style="color:rgba(255,255,255,0.25);font-size:10px;">+${(o.items||[]).length - 3} más</span>` : '';
+                    const nextAction = getKitchenNextAction(s, o.metodo);
+
+                    let actionButtons = '';
+                    if (s === 'listo' && !isRetiro) {
+                        if (o.driverName) {
+                            actionButtons = `<button class="k-btn-next" onclick="event.stopPropagation();kitchenAdvanceOrder('${o.id}','en_camino')">🛵 Despachar</button>`;
+                        } else {
+                            actionButtons = `<button class="k-btn-next" onclick="event.stopPropagation();assignDriver('${o.id}')">🛵 Asignar repartidor</button>`;
+                        }
+                    } else if (s === 'en_camino') {
+                        const entregarBtn = `<button class="k-btn-next" onclick="event.stopPropagation();kitchenAdvanceOrder('${o.id}','entregado')">🏁 Entregar</button>`;
+                        const contactBtn = o.driverPhone ? `<button class="k-btn-contact" onclick="event.stopPropagation();contactDriver('${o.driverPhone}')">📞 Contactar</button>` : '';
+                        actionButtons = entregarBtn + (contactBtn ? ` ${contactBtn}` : '');
+                    } else if (nextAction) {
+                        actionButtons = `<button class="k-btn-next" onclick="event.stopPropagation();kitchenAdvanceOrder('${o.id}','${nextAction.next}')">${nextAction.label}</button>`;
+                    }
+
+                    const driverHtml = (s === 'en_camino' && o.driverName)
+                        ? `<div class="k-card-driver">🛵 ${o.driverName}</div>`
+                        : '';
+
+                    return `<div class="k-card" onclick="manageOrder('${o.id}')">
+                        <div class="k-card-top">
+                            <div>
+                                <div class="k-card-id">#${o.id.slice(-5)} ${payBadge}</div>
+                                <div class="k-card-cliente">${o.cliente || 'Cliente'} · ${isRetiro ? '📍 Retiro' : '🛵 Delivery'}</div>
+                            </div>
+                            <div class="k-card-timer ${sla}">${timer}</div>
+                        </div>
+                        <div class="k-card-items"><span>${items}</span>${extraItems}</div>
+                        ${driverHtml}
+                        <div class="k-card-actions">
+                            ${actionButtons}
+                            <button class="k-btn-detail" onclick="event.stopPropagation();manageOrder('${o.id}')">📋 Detalle</button>
+                        </div>
+                    </div>`;
+                }).join('') || '<div class="k-empty">Sin órdenes</div>';
+
+                return `<div class="k-group">
+                    <div class="k-group-header"><span>${labels[s]}</span><span class="k-count">${group.length}</span></div>
+                    <div class="k-group-body">${cardsHtml}</div>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = hasOrders ? `<div class="kitchen-grid">${gridHtml}</div>` : '<div class="k-empty">✨ No hay órdenes activas en cocina</div>';
+        }
+
+        function kitchenAdvanceOrder(id, nextStatus) {
+            setOrderStatus(id, nextStatus).then(() => {
+                renderKitchenView(allOrders);
+            }).catch(e => alert("❌ Error: " + e.message));
+        }
+
+        /* ── Dispatch / Driver ── */
+        function assignDriver(id) {
+            document.getElementById('driver-order-id').value = id;
+            document.getElementById('driver-name').value = '';
+            document.getElementById('driver-phone').value = '';
+            openModal('driver');
+        }
+
+        async function saveDriverAssignment() {
+            const id = document.getElementById('driver-order-id').value;
+            const driverName = document.getElementById('driver-name').value.trim();
+            const driverPhone = document.getElementById('driver-phone').value.trim();
+            if (!driverName || !driverPhone) { alert('Ingresa nombre y teléfono del repartidor'); return; }
+            try {
+                let ref = `orders/${id}`;
+                let snap = await db.ref(ref).once('value');
+                if (!snap.val()) { ref = `pending_orders/${id}`; snap = await db.ref(ref).once('value'); }
+                const order = snap.val();
+                if (!order) throw new Error('Pedido no encontrado');
+
+                const now = Date.now();
+                const timestamps = order._statusTimestamps || {};
+                timestamps.en_camino = now;
+
+                await db.ref(ref).update({
+                    driverName, driverPhone, driverAssignedAt: now,
+                    orderStatus: 'en_camino', _statusChangedAt: now, estado: 'en camino',
+                    _statusTimestamps: timestamps
+                });
+
+                closeModal('driver');
+                notifyOrderState({ id, ...order, driverName, driverPhone, _statusTimestamps: timestamps }, 'en_camino');
+                renderKitchenView(allOrders);
+            } catch (e) { alert('❌ Error: ' + e.message); }
+        }
+
+        function contactDriver(phone) {
+            const clean = (phone || '').replace(/\D/g, '');
+            if (!clean) return;
+            window.open(`https://wa.me/${clean}`, '_blank');
+        }
+
+        function startKitchenTimer() {
+            if (_kitchenTimer) clearInterval(_kitchenTimer);
+            _kitchenTimer = setInterval(() => {
+                const kitchenSection = document.getElementById('kitchen');
+                if (kitchenSection && kitchenSection.classList.contains('active') && allOrders.length > 0) {
+                    renderKitchenView(allOrders);
+                }
+            }, 15000);
+        }
+
+        /* ── Centralized Automation Layer ── */
+        const _notified = new Set();
+
+        function sendPushForOrder(order, event) {
+            const titleMap = {
+                en_horno: 'Tu pedido está en el horno',
+                listo: 'Tu pedido está listo',
+                en_camino: 'Tu pedido va en camino',
+                entregado: 'Tu pedido fue entregado',
+                payment_confirmed: 'Pago confirmado',
+                payment_pending: 'Pago pendiente'
+            };
+            var ptitle = titleMap[event] || 'Peppe\'s Pizza';
+            var pbody = 'Pedido #' + (order.id ? order.id.slice(-5) : '');
+            var purl = order.id && order.auth_token ? '/track.html?id=' + encodeURIComponent(order.id) + '&token=' + encodeURIComponent(order.auth_token) : '/';
+            fetch('/api/send-push.js', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ scope: 'order:' + order.id, title: ptitle, body: pbody, url: purl })
+            }).catch(function () {});
+        }
+
+        function notifyOrderState(order, event, options) {
+            const { paymentLink } = options || {};
+
+            const dedupKey = `${order.id}:${event}`;
+            if (_notified.has(dedupKey)) return false;
+
+            const eventTypeMap = {
+                payment_pending: 'payment_pending',
+                payment_confirmed: 'payment_confirmed',
+                payment_reminder: 'payment_reminder',
+                en_horno: 'en_horno',
+                listo: 'listo',
+                en_camino: 'en_camino',
+                entregado: 'entregado',
+                tracking_link: 'tracking_link',
+                retention_comeback: 'retention_comeback',
+                retention_inactive: 'retention_inactive',
+                retention_reorder: 'retention_reorder'
+            };
+
+            const waType = eventTypeMap[event];
+            if (!waType) return false;
+
+            sendOrderWhatsAppMessage(order, waType, paymentLink);
+            sendPushForOrder(order, event);
+
+            _notified.add(dedupKey);
+
+            const node = order.adminCreated ? 'pending_orders' : 'orders';
+            db.ref(`${node}/${order.id}/_notifications/${event}`).set({ sentAt: Date.now() }).catch(() => {});
+
+            return true;
+        }
+
+        /* ── Customer Intelligence ── */
+        let _customerProfiles = [];
+        let _customerFiltered = [];
+
+        function deriveCustomerProfiles(orders) {
+            const map = {};
+            const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            orders.forEach(o => {
+                const phone = normalizePhoneLocal(o.telefono || '');
+                if (!phone) return;
+                if (!map[phone]) {
+                    map[phone] = {
+                        phone, cliente: o.cliente || 'Cliente',
+                        firstOrder: o.timestamp || 0, lastOrder: o.timestamp || 0,
+                        totalOrders: 0, totalSpent: 0,
+                        orderIds: [], products: {}, methods: {}, addresses: new Set(),
+                        timestamps: [], combos: {}
+                    };
+                }
+                const p = map[phone];
+                p.totalOrders++;
+                p.totalSpent += o.total || 0;
+                if ((o.timestamp || 0) > p.lastOrder) { p.lastOrder = o.timestamp; p.cliente = o.cliente || p.cliente; }
+                if ((o.timestamp || 0) < p.firstOrder && o.timestamp) p.firstOrder = o.timestamp;
+                p.orderIds.push(o.id);
+                if (o.timestamp) p.timestamps.push(o.timestamp);
+                (o.items || []).forEach(item => {
+                    const name = item.name || 'Producto';
+                    p.products[name] = (p.products[name] || 0) + (item.qty || 1);
+                });
+                // Track item combos
+                if (o.items && o.items.length) {
+                    const comboKey = o.items.map(i => `${i.qty || 1}x${i.name || ''}${i.size && i.size !== 'U' ? '(' + i.size + ')' : ''}`).sort().join(' + ');
+                    p.combos[comboKey] = (p.combos[comboKey] || 0) + 1;
+                }
+                if (o.metodo) p.methods[o.metodo] = (p.methods[o.metodo] || 0) + 1;
+                if (o.direccion) p.addresses.add(o.direccion);
+            });
+
+            let profiles = Object.values(map).map(p => {
+                // Timing patterns
+                const dayCount = {};
+                const hourCount = {};
+                p.timestamps.forEach(ts => {
+                    const d = new Date(ts);
+                    dayCount[d.getDay()] = (dayCount[d.getDay()] || 0) + 1;
+                    hourCount[d.getHours()] = (hourCount[d.getHours()] || 0) + 1;
+                });
+                const prefDays = Object.entries(dayCount).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([d]) => DAY_NAMES[parseInt(d)]);
+                const peakHour = Object.entries(hourCount).sort((a, b) => b[1] - a[1])[0];
+                const timeLabel = peakHour ? (parseInt(peakHour[0]) < 12 ? 'mañana' : parseInt(peakHour[0]) < 18 ? 'tarde' : 'noche') : '';
+
+                // Top combo
+                const topCombo = Object.entries(p.combos).sort((a, b) => b[1] - a[1])[0];
+
+                // Last order template (for reorder)
+                const lastOrderData = p.orderIds.length ? orders.find(o => o.id === p.orderIds[0]) : null;
+                // Actually find the most recent by timestamp
+                const sortedOrders = orders.filter(o => normalizePhoneLocal(o.telefono || '') === phone).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                const lastOrder = sortedOrders[0] || null;
+
+                const daysSinceLast = p.lastOrder ? Math.floor((Date.now() - p.lastOrder) / 86400000) : null;
+
+                return {
+                    ...p,
+                    addresses: [...p.addresses],
+                    avgTicket: p.totalOrders ? Math.round(p.totalSpent / p.totalOrders) : 0,
+                    favoriteProducts: Object.entries(p.products).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n]) => n),
+                    daysSinceLast,
+                    isRepeat: p.totalOrders >= 2,
+                    isInactive: daysSinceLast !== null && daysSinceLast > 30,
+                    timing: {
+                        preferredDays: prefDays,
+                        timeLabel,
+                        peakHourCount: peakHour ? peakHour[1] : 0
+                    },
+                    topCombo: topCombo ? { label: topCombo[0], count: topCombo[1] } : null,
+                    lastOrderId: lastOrder?.id || null,
+                    lastOrderItems: lastOrder?.items || null,
+                    lastOrderTotal: lastOrder?.total || 0,
+                    // Retention scoring
+                    loyaltyScore: Math.min(100, Math.round(
+                        (Math.min(p.totalOrders, 20) / 20 * 40) +       // up to 40pts for frequency
+                        (Math.min(p.totalSpent, 500000) / 500000 * 30) + // up to 30pts for spend
+                        (p.isRepeat ? 15 : 0) +                         // 15pts for repeat
+                        (daysSinceLast !== null && daysSinceLast < 7 ? 15 : 0) // 15pts for recency
+                    )),
+                    churnRisk: daysSinceLast === null ? 'new' :
+                        daysSinceLast > 60 ? 'high' :
+                        daysSinceLast > 30 ? 'medium' : 'low',
+                    expectedReturnLabel: daysSinceLast === null ? 'Nuevo cliente' :
+                        daysSinceLast < 3 ? 'Volverá pronto' :
+                        daysSinceLast < 7 ? 'Volverá esta semana' :
+                        daysSinceLast < 14 ? 'Cliente activo' :
+                        daysSinceLast < 30 ? 'Riesgo medio' :
+                        'Cliente inactivo'
+                };
+            });
+
+            const sorted = [...profiles].sort((a, b) => b.totalSpent - a.totalSpent);
+            const top20 = Math.max(1, Math.ceil(sorted.length * 0.2));
+            const vipSet = new Set(sorted.slice(0, top20).map(p => p.phone));
+            profiles.forEach(p => { p.isVip = vipSet.has(p.phone) || p.totalOrders >= 10; });
+
+            return profiles.sort((a, b) => b.totalOrders - a.totalOrders || b.totalSpent - a.totalSpent);
+        }
+
+        function loadCustomers() {
+            const ordersRef = db.ref('orders');
+            const pendingRef = db.ref('pending_orders');
+            Promise.all([ordersRef.once('value'), pendingRef.once('value')]).then(([ordersSnap, pendingSnap]) => {
+                let all = [];
+                const oData = ordersSnap.val();
+                if (oData) all = Object.keys(oData).map(id => ({ id, ...oData[id] }));
+                const pData = pendingSnap.val();
+                if (pData) Object.keys(pData).forEach(id => { if (!all.find(o => o.id === id)) all.push({ id, ...pData[id] }); });
+                _customerProfiles = deriveCustomerProfiles(all);
+                _customerFiltered = [..._customerProfiles];
+                renderCustomers(_customerFiltered);
+            }).catch(err => {
+                console.error('[customers] Error:', err);
+                document.getElementById('customers-view').innerHTML = '<div class="c-empty"><span class="emoji">⚠️</span>Error cargando datos</div>';
+            });
+        }
+
+        function renderCustomers(profiles) {
+            const container = document.getElementById('customers-view');
+            if (!container) return;
+            if (!profiles.length) {
+                container.innerHTML = '<div class="c-empty"><span class="emoji">📭</span>Sin clientes aún</div>';
+                return;
+            }
+            container.innerHTML = profiles.map(p => {
+                const favs = p.favoriteProducts.length ? p.favoriteProducts.join(' · ') : '—';
+                const lastLabel = p.daysSinceLast === null ? '—' : p.daysSinceLast === 0 ? 'Hoy' : p.daysSinceLast === 1 ? 'Ayer' : `Hace ${p.daysSinceLast} días`;
+                const lastCls = p.isInactive ? 'last inactive' : 'last';
+                const vipBadge = p.isVip ? '<span class="c-card-vip">⭐ VIP</span>' : '';
+
+                // Timing insight
+                let timingStr = '';
+                if (p.timing.preferredDays.length && p.timing.timeLabel) {
+                    timingStr = `🕐 ${p.timing.preferredDays.join('/')} a la ${p.timing.timeLabel}`;
+                } else if (p.timing.preferredDays.length) {
+                    timingStr = `🕐 Usualmente ${p.timing.preferredDays.join('/')}`;
+                }
+
+                // Retention label
+                let retLabel = '';
+                let retCls = '';
+                if (p.churnRisk === 'high') { retLabel = '🔴 Inactivo'; retCls = 'inactive'; }
+                else if (p.churnRisk === 'medium') { retLabel = '🟡 Riesgo medio'; retCls = ''; }
+                else if (p.expectedReturnLabel === 'Volverá pronto') { retLabel = '🟢 Volverá pronto'; retCls = ''; }
+                else if (p.expectedReturnLabel === 'Nuevo cliente') { retLabel = '🆕 Nuevo'; retCls = ''; }
+                else { retLabel = '🟢 Activo'; retCls = ''; }
+
+                // Combo insight
+                let comboStr = '';
+                if (p.topCombo && p.topCombo.count > 1) {
+                    const shortCombo = p.topCombo.label.length > 30 ? p.topCombo.label.slice(0, 28) + '…' : p.topCombo.label;
+                    comboStr = `🔄 ${shortCombo}`;
+                }
+
+                return `<div class="c-card" onclick="toggleCustomerDetail('${p.phone}')">
+                    <div class="c-card-header">
+                        <span class="c-card-name">${p.cliente}</span>
+                        ${vipBadge}
+                    </div>
+                    <div class="c-card-phone">📞 <a href="https://wa.me/${p.phone}" target="_blank">${p.phone}</a></div>
+                    <div class="c-card-stats">
+                        <div class="c-card-stat"><span class="val">${p.totalOrders}</span><span class="lbl">Pedidos</span></div>
+                        <div class="c-card-stat"><span class="val">$${(p.totalSpent || 0).toLocaleString()}</span><span class="lbl">Gastado</span></div>
+                        <div class="c-card-stat"><span class="val">$${(p.avgTicket || 0).toLocaleString()}</span><span class="lbl">Ticket prom.</span></div>
+                    </div>
+                    <div class="c-card-prods">🍕 ${favs}</div>
+                    ${timingStr ? `<div class="c-card-prods" style="color:rgba(255,255,255,0.4);">${timingStr}</div>` : ''}
+                    ${comboStr ? `<div class="c-card-prods" style="color:var(--blue);font-weight:500;">${comboStr}</div>` : ''}
+                    <div class="c-card-footer">
+                        <span class="${lastCls}">${lastLabel}</span>
+                        <span style="${retCls === 'inactive' ? 'color:#ff6b6b;' : ''}">${retLabel}</span>
+                    </div>
+                    <div class="c-card-detail" id="cd-${p.phone}"></div>
+                </div>`;
+            }).join('');
+        }
+
+        function filterCustomers(query) {
+            const q = query.toLowerCase().trim();
+            if (!q) {
+                _customerFiltered = [..._customerProfiles];
+            } else {
+                _customerFiltered = _customerProfiles.filter(p =>
+                    p.cliente.toLowerCase().includes(q) || p.phone.includes(q)
+                );
+            }
+            const sort = document.getElementById('c-sort').value;
+            applyCustomerSort(sort);
+        }
+
+        function sortCustomers(by) {
+            applyCustomerSort(by);
+        }
+
+        function applyCustomerSort(by) {
+            const map = {
+                orders: (a, b) => b.totalOrders - a.totalOrders || b.totalSpent - a.totalSpent,
+                spent: (a, b) => b.totalSpent - a.totalSpent || b.totalOrders - a.totalOrders,
+                recent: (a, b) => (b.lastOrder || 0) - (a.lastOrder || 0),
+                oldest: (a, b) => (a.lastOrder || 0) - (b.lastOrder || 0)
+            };
+            _customerFiltered.sort(map[by] || map.orders);
+            renderCustomers(_customerFiltered);
+        }
+
+        function toggleCustomerDetail(phone) {
+            const el = document.getElementById('cd-' + phone);
+            if (!el) return;
+            const isOpen = el.classList.contains('open');
+            document.querySelectorAll('.c-card-detail.open').forEach(e => e.classList.remove('open'));
+            if (isOpen) return;
+            el.classList.add('open');
+            if (!el.innerHTML) {
+                const profile = _customerProfiles.find(p => p.phone === phone);
+                if (!profile) return;
+                // Build retention insight
+                let riskColor = '#2ecc71';
+                if (profile.churnRisk === 'high') riskColor = '#ff6b6b';
+                else if (profile.churnRisk === 'medium') riskColor = '#f1c40f';
+                const timingLine = profile.timing.preferredDays.length
+                    ? `Usualmente ${profile.timing.preferredDays.join('/')}${profile.timing.timeLabel ? ' a la ' + profile.timing.timeLabel : ''}`
+                    : 'Sin patrón de horario';
+                const comboLine = profile.topCombo && profile.topCombo.count > 1
+                    ? `Combo frecuente: ${profile.topCombo.label} (${profile.topCombo.count}x)`
+                    : null;
+
+                el.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;margin-bottom:8px;font-size:12px;">
+                        <span style="color:rgba(255,255,255,0.4);">Lealtad</span>
+                        <span style="color:${riskColor};font-weight:600;">${profile.loyaltyScore}/100 · ${profile.expectedReturnLabel}</span>
+                    </div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.3);padding:4px 0 8px;line-height:1.6;">
+                        ${timingLine}<br>
+                        ${comboLine ? comboLine + '<br>' : ''}
+                        Ticket promedio $${(profile.avgTicket || 0).toLocaleString()}
+                    </div>
+                    <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.5px;padding:4px 0;border-top:1px solid rgba(255,255,255,0.06);">Historial</div>
+                `;
+                // Fetch order list for this customer
+                const ordersRef = db.ref('orders');
+                const pendingRef = db.ref('pending_orders');
+                Promise.all([ordersRef.once('value'), pendingRef.once('value')]).then(([oSnap, pSnap]) => {
+                    let all = [];
+                    const oData = oSnap.val();
+                    if (oData) all = Object.keys(oData).map(id => ({ id, ...oData[id] }));
+                    const pData = pSnap.val();
+                    if (pData) Object.keys(pData).forEach(id => { if (!all.find(o => o.id === id)) all.push({ id, ...pData[id] }); });
+                    const custOrders = all.filter(o => normalizePhoneLocal(o.telefono || '') === phone)
+                        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                    el.innerHTML += custOrders.map(o => {
+                        const date = o.timestamp ? new Date(o.timestamp).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' }) : '—';
+                        const os = deriveOrderStatus(o);
+                        return `<div class="c-order-row" onclick="event.stopPropagation();manageOrder('${o.id}')" style="cursor:pointer;">
+                            <span class="oid">#${o.id.slice(-5)}</span>
+                            <span class="odate">${date}</span>
+                            <span>${getStatusLabel(os)}</span>
+                            <span class="ototal">$${(o.total || 0).toLocaleString()}</span>
+                        </div>`;
+                    }).join('') || '<div style="padding:8px;text-align:center;color:rgba(255,255,255,0.3);font-size:12px;">Sin pedidos</div>';
+                });
+            }
+        }
+
+        function getStatusLabel(os) {
+            const labels = { recibido: '📥 Recibido', en_horno: '🔥 Horno', listo: '✅ Listo', en_camino: '🛵 Camino', entregado: '🏁 Entregado', cancelado: '❌ Cancelado' };
+            return labels[os] || os;
+        }
+
+        function getCustomerSummary(phone) {
+            if (!phone) return '';
+            const profile = _customerProfiles.find(p => p.phone === phone);
+            if (!profile) return '<div class="customer-summary"><div class="cs-title">Cliente</div><div style="font-size:12px;color:var(--dim);">Sin historial disponible</div></div>';
+            const favs = profile.favoriteProducts.length ? profile.favoriteProducts.join(', ') : '—';
+            const lastLabel = profile.daysSinceLast === null ? '—' : profile.daysSinceLast === 0 ? 'Hoy' : `Hace ${profile.daysSinceLast} días`;
+            const timingLine = profile.timing.preferredDays.length
+                ? `${profile.timing.preferredDays.join('/')}${profile.timing.timeLabel ? ' a la ' + profile.timing.timeLabel : ''}`
+                : null;
+            return `<div class="customer-summary">
+                <div class="cs-title">👤 ${profile.cliente} ${profile.isVip ? '⭐ VIP' : ''} · Lealtad ${profile.loyaltyScore}/100</div>
+                <div class="cs-row"><span class="cs-label">Pedidos</span><span class="cs-value">${profile.totalOrders}</span></div>
+                <div class="cs-row"><span class="cs-label">Total gastado</span><span class="cs-value green">$${(profile.totalSpent || 0).toLocaleString()}</span></div>
+                <div class="cs-row"><span class="cs-label">Ticket prom.</span><span class="cs-value">$${(profile.avgTicket || 0).toLocaleString()}</span></div>
+                <div class="cs-row"><span class="cs-label">Favoritos</span><span class="cs-value">${favs}</span></div>
+                <div class="cs-row"><span class="cs-label">últ. pedido</span><span class="cs-value">${lastLabel}</span></div>
+                ${timingLine ? `<div class="cs-row"><span class="cs-label">Horario</span><span class="cs-value">${timingLine}</span></div>` : ''}
+                <div class="cs-row"><span class="cs-label">Estado</span><span class="cs-value">${profile.expectedReturnLabel}</span></div>
+            </div>`;
+        }
+
+        function initProductSearch() {
+            const searchInput = document.getElementById('no-product-search');
+            if (!searchInput) return;
+            searchInput.addEventListener('input', function () { onProductSearchInput(this.value); });
+            searchInput.addEventListener('focus', function () { if (!this.value) showRecentProducts(); });
+            searchInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') hideResults();
+                if (e.key === 'Enter' && _selectedProductId) { e.preventDefault(); addNewOrderProduct(); }
+            });
+            document.addEventListener('click', function (e) {
+                const area = document.getElementById('no-add-product-area');
+                if (area && !area.contains(e.target)) hideResults();
+            });
         }
 
         initApp();

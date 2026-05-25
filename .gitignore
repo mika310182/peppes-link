@@ -1,3 +1,11 @@
 NUL
 .vercel
 
+
+# Dependencies
+node_modules/
+
+# Agent/IDE artifacts.skills/
+*.log
+.DS_Store
+Thumbs.db
