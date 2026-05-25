@@ -3385,30 +3385,41 @@
       const snap = document.getElementById("pizzasSnap");
       const list = getCleanProductList(id);
 
-      snap.innerHTML = list.flatMap((p, pi) => {
-        const sizes = getSizesForProduct(p);
-        return sizes.map((sz, vi) =>
-          `<div class="pizzaSlide" data-prod="${pi}" data-var="${vi}"><img class="prodSlideImg" src="${resolveImgPath(p.img)}" loading="lazy" onerror="this.onerror=null;this.src='assets/placeholder.png'"></div>`
-        );
-      }).join("");
+      snap.innerHTML = list.map((p, pi) =>
+        `<div class="pizzaSlide" data-prod="${pi}"><img class="prodSlideImg" src="${resolveImgPath(p.img)}" loading="lazy" onerror="this.onerror=null;this.src='assets/placeholder.png'"></div>`
+      ).join("");
 
       if (activeSlideObserver) { activeSlideObserver.disconnect(); activeSlideObserver = null; }
 
       const obs = new IntersectionObserver(ents => ents.forEach(e => {
         if (e.isIntersecting) {
           const pi = parseInt(e.target.dataset.prod);
-          const vi = parseInt(e.target.dataset.var);
-          if (pi !== state.productIndex || vi !== state.variantIndex) {
-            state.productIndex = pi; state.variantIndex = vi;
-            const p = list[pi];
-            if (p) {
-              const sizes = getSizesForProduct(p);
-              state.size = sizes[vi] || 'U';
+          if (pi === state.productIndex) return;
+          const currentP = list[state.productIndex];
+          if (currentP) {
+            const sizes = getSizesForProduct(currentP);
+            const curIdx = sizes.indexOf(state.size);
+            if (pi > state.productIndex && curIdx < sizes.length - 1) {
+              state.size = sizes[curIdx + 1];
+              state.variantIndex = curIdx + 1;
+              snap.querySelector(`[data-prod="${state.productIndex}"]`).scrollIntoView({ behavior: 'instant', inline: 'center' });
+              renderExtras(); renderDetails();
+              return;
             }
-            state.selectedExtras.clear(); clearToppings();
-            state.promoSelections = [];
-            renderExtras(); renderDetails();
+            if (pi < state.productIndex && curIdx > 0) {
+              state.size = sizes[curIdx - 1];
+              state.variantIndex = curIdx - 1;
+              snap.querySelector(`[data-prod="${state.productIndex}"]`).scrollIntoView({ behavior: 'instant', inline: 'center' });
+              renderExtras(); renderDetails();
+              return;
+            }
           }
+          state.productIndex = pi; state.variantIndex = 0;
+          const p = list[pi];
+          if (p) { const sizes = getSizesForProduct(p); state.size = sizes[0] || 'U'; }
+          state.selectedExtras.clear(); clearToppings();
+          state.promoSelections = [];
+          renderExtras(); renderDetails();
         }
       }), { root: snap, threshold: 0.6 });
 
@@ -4545,9 +4556,6 @@
           if (state.variantIndex < 0) state.variantIndex = 0;
         }
         renderExtras(); renderDetails();
-        const snap = document.getElementById("pizzasSnap");
-        const target = snap?.querySelector(`[data-prod="${state.productIndex}"][data-var="${state.variantIndex}"]`);
-        if (target) target.scrollIntoView({ behavior: 'instant', inline: 'center' });
       }
     };
 
