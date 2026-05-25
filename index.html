@@ -2864,7 +2864,7 @@
     };
 
     let state = {
-      categoryId: "pizzas", productIndex: 0, size: "M", qty: 1,
+      categoryId: "pizzas", productIndex: 0, variantIndex: 0, size: "M", qty: 1,
       cart: [], selectedExtras: new Set(), promoSelections: [], isDelivery: false
     };
 
@@ -2874,6 +2874,12 @@
     const ADD_BTN_HTML = 'Agregar <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>';
 
     const scaleBySize = { P: 0.82, M: 1.0, G: 1.15, U: 1.0 };
+
+    function getSizesForProduct(p) {
+      if (!p || !p.prices) return ['U'];
+      const sizes = Object.keys(p.prices).filter(s => p.prices[s] > 0);
+      return sizes.length > 0 ? sizes : ['U'];
+    }
     let tiempoRestante = 180;
     let intervalCancelacion;
     let currentOrderId = "";
@@ -3183,6 +3189,9 @@
         const firstAvailable = Array.from(sizeBtns).find(b => !b.disabled && b.style.display !== 'none');
         if (firstAvailable) {
           state.size = firstAvailable.dataset.size;
+          const sizes = getSizesForProduct(p);
+          state.variantIndex = sizes.indexOf(state.size);
+          if (state.variantIndex < 0) state.variantIndex = 0;
           sizeBtns.forEach(x => x.classList.toggle("isActive", x === firstAvailable));
           renderExtras();
           renderDetails();
@@ -3368,25 +3377,38 @@
     let activeSlideObserver = null; // ✅ FIX: track observer to avoid leaks
 
     function selectCategory(id) {
-      state.categoryId = id; state.productIndex = 0;
+      state.categoryId = id; state.productIndex = 0; state.variantIndex = 0;
       state.selectedExtras.clear(); clearToppings();
-      state.promoSelections = []; // ✅ FIX: limpiar selecciones promo al cambiar categoría
+      state.promoSelections = [];
       renderCategories();
 
       const snap = document.getElementById("pizzasSnap");
       const list = getCleanProductList(id);
 
-      snap.innerHTML = list.map((p, idx) => `<div class="pizzaSlide" data-index="${idx}"><img class="prodSlideImg" src="${resolveImgPath(p.img)}" loading="lazy" onerror="this.onerror=null;this.src='assets/placeholder.png'"></div>`).join("");
+      snap.innerHTML = list.flatMap((p, pi) => {
+        const sizes = getSizesForProduct(p);
+        return sizes.map((sz, vi) =>
+          `<div class="pizzaSlide" data-prod="${pi}" data-var="${vi}"><img class="prodSlideImg" src="${resolveImgPath(p.img)}" loading="lazy" onerror="this.onerror=null;this.src='assets/placeholder.png'"></div>`
+        );
+      }).join("");
 
-      // ✅ FIX: Desconectar observer anterior antes de crear uno nuevo
       if (activeSlideObserver) { activeSlideObserver.disconnect(); activeSlideObserver = null; }
 
       const obs = new IntersectionObserver(ents => ents.forEach(e => {
         if (e.isIntersecting) {
-          state.productIndex = parseInt(e.target.dataset.index);
-          state.selectedExtras.clear(); clearToppings();
-          state.promoSelections = [];
-          renderExtras(); renderDetails();
+          const pi = parseInt(e.target.dataset.prod);
+          const vi = parseInt(e.target.dataset.var);
+          if (pi !== state.productIndex || vi !== state.variantIndex) {
+            state.productIndex = pi; state.variantIndex = vi;
+            const p = list[pi];
+            if (p) {
+              const sizes = getSizesForProduct(p);
+              state.size = sizes[vi] || 'U';
+            }
+            state.selectedExtras.clear(); clearToppings();
+            state.promoSelections = [];
+            renderExtras(); renderDetails();
+          }
         }
       }), { root: snap, threshold: 0.6 });
 
@@ -3396,6 +3418,11 @@
       const hasSizes = list.some(p => p.prices && (p.prices.P || p.prices.M || p.prices.G));
       document.getElementById("sizes").style.display = hasSizes ? "flex" : "none";
       state.size = hasSizes ? (id === 'pizzas' ? 'M' : 'P') : 'U';
+      if (list.length > 0) {
+        const firstSizes = getSizesForProduct(list[0]);
+        const idx = firstSizes.indexOf(state.size);
+        state.variantIndex = idx >= 0 ? idx : 0;
+      }
       renderExtras(); renderDetails();
     }
 
@@ -4510,7 +4537,17 @@
       if (b && !b.disabled) {
         state.size = b.dataset.size;
         document.querySelectorAll(".sizeBtn").forEach(x => x.classList.toggle("isActive", x === b));
+        const list = getCleanProductList(state.categoryId);
+        const p = list[state.productIndex];
+        if (p) {
+          const sizes = getSizesForProduct(p);
+          state.variantIndex = sizes.indexOf(state.size);
+          if (state.variantIndex < 0) state.variantIndex = 0;
+        }
         renderExtras(); renderDetails();
+        const snap = document.getElementById("pizzasSnap");
+        const target = snap?.querySelector(`[data-prod="${state.productIndex}"][data-var="${state.variantIndex}"]`);
+        if (target) target.scrollIntoView({ behavior: 'instant', inline: 'center' });
       }
     };
 
