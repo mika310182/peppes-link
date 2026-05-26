@@ -3513,6 +3513,11 @@
           activeSlide.appendChild(overlay);
           activeSlide.appendChild(overlayNext);
         }
+        // For products with per-size images, update the slide img to prevent double-render through transparent overlay areas
+        if (state.categoryId === 'lasanas' && p.imgBySize?.[state.size]) {
+          const slideImg = activeSlide?.querySelector('.prodSlideImg');
+          if (slideImg) slideImg.src = resolveImgPath(p.imgBySize[state.size]);
+        }
         const newSrc = resolveImgPath(p.imgBySize?.[state.size] || p.img);
         const currentSrc = overlay.getAttribute('src');
         if (currentSrc && currentSrc !== newSrc) {
