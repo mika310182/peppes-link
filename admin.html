@@ -4348,7 +4348,7 @@
                             body: JSON.stringify({
                                 orderId,
                                 items: order.items || [],
-                                deliveryCost: order.metodo === 'Despacho' ? (order.deliveryCost || 0) : 0,
+                                deliveryCost: order.metodo === 'Delivery' ? (order.deliveryCost || 0) : 0,
                                 authToken
                             })
                         });
@@ -4714,7 +4714,8 @@
                     { id: "pas_bolo", type: "Pastas", name: "Pasta Boloñesa", desc: "Salsa boloñesa artesanal con carne.", img: "assets/pasta-boloñesa.png", prices: { U: 6990 } },
                     { id: "pas_4que", type: "Pastas", name: "Pasta 4 Quesos", desc: "Fusión de 4 quesos.", img: "assets/pasta-4-quesos.png", prices: { U: 6990 } },
                     { id: "pas_amat", type: "Pastas", name: "Pasta Amatricciana", desc: "Salsa de tomate, cebolla tocino y un toque picante.", img: "assets/pasta-amatricciana.png", prices: { U: 6990 } },
-                    { id: "pas_pest", type: "Pastas", name: "Pasta Pesto", desc: "Salsa pesto artesanal.", img: "assets/pasta-pesto.png", prices: { U: 6990 } }
+                    { id: "pas_pest", type: "Pastas", name: "Pasta Pesto", desc: "Salsa pesto artesanal.", img: "assets/pasta-pesto.png", prices: { U: 6990 } },
+                    { id: "pasta_angelo", type: "Pastas", name: "Pasta Angelo", desc: "Fideos con topping de salsa 3 quesos + jamón.", img: "assets/pasta-angelo.png", prices: { U: 6990 } }
                 ],
                 antojos: [
                     { id: "palitos_q", type: "Snack", name: "Palitos Ajo-Queso", desc: "8 unidades con ajo y queso.", img: "assets/palitos-ajo-queso.png", prices: { U: 4990 } },
