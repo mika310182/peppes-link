@@ -3510,6 +3510,11 @@
 
       // ── Lasañas: single image swap, no overlay ──
       if (state.categoryId === 'lasanas' && activeSlide) {
+        // Hide pizza overlay elements to prevent ghost rendering
+        const ov = document.getElementById('detailOverlay');
+        const ovn = document.getElementById('detailOverlayNext');
+        if (ov) ov.style.display = 'none';
+        if (ovn) ovn.style.display = 'none';
         const slideImg = activeSlide.querySelector('.prodSlideImg');
         if (slideImg) {
           const newSrc = resolveImgPath(p.imgBySize?.[state.size] || p.img);
@@ -3531,6 +3536,9 @@
         // ── Pizzas / others: overlay crossfade system ──
         const overlay = document.getElementById('detailOverlay');
         const overlayNext = document.getElementById('detailOverlayNext');
+        // Restore overlay visibility when leaving lasañas
+        if (overlay) overlay.style.display = '';
+        if (overlayNext) overlayNext.style.display = '';
         if (overlay && overlayNext) {
           if (activeSlide && overlay.parentNode !== activeSlide) {
             activeSlide.appendChild(overlay);
