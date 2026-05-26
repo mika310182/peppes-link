@@ -3515,6 +3515,8 @@
         const ovn = document.getElementById('detailOverlayNext');
         if (ov) ov.style.display = 'none';
         if (ovn) ovn.style.display = 'none';
+        const tl = document.getElementById('toppingLayer');
+        if (tl) tl.style.display = 'none';
         const slideImg = activeSlide.querySelector('.prodSlideImg');
         if (slideImg) {
           const newSrc = resolveImgPath(p.imgBySize?.[state.size] || p.img);
@@ -3539,6 +3541,8 @@
         // Restore overlay visibility when leaving lasañas
         if (overlay) overlay.style.display = '';
         if (overlayNext) overlayNext.style.display = '';
+        const tl = document.getElementById('toppingLayer');
+        if (tl) tl.style.display = '';
         if (overlay && overlayNext) {
           if (activeSlide && overlay.parentNode !== activeSlide) {
             activeSlide.appendChild(overlay);
