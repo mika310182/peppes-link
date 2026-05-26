@@ -2657,7 +2657,8 @@
       const merged = {
         ...staticProd,
         ...remoteProd,
-        prices: (() => { const m = { ...(staticProd?.prices || { U: 0 }), ...(remoteProd.prices || {}) }; Object.keys(staticProd?.prices || {}).forEach(k => { const v = remoteProd.prices?.[k]; if (v === '' || v === null || v === undefined) m[k] = (staticProd?.prices || {})[k]; }); return cleanPrices(m); })()
+        prices: (() => { const m = { ...(staticProd?.prices || { U: 0 }), ...(remoteProd.prices || {}) }; Object.keys(staticProd?.prices || {}).forEach(k => { const v = remoteProd.prices?.[k]; if (v === '' || v === null || v === undefined) m[k] = (staticProd?.prices || {})[k]; }); return cleanPrices(m); })(),
+        imgBySize: (() => { const m = { ...(staticProd?.imgBySize || {}), ...(remoteProd?.imgBySize || {}) }; Object.keys(staticProd?.imgBySize || {}).forEach(k => { const v = remoteProd?.imgBySize?.[k]; if (!v || v.trim() === '') m[k] = (staticProd?.imgBySize || {})[k]; }); return m; })()
       };
 
       // La disponibilidad debe ser mandatoria desde Firebase si existe
@@ -2729,7 +2730,7 @@
       const staticProds = DATA.products[catId] || [];
       let list = remote.length > 0 ? remote.map(rp => {
         const sp = staticProds.find(p => p.id === rp.id);
-        return sp ? { ...sp, ...rp, prices: (() => { const m = { ...sp.prices, ...rp.prices }; Object.keys(sp.prices).forEach(k => { const v = rp.prices?.[k]; if (v === '' || v === null || v === undefined) m[k] = sp.prices[k]; }); return cleanPrices(m); })() } : (staticProds.length > 0 ? null : rp);
+        return sp ? { ...sp, ...rp, prices: (() => { const m = { ...sp.prices, ...rp.prices }; Object.keys(sp.prices).forEach(k => { const v = rp.prices?.[k]; if (v === '' || v === null || v === undefined) m[k] = sp.prices[k]; }); return cleanPrices(m); })(), imgBySize: (() => { const m = { ...(sp.imgBySize || {}), ...(rp.imgBySize || {}) }; Object.keys(sp.imgBySize || {}).forEach(k => { const v = rp.imgBySize?.[k]; if (!v || v.trim() === '') m[k] = (sp.imgBySize || {})[k]; }); return m; })() } : (staticProds.length > 0 ? null : rp);
       }).filter(Boolean) : staticProds;
 
       // Filtrar por día si es categoría "promo"
