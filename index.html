@@ -2726,7 +2726,7 @@
 
     function getCleanProductList(catId) {
       const inventory = window.REMOTE_DATA.inventory || {};
-      const remote = Object.values(inventory[catId] || {}).filter(p => p && typeof p === "object" && p.id);
+      const remote = Object.entries(inventory[catId] || {}).filter(([, p]) => p && typeof p === "object").map(([key, p]) => ({ ...p, id: p.id || key }));
       const staticProds = DATA.products[catId] || [];
       let list = remote.length > 0 ? remote.map(rp => {
         const sp = staticProds.find(p => p.id === rp.id);
