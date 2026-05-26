@@ -3505,21 +3505,38 @@
       document.getElementById("totalPrice").textContent = "$" + ((priceVal + exT) * state.qty).toLocaleString('es-CL');
       document.getElementById("qty").textContent = state.qty;
 
-      const overlay = document.getElementById('detailOverlay');
-      const overlayNext = document.getElementById('detailOverlayNext');
-      if (overlay && overlayNext) {
-        const activeSlide = document.querySelector(`.pizzaSlide[data-prod="${state.productIndex}"]`);
-        if (activeSlide && overlay.parentNode !== activeSlide) {
-          activeSlide.appendChild(overlay);
-          activeSlide.appendChild(overlayNext);
+      const activeSlide = document.querySelector(`.pizzaSlide[data-prod="${state.productIndex}"]`);
+
+      // ── Lasañas: single image swap, no overlay ──
+      if (state.categoryId === 'lasanas' && activeSlide) {
+        const slideImg = activeSlide.querySelector('.prodSlideImg');
+        if (slideImg) {
+          const newSrc = resolveImgPath(p.imgBySize?.[state.size] || p.img);
+          const currentSrc = slideImg.getAttribute('src');
+          if (currentSrc && currentSrc !== newSrc) {
+            slideImg.style.transition = 'opacity .12s ease-out';
+            slideImg.style.opacity = '0';
+            setTimeout(() => {
+              slideImg.src = newSrc;
+              slideImg.style.opacity = '1';
+              setTimeout(() => { slideImg.style.transition = ''; }, 120);
+            }, 120);
+          } else {
+            slideImg.src = newSrc || slideImg.src;
+            slideImg.style.opacity = '1';
+          }
         }
-        // For products with per-size images, update the slide img to prevent double-render through transparent overlay areas
-        if (state.categoryId === 'lasanas' && p.imgBySize?.[state.size]) {
-          const slideImg = activeSlide?.querySelector('.prodSlideImg');
-          if (slideImg) slideImg.src = resolveImgPath(p.imgBySize[state.size]);
-        }
-        const newSrc = resolveImgPath(p.imgBySize?.[state.size] || p.img);
-        const currentSrc = overlay.getAttribute('src');
+      } else {
+        // ── Pizzas / others: overlay crossfade system ──
+        const overlay = document.getElementById('detailOverlay');
+        const overlayNext = document.getElementById('detailOverlayNext');
+        if (overlay && overlayNext) {
+          if (activeSlide && overlay.parentNode !== activeSlide) {
+            activeSlide.appendChild(overlay);
+            activeSlide.appendChild(overlayNext);
+          }
+          const newSrc = resolveImgPath(p.imgBySize?.[state.size] || p.img);
+          const currentSrc = overlay.getAttribute('src');
         if (currentSrc && currentSrc !== newSrc) {
           window._xfId = (window._xfId || 0) + 1;
           const thisId = window._xfId;
@@ -3556,6 +3573,7 @@
           overlay.src = newSrc || overlay.src; overlay.style.opacity = '1'; overlay.style.transform = `translate(-50%,-50%) scale(${finalScale})`;
           overlayNext.style.opacity = '0'; overlayNext.style.transform = 'translate(-50%,-50%) scale(1.04)';
         }
+      }
       }
 
       if (state.categoryId === 'pizzas') {
