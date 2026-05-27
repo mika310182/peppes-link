@@ -16,6 +16,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-auth-compat.js"></script>
     <script src="/js/notification-utils.js"></script>
+    <script src="/js/distanceUtils.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Titan+One&display=swap"
         rel="stylesheet">
@@ -3199,7 +3200,8 @@
                     <div class="field-row" style="margin-top:12px;">
                         <div class="field">
                             <label>Dirección</label>
-                            <input type="text" id="no-direccion" placeholder="Calle, número, depto" oninput="newOrderDraft.direccion=this.value">
+                            <input type="text" id="no-direccion" placeholder="Calle, número, depto" autocomplete="off" oninput="newOrderDraft.direccion=this.value">
+                            <div id="no-delivery-info" style="margin-top:6px;min-height:18px;"></div>
                         </div>
                     </div>
                 </div>
@@ -3991,6 +3993,30 @@
             newOrderDraft.paymentStatus = 'pending';
             newOrderDraft.orderStatus = 'recibido';
             newOrderDraft.deliveryCost = 0;
+            newOrderDraft._deliveryCoords = null;
+            newOrderDraft._deliveryDistance = null;
+        }
+
+        function adminCalcDeliveryCost(lat, lng) {
+            if (!lat || !lng) {
+                newOrderDraft._deliveryCoords = null;
+                newOrderDraft._deliveryDistance = null;
+                newOrderDraft.deliveryCost = 0;
+                return;
+            }
+            const dist = window.calculateDistanceKm(RESTAURANT_LAT[0], RESTAURANT_LNG[0], lat, lng);
+            const cost = window.getDeliveryPrice(dist);
+            newOrderDraft._deliveryCoords = { lat, lng };
+            newOrderDraft._deliveryDistance = dist;
+            newOrderDraft.deliveryCost = cost !== null ? cost : 0;
+            const info = document.getElementById('no-delivery-info');
+            if (info) {
+                if (cost === null) {
+                    info.innerHTML = '<span style="color:var(--pepper-red);font-size:12px;">🚫 Fuera de zona de entrega (máx. 10 km)</span>';
+                } else {
+                    info.innerHTML = `<span style="font-size:12px;">📍 ${dist.toFixed(2)} km — Envío: $${cost.toLocaleString('es-CL')}</span>`;
+                }
+            }
         }
 
         function getProductPrice(product, size) {
@@ -4175,10 +4201,17 @@
                 return sum + (ex ? (ex.pm || ex.price || 0) : 0);
             }, 0);
             const totalExtras = extraCost;
-            newOrderDraft.deliveryCost = newOrderDraft.metodo === 'Delivery' ? 2000 : 0;
+            if (newOrderDraft.metodo === 'Delivery' && !newOrderDraft._deliveryCoords && !newOrderDraft._deliveryDistance) {
+                newOrderDraft.deliveryCost = 2000;
+            } else if (newOrderDraft.metodo !== 'Delivery') {
+                newOrderDraft.deliveryCost = 0;
+            }
             const delivery = newOrderDraft.deliveryCost;
             const discount = 0;
             const total = subtotal + totalExtras + delivery - discount;
+
+            const infoEl = document.getElementById('no-delivery-info');
+            if (infoEl) infoEl.style.display = newOrderDraft.metodo === 'Delivery' ? '' : 'none';
 
             document.getElementById('no-total-subtotal').textContent = '$' + (subtotal + totalExtras).toLocaleString();
             document.getElementById('no-total-delivery').textContent = '$' + delivery.toLocaleString();
@@ -4200,6 +4233,7 @@
             document.getElementById('no-product-search').value = '';
             document.getElementById('no-product-selected').value = '';
             _selectedProductId = '';
+            document.getElementById('no-delivery-info').innerHTML = '';
             hideResults();
             updateNewOrderSizeOptions();
             populateNewOrderExtras();
@@ -4251,7 +4285,7 @@
                 return sum + (ex ? (ex.pm || ex.price || 0) : 0);
             }, 0);
             const subtotal = productsTotal + extraCost;
-            const deliveryCost = newOrderDraft.metodo === 'Delivery' ? 2000 : 0;
+            const deliveryCost = newOrderDraft.metodo === 'Delivery' ? (newOrderDraft.deliveryCost || 2000) : 0;
             const discount = 0;
             const total = subtotal + deliveryCost - discount;
 
@@ -4294,9 +4328,9 @@
                 telefono: (newOrderDraft.telefono || '').trim(),
                 metodo: newOrderDraft.metodo,
                 direccion: (newOrderDraft.direccion || (newOrderDraft.metodo === 'Retiro' ? 'Retiro en local' : '')).trim() || 'Sin dirección',
-                glink: null,
-                coords: null,
-                distanceKm: null,
+                glink: newOrderDraft._deliveryCoords ? `https://www.google.com/maps?q=${newOrderDraft._deliveryCoords.lat},${newOrderDraft._deliveryCoords.lng}` : null,
+                coords: newOrderDraft._deliveryCoords,
+                distanceKm: newOrderDraft._deliveryDistance,
                 nota: '',
                 items: orderItems,
                 subtotal: subtotal,
@@ -6695,7 +6729,38 @@ ${items}
         }
 
         initApp();
+
+        function initAdminPlacesAutocomplete() {
+            function setup() {
+                const input = document.getElementById('no-direccion');
+                if (!input) { setTimeout(setup, 500); return; }
+                const ac = new google.maps.places.Autocomplete(input, {
+                    types: ['address'],
+                    componentRestrictions: { country: 'cl' },
+                    bounds: new google.maps.LatLngBounds(
+                        new google.maps.LatLng(-23.85, -70.60),
+                        new google.maps.LatLng(-23.45, -70.20)
+                    ),
+                    strictBounds: false,
+                    fields: ['formatted_address', 'geometry', 'address_components']
+                });
+                ac.addListener('place_changed', () => {
+                    const place = ac.getPlace();
+                    if (!place.geometry) return;
+                    const lat = place.geometry.location.lat();
+                    const lng = place.geometry.location.lng();
+                    newOrderDraft.direccion = place.formatted_address || input.value;
+                    input.value = place.formatted_address || input.value;
+                    adminCalcDeliveryCost(lat, lng);
+                    updateNewOrderTotals();
+                });
+            }
+            setup();
+        }
     </script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC1I5hFEM4arr2a5hM_IjnZHHEUgsMcIgM&libraries=places&callback=initAdminPlacesAutocomplete"
+        async defer></script>
 </body>
 
 </html>
