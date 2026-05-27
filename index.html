@@ -3194,7 +3194,7 @@
           btnAdd.innerHTML = isAgotado ? "AGOTADO" : ADD_BTN_HTML;
           btnAdd.style.background = isAgotado ? "#555" : "var(--pepper-red)";
 
-          updateSizeButtons(p);
+          if (state.categoryId === 'pizzas' || state.categoryId === 'lasanas') updateSizeButtons(p);
         }
       });
     }
@@ -3432,12 +3432,17 @@
 
       if (activeSlideObserver) { activeSlideObserver.disconnect(); activeSlideObserver = null; }
 
+      const singleSizeCats = ['pastas', 'antojos', 'ens', 'postres', 'bebidas', 'promo'];
+      const hasSizes = !singleSizeCats.includes(id) && list.some(p => p.prices && (p.prices.P || p.prices.M || p.prices.G));
+      document.getElementById("sizes").style.display = hasSizes ? "flex" : "none";
+      state.size = hasSizes && list.length > 0 ? getDefaultSize(list[0]) : 'U';
+
       const obs = new IntersectionObserver(ents => ents.forEach(e => {
         if (e.isIntersecting) {
           const pi = parseInt(e.target.dataset.prod);
           if (pi === state.productIndex) return;
           state.productIndex = pi;
-          if (list[pi]) state.size = getDefaultSize(list[pi]);
+          if (list[pi]) state.size = hasSizes ? getDefaultSize(list[pi]) : 'U';
           state.selectedExtras.clear(); clearToppings();
           state.promoSelections = [];
           renderExtras(); renderDetails();
@@ -3446,10 +3451,6 @@
 
       document.querySelectorAll('.pizzaSlide').forEach(s => obs.observe(s));
       activeSlideObserver = obs;
-      snap.scrollLeft = 0;
-      const hasSizes = list.some(p => p.prices && (p.prices.P || p.prices.M || p.prices.G));
-      document.getElementById("sizes").style.display = hasSizes ? "flex" : "none";
-      state.size = list.length > 0 ? getDefaultSize(list[0]) : 'U';
       renderExtras(); renderDetails();
     }
 
