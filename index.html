@@ -56,51 +56,27 @@
   <script>
     window.googleMapsReady = false;
     window.initGooglePlacesAutocomplete = function () {
-      function setupAutocomplete() {
-        const input = document.getElementById('address_street');
-        if (!input) {
-          setTimeout(setupAutocomplete, 500);
-          return;
+      window.initAddressAutocomplete('address_street', function(data) {
+        window.customerLocation = {
+          address: data.address,
+          coords: { lat: data.lat, lng: data.lng },
+          glink: data.glink,
+          hasHouseNumber: data.hasHouseNumber,
+          street: data.street,
+          streetNumber: data.streetNumber,
+          rawAddressDetails: data.rawAddressDetails
+        };
+        if (typeof window.updatePricingByCoords === 'function') {
+          window.updatePricingByCoords(data.lat, data.lng, data.rawAddressDetails);
+        } else {
+          setTimeout(function() {
+            if (typeof window.updatePricingByCoords === 'function') {
+              window.updatePricingByCoords(data.lat, data.lng, data.rawAddressDetails);
+            }
+          }, 100);
         }
-        const autocomplete = new google.maps.places.Autocomplete(input, {
-          types: ['address'],
-          componentRestrictions: { country: 'cl' },
-          bounds: new google.maps.LatLngBounds(
-            new google.maps.LatLng(-23.85, -70.60),
-            new google.maps.LatLng(-23.45, -70.20)
-          ),
-          strictBounds: false,
-          fields: ['formatted_address', 'geometry', 'address_components']
-        });
-        autocomplete.addListener('place_changed', () => {
-          const place = autocomplete.getPlace();
-          if (!place.geometry || !place.address_components) return;
-          const route = place.address_components.find(c => c.types.includes('route'));
-          const streetNumber = place.address_components.find(c => c.types.includes('street_number'));
-          const street = route?.long_name || '';
-          const streetNumberVal = streetNumber?.long_name || '';
-          window.customerLocation = {
-            address: place.formatted_address,
-            coords: { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() },
-            glink: `https://www.google.com/maps?q=${place.geometry.location.lat()},${place.geometry.location.lng()}`,
-            hasHouseNumber: !!streetNumber,
-            street: street,
-            streetNumber: streetNumberVal,
-            rawAddressDetails: place.address_components
-          };
-          if (typeof window.updatePricingByCoords === 'function') {
-            window.updatePricingByCoords(place.geometry.location.lat(), place.geometry.location.lng(), place.address_components);
-          } else {
-            setTimeout(() => {
-              if (typeof window.updatePricingByCoords === 'function') {
-                window.updatePricingByCoords(place.geometry.location.lat(), place.geometry.location.lng(), place.address_components);
-              }
-            }, 100);
-          }
-        });
-        window.googleMapsReady = true;
-      }
-      setupAutocomplete();
+      });
+      window.googleMapsReady = true;
     };
   </script>
   <script

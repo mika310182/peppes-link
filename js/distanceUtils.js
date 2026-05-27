@@ -48,3 +48,70 @@ window.getDeliveryPrice = function(distance) {
     // If distance > 10 km: Return null
     return null;
 };
+
+/**
+ * Shared Google Places Autocomplete Pipeline
+ * Used by both client (index.html) and admin (admin.html)
+ * Single source of truth — do not duplicate elsewhere.
+ */
+
+var _addressAutocomplete = null;
+
+window.parsePlaceData = function(place) {
+    if (!place || !place.geometry || !place.address_components) return null;
+    var route = place.address_components.find(function(c) { return c.types.includes('route'); });
+    var streetNumber = place.address_components.find(function(c) { return c.types.includes('street_number'); });
+    return {
+        address: place.formatted_address,
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng(),
+        glink: 'https://www.google.com/maps?q=' + place.geometry.location.lat() + ',' + place.geometry.location.lng(),
+        hasHouseNumber: !!streetNumber,
+        street: (route && route.long_name) || '',
+        streetNumber: (streetNumber && streetNumber.long_name) || '',
+        rawAddressDetails: place.address_components
+    };
+};
+
+window.calculateDeliveryFlow = function(lat, lng) {
+    var dist = window.calculateDistanceKm(RESTAURANT_LAT[0], RESTAURANT_LNG[0], lat, lng);
+    var cost = window.getDeliveryPrice(dist);
+    return {
+        distance: dist,
+        cost: cost,
+        inZone: cost !== null
+    };
+};
+
+window.initAddressAutocomplete = function(inputId, onPlace) {
+    function poll() {
+        var input = document.getElementById(inputId);
+        if (!input) { setTimeout(poll, 500); return; }
+        var ac = new google.maps.places.Autocomplete(input, {
+            types: ['address'],
+            componentRestrictions: { country: 'cl' },
+            bounds: new google.maps.LatLngBounds(
+                new google.maps.LatLng(-23.85, -70.60),
+                new google.maps.LatLng(-23.45, -70.20)
+            ),
+            strictBounds: false,
+            fields: ['formatted_address', 'geometry', 'address_components']
+        });
+        ac.addListener('place_changed', function() {
+            var place = ac.getPlace();
+            var data = window.parsePlaceData(place);
+            if (data && typeof onPlace === 'function') {
+                onPlace(data, input);
+            }
+        });
+        _addressAutocomplete = ac;
+    }
+    poll();
+};
+
+window.cleanupAddressAutocomplete = function() {
+    if (_addressAutocomplete) {
+        google.maps.event.clearInstanceListeners(_addressAutocomplete);
+        _addressAutocomplete = null;
+    }
+};

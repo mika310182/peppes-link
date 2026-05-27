@@ -3997,28 +3997,6 @@
             newOrderDraft._deliveryDistance = null;
         }
 
-        function adminCalcDeliveryCost(lat, lng) {
-            if (!lat || !lng) {
-                newOrderDraft._deliveryCoords = null;
-                newOrderDraft._deliveryDistance = null;
-                newOrderDraft.deliveryCost = 0;
-                return;
-            }
-            const dist = window.calculateDistanceKm(RESTAURANT_LAT[0], RESTAURANT_LNG[0], lat, lng);
-            const cost = window.getDeliveryPrice(dist);
-            newOrderDraft._deliveryCoords = { lat, lng };
-            newOrderDraft._deliveryDistance = dist;
-            newOrderDraft.deliveryCost = cost !== null ? cost : 0;
-            const info = document.getElementById('no-delivery-info');
-            if (info) {
-                if (cost === null) {
-                    info.innerHTML = '<span style="color:var(--pepper-red);font-size:12px;">🚫 Fuera de zona de entrega (máx. 10 km)</span>';
-                } else {
-                    info.innerHTML = `<span style="font-size:12px;">📍 ${dist.toFixed(2)} km — Envío: $${cost.toLocaleString('es-CL')}</span>`;
-                }
-            }
-        }
-
         function getProductPrice(product, size) {
             if (!product || !product.prices) return 0;
             if (size === 'P' || size === 'M') return product.prices[size] || product.prices.U || product.prices.P || 0;
@@ -4201,9 +4179,7 @@
                 return sum + (ex ? (ex.pm || ex.price || 0) : 0);
             }, 0);
             const totalExtras = extraCost;
-            if (newOrderDraft.metodo === 'Delivery' && !newOrderDraft._deliveryCoords && !newOrderDraft._deliveryDistance) {
-                newOrderDraft.deliveryCost = 2000;
-            } else if (newOrderDraft.metodo !== 'Delivery') {
+            if (newOrderDraft.metodo !== 'Delivery') {
                 newOrderDraft.deliveryCost = 0;
             }
             const delivery = newOrderDraft.deliveryCost;
@@ -5670,7 +5646,12 @@
             }
 
             // ── Customer Retention Metrics ──
-            const customerProfiles = deriveCustomerProfiles(orders);
+            let customerProfiles = [];
+            try {
+                customerProfiles = deriveCustomerProfiles(orders);
+            } catch (e) {
+                console.error('[analytics] deriveCustomerProfiles failed:', e);
+            }
             const totalCustomers = customerProfiles.length;
             const repeatCustomers = customerProfiles.filter(p => p.isRepeat).length;
             const vipCustomers = customerProfiles.filter(p => p.isVip).length;
@@ -6471,10 +6452,8 @@ ${items}
                 // Top combo
                 const topCombo = Object.entries(p.combos).sort((a, b) => b[1] - a[1])[0];
 
-                // Last order template (for reorder)
-                const lastOrderData = p.orderIds.length ? orders.find(o => o.id === p.orderIds[0]) : null;
-                // Actually find the most recent by timestamp
-                const sortedOrders = orders.filter(o => normalizePhoneLocal(o.telefono || '') === phone).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                // Find most recent order by timestamp
+                const sortedOrders = orders.filter(o => normalizePhoneLocal(o.telefono || '') === p.phone).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                 const lastOrder = sortedOrders[0] || null;
 
                 const daysSinceLast = p.lastOrder ? Math.floor((Date.now() - p.lastOrder) / 86400000) : null;
@@ -6731,31 +6710,23 @@ ${items}
         initApp();
 
         function initAdminPlacesAutocomplete() {
-            function setup() {
-                const input = document.getElementById('no-direccion');
-                if (!input) { setTimeout(setup, 500); return; }
-                const ac = new google.maps.places.Autocomplete(input, {
-                    types: ['address'],
-                    componentRestrictions: { country: 'cl' },
-                    bounds: new google.maps.LatLngBounds(
-                        new google.maps.LatLng(-23.85, -70.60),
-                        new google.maps.LatLng(-23.45, -70.20)
-                    ),
-                    strictBounds: false,
-                    fields: ['formatted_address', 'geometry', 'address_components']
-                });
-                ac.addListener('place_changed', () => {
-                    const place = ac.getPlace();
-                    if (!place.geometry) return;
-                    const lat = place.geometry.location.lat();
-                    const lng = place.geometry.location.lng();
-                    newOrderDraft.direccion = place.formatted_address || input.value;
-                    input.value = place.formatted_address || input.value;
-                    adminCalcDeliveryCost(lat, lng);
-                    updateNewOrderTotals();
-                });
-            }
-            setup();
+            window.initAddressAutocomplete('no-direccion', function(data, input) {
+                newOrderDraft.direccion = data.address;
+                input.value = data.address;
+                var flow = window.calculateDeliveryFlow(data.lat, data.lng);
+                newOrderDraft._deliveryCoords = { lat: data.lat, lng: data.lng };
+                newOrderDraft._deliveryDistance = flow.distance;
+                newOrderDraft.deliveryCost = flow.cost !== null ? flow.cost : 0;
+                var info = document.getElementById('no-delivery-info');
+                if (info) {
+                    if (flow.inZone) {
+                        info.innerHTML = '<span style="font-size:12px;">📍 ' + flow.distance.toFixed(2) + ' km — Envío: $' + flow.cost.toLocaleString('es-CL') + '</span>';
+                    } else {
+                        info.innerHTML = '<span style="color:var(--pepper-red);font-size:12px;">🚫 Fuera de zona de entrega (máx. 10 km)</span>';
+                    }
+                }
+                updateNewOrderTotals();
+            });
         }
     </script>
     <script
