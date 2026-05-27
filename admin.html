@@ -16,7 +16,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-auth-compat.js"></script>
     <script src="/js/notification-utils.js"></script>
-    <script src="/js/distanceUtils.js"></script>
+    <script src="/js/distanceUtils.js?v=2"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Titan+One&display=swap"
         rel="stylesheet">
@@ -6710,6 +6710,10 @@ ${items}
         initApp();
 
         function initAdminPlacesAutocomplete() {
+            if (typeof window.initAddressAutocomplete !== 'function') {
+                console.error('[Peppe] initAddressAutocomplete no disponible — cache obsoleto. Recarga con Ctrl+Shift+R para forzar refresco.');
+                return;
+            }
             window.initAddressAutocomplete('no-direccion', function(data, input) {
                 newOrderDraft.direccion = data.address;
                 input.value = data.address;
@@ -6730,7 +6734,7 @@ ${items}
         }
     </script>
     <script
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC1I5hFEM4arr2a5hM_IjnZHHEUgsMcIgM&libraries=places&callback=initAdminPlacesAutocomplete"
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC1I5hFEM4arr2a5hM_IjnZHHEUgsMcIgM&libraries=places&callback=initAdminPlacesAutocomplete&loading=async"
         async defer></script>
 </body>
 

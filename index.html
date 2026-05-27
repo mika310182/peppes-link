@@ -56,6 +56,11 @@
   <script>
     window.googleMapsReady = false;
     window.initGooglePlacesAutocomplete = function () {
+      if (typeof window.initAddressAutocomplete !== 'function') {
+        console.error('[Peppe] initAddressAutocomplete no disponible — recarga la página.');
+        window.googleMapsReady = true;
+        return;
+      }
       window.initAddressAutocomplete('address_street', function(data) {
         window.customerLocation = {
           address: data.address,
@@ -80,7 +85,7 @@
     };
   </script>
   <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC1I5hFEM4arr2a5hM_IjnZHHEUgsMcIgM&libraries=places&callback=initGooglePlacesAutocomplete"
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC1I5hFEM4arr2a5hM_IjnZHHEUgsMcIgM&libraries=places&callback=initGooglePlacesAutocomplete&loading=async"
     async defer></script>
 
   <style>
@@ -2558,7 +2563,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
-  <script src="js/distanceUtils.js"></script>
+  <script src="js/distanceUtils.js?v=2"></script>
   <script src="js/notification-utils.js"></script>
   <script>
     const SUCCESS_SOUND = "https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3";
